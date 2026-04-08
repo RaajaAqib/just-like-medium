@@ -1,6 +1,5 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Article from './pages/Article';
 import Login from './pages/Login';
@@ -10,6 +9,10 @@ import EditArticle from './pages/EditArticle';
 import AuthorProfile from './pages/AuthorProfile';
 import AdminDashboard from './pages/AdminDashboard';
 import OurStory from './pages/OurStory';
+import Library from './pages/Library';
+import MyStories from './pages/MyStories';
+import StatsPage from './pages/StatsPage';
+import FollowingPage from './pages/FollowingPage';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -25,41 +28,27 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
-// Pages that manage their own Navbar
-const SELF_NAVBARED = ['/', '/login', '/register'];
-
-function Layout({ children }) {
-  const location = useLocation();
-  const isHome = location.pathname === '/';
-  const isAuth = ['/login', '/register'].includes(location.pathname);
-  const isSelfNavbared = isHome || isAuth || location.pathname === '/our-story';
-
-  if (isSelfNavbared) return <>{children}</>;
-
-
-  return (
-    <div className="min-h-screen bg-white">
-      <Navbar />
-      {children}
-    </div>
-  );
-}
-
 export default function App() {
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/article/:slug" element={<Article />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/our-story" element={<OurStory />} />
-        <Route path="/profile/:id" element={<AuthorProfile />} />
-        <Route path="/write" element={<ProtectedRoute><WriteArticle /></ProtectedRoute>} />
-        <Route path="/edit/:id" element={<ProtectedRoute><EditArticle /></ProtectedRoute>} />
-        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Layout>
+    <Routes>
+      {/* Public */}
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/our-story" element={<OurStory />} />
+      <Route path="/article/:slug" element={<Article />} />
+      <Route path="/profile/:id" element={<AuthorProfile />} />
+
+      {/* Protected — use SidebarLayout internally */}
+      <Route path="/write" element={<ProtectedRoute><WriteArticle /></ProtectedRoute>} />
+      <Route path="/edit/:id" element={<ProtectedRoute><EditArticle /></ProtectedRoute>} />
+      <Route path="/library" element={<ProtectedRoute><Library /></ProtectedRoute>} />
+      <Route path="/my-stories" element={<ProtectedRoute><MyStories /></ProtectedRoute>} />
+      <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
+      <Route path="/following" element={<ProtectedRoute><FollowingPage /></ProtectedRoute>} />
+      <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
