@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
-import { FiEdit2, FiTrash2, FiMoreHorizontal } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiMoreHorizontal, FiX } from 'react-icons/fi';
 import SidebarLayout from '../components/SidebarLayout';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/axios';
@@ -10,14 +10,19 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function MyStories() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('published');
   const [openMenu, setOpenMenu] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importTitle, setImportTitle] = useState('');
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     if (!user) return;
-    api.get(`/users/${user._id}`)
+    api.get('/users/me/posts')
       .then(res => setPosts(res.data.posts || []))
       .catch(() => toast.error('Failed to load stories'))
       .finally(() => setLoading(false));
@@ -36,6 +41,28 @@ export default function MyStories() {
     } catch { toast.error('Failed to delete'); }
   };
 
+  const handleImport = async () => {
+    if (!importTitle.trim()) return toast.error('Please enter a title');
+    if (!importText.trim()) return toast.error('Please paste some content');
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', importTitle.trim());
+      formData.append('content', `<p>${importText.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</p>`);
+      formData.append('published', 'false');
+      const res = await api.post('/posts', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      toast.success('Story imported as draft!');
+      setImportOpen(false);
+      setImportText('');
+      setImportTitle('');
+      navigate(`/edit/${res.data.post._id}`);
+    } catch {
+      toast.error('Failed to import');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const tabs = [
     { key: 'drafts', label: `Drafts ${drafts.length}` },
     { key: 'published', label: 'Published' },
@@ -47,7 +74,7 @@ export default function MyStories() {
       <div className="max-w-4xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl font-bold font-serif text-medium-black">Stories</h1>
-          <Link to="/write" className="btn-black-outline text-sm px-5 py-2">Import a story</Link>
+          <button onClick={() => setImportOpen(true)} className="btn-black-outline text-sm px-5 py-2">Import a story</button>
         </div>
 
         {/* Tabs */}
@@ -132,6 +159,44 @@ export default function MyStories() {
           </>
         )}
       </div>
+      {/* Import Modal */}
+      {importOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-medium-black">Import a story</h2>
+              <button onClick={() => setImportOpen(false)} className="text-medium-gray hover:text-medium-black">
+                <FiX className="text-xl" />
+              </button>
+            </div>
+            <p className="text-sm text-medium-gray mb-4">
+              Paste your story text below. It will be saved as a draft that you can edit and publish.
+            </p>
+            <input
+              type="text"
+              value={importTitle}
+              onChange={e => setImportTitle(e.target.value)}
+              placeholder="Story title"
+              className="w-full border border-medium-border rounded-lg px-4 py-2.5 text-sm mb-3 focus:outline-none focus:border-medium-black"
+            />
+            <textarea
+              value={importText}
+              onChange={e => setImportText(e.target.value)}
+              placeholder="Paste your story content here..."
+              rows={8}
+              className="w-full border border-medium-border rounded-lg px-4 py-2.5 text-sm mb-4 focus:outline-none focus:border-medium-black resize-none"
+            />
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setImportOpen(false)} className="btn-black-outline text-sm px-5 py-2">
+                Cancel
+              </button>
+              <button onClick={handleImport} disabled={importing} className="btn-black text-sm px-5 py-2">
+                {importing ? 'Importing...' : 'Import as draft'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </SidebarLayout>
   );
 }

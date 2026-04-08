@@ -23,6 +23,17 @@ router.post('/upload-image', protect, upload.single('coverImage'), (req, res) =>
   res.json({ success: true, url: req.file.path });
 });
 
+// Get post by ID (for editing drafts — author only)
+router.get('/id/:id', protect, async (req, res) => {
+  try {
+    const post = await require('../models/Post').findById(req.params.id).populate('author', 'name avatar bio');
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+    if (post.author._id.toString() !== req.user._id.toString() && !req.user.isAdmin)
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    res.json({ success: true, post });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
 // Public
 router.get('/', getPosts);
 router.get('/:slug', optionalAuth, getPost);

@@ -1,5 +1,6 @@
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
+const Notification = require('../models/Notification');
 
 // GET /api/comments/:postId
 const getComments = async (req, res) => {
@@ -36,6 +37,18 @@ const createComment = async (req, res) => {
     });
 
     await comment.populate('author', 'name avatar');
+
+    // Notify post author (not if commenting on own post)
+    if (!parentComment && post.author.toString() !== req.user._id.toString()) {
+      await Notification.create({
+        recipient: post.author,
+        fromUser: req.user._id,
+        type: 'comment',
+        post: post._id,
+        postTitle: post.title,
+        postSlug: post.slug,
+      });
+    }
 
     res.status(201).json({ success: true, comment });
   } catch (error) {

@@ -26,17 +26,8 @@ export default function EditArticle() {
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        // Fetch all posts to find by id — or add a /posts/id/:id endpoint
-        // For simplicity we reuse the slug-based endpoint via admin or load from profile
-        const res = await api.get(`/users/${user._id}`);
-        const post = res.data.posts?.find((p) => p._id === id);
-        if (!post && !user.isAdmin) {
-          toast.error('Post not found or not authorized');
-          return navigate('/');
-        }
-        // Fetch full content
-        const fullRes = await api.get(`/posts/${post.slug}`);
-        const p = fullRes.data.post;
+        const res = await api.get(`/posts/id/${id}`);
+        const p = res.data.post;
         setTitle(p.title);
         setContent(p.content);
         setTags(p.tags || []);
@@ -45,7 +36,7 @@ export default function EditArticle() {
         setPostSlug(p.slug);
       } catch {
         toast.error('Failed to load post');
-        navigate('/');
+        navigate('/my-stories');
       } finally {
         setLoading(false);
       }
@@ -85,8 +76,13 @@ export default function EditArticle() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      toast.success('Post updated!');
-      navigate(`/article/${res.data.post.slug}`);
+      if (published) {
+        toast.success('Story published!');
+        navigate(`/article/${res.data.post.slug}`);
+      } else {
+        toast.success('Draft saved!');
+        navigate('/my-stories');
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update');
     } finally {

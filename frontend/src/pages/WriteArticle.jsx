@@ -54,8 +54,13 @@ export default function WriteArticle() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      toast.success('Story published!');
-      navigate(`/article/${res.data.post.slug}`);
+      if (published) {
+        toast.success('Story published!');
+        navigate(`/article/${res.data.post.slug}`);
+      } else {
+        toast.success('Draft saved!');
+        navigate('/my-stories');
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to publish');
     } finally {

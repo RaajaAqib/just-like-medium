@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
-import { FiHeart, FiEdit2, FiTrash2, FiClock, FiEye } from 'react-icons/fi';
+import { FiHeart, FiEdit2, FiTrash2, FiClock, FiEye, FiBookmark } from 'react-icons/fi';
 import { MdOutlineWavingHand } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/axios';
@@ -19,6 +19,7 @@ export default function Article() {
   const [likesCount, setLikesCount] = useState(0);
   const [claps, setClaps] = useState(0);
   const [clapCooldown, setClapCooldown] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     fetchPost();
@@ -62,6 +63,17 @@ export default function Article() {
       setClaps(res.data.claps);
     } catch {
       toast.error('Failed to clap');
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user) return toast.error('Please login to save');
+    try {
+      const res = await api.post(`/users/save-post/${post._id}`);
+      setSaved(res.data.saved);
+      toast.success(res.data.saved ? 'Saved to library' : 'Removed from library');
+    } catch {
+      toast.error('Failed to save');
     }
   };
 
@@ -169,6 +181,16 @@ export default function Article() {
         >
           <MdOutlineWavingHand className="text-xl" />
           <span>{claps}</span>
+        </button>
+
+        <button
+          onClick={handleSave}
+          className={`ml-auto flex items-center gap-2 text-sm transition ${
+            saved ? 'text-medium-black' : 'text-gray-400 hover:text-medium-black'
+          }`}
+          title={saved ? 'Remove from library' : 'Save to library'}
+        >
+          <FiBookmark className={`text-xl ${saved ? 'fill-current' : ''}`} />
         </button>
       </div>
 

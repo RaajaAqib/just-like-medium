@@ -1,5 +1,6 @@
 const Post = require('../models/Post');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 const slugify = require('slugify');
 
 const generateSlug = async (title) => {
@@ -180,6 +181,17 @@ const likePost = async (req, res) => {
       post.likes = post.likes.filter((id) => id.toString() !== userId.toString());
     } else {
       post.likes.push(userId);
+      // Create notification for post author (not self-like)
+      if (post.author.toString() !== userId.toString()) {
+        await Notification.create({
+          recipient: post.author,
+          fromUser: userId,
+          type: 'like',
+          post: post._id,
+          postTitle: post.title,
+          postSlug: post.slug,
+        });
+      }
     }
 
     await post.save({ validateBeforeSave: false });
