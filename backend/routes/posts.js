@@ -17,6 +17,12 @@ const { upload } = require('../utils/cloudinary');
 // Admin
 router.get('/admin/all', protect, adminOnly, getAllPostsAdmin);
 
+// Image upload for editor (must be before /:slug)
+router.post('/upload-image', protect, upload.single('coverImage'), (req, res) => {
+  if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+  res.json({ success: true, url: req.file.path });
+});
+
 // Public
 router.get('/', getPosts);
 router.get('/:slug', optionalAuth, getPost);
