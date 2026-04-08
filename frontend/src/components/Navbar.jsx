@@ -27,8 +27,8 @@ export default function Navbar({ variant = 'default' }) {
             Just Like Medium
           </Link>
           <div className="flex items-center gap-5">
-            <Link to="/" className="text-sm text-medium-black hover:text-medium-gray hidden md:block transition">Our story</Link>
-            <Link to="/" className="text-sm text-medium-black hover:text-medium-gray hidden md:block transition">Membership</Link>
+            <Link to="/our-story" className="text-sm text-medium-black hover:text-medium-gray hidden md:block transition">Our story</Link>
+            <Link to="/our-story" className="text-sm text-medium-black hover:text-medium-gray hidden md:block transition">Membership</Link>
             {user ? (
               <>
                 <Link to="/write" className="text-sm text-medium-black hover:text-medium-gray transition">Write</Link>

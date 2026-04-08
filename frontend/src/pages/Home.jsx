@@ -64,9 +64,14 @@ function LandingHero() {
       {/* Footer */}
       <footer className="border-t border-medium-border mt-auto py-6">
         <div className="max-w-7xl mx-auto px-6 flex flex-wrap gap-4 text-xs text-medium-gray">
-          {['Help', 'Status', 'About', 'Careers', 'Blog', 'Privacy', 'Terms', 'Text to speech'].map(l => (
-            <span key={l} className="hover:text-medium-black cursor-pointer transition">{l}</span>
-          ))}
+          <Link to="/our-story" className="hover:text-medium-black transition">Help</Link>
+          <Link to="/our-story" className="hover:text-medium-black transition">Status</Link>
+          <Link to="/our-story" className="hover:text-medium-black transition">About</Link>
+          <Link to="/our-story" className="hover:text-medium-black transition">Careers</Link>
+          <Link to="/our-story" className="hover:text-medium-black transition">Blog</Link>
+          <Link to="/our-story" className="hover:text-medium-black transition">Privacy</Link>
+          <Link to="/our-story" className="hover:text-medium-black transition">Terms</Link>
+          <span className="text-medium-gray">Text to speech</span>
         </div>
       </footer>
     </div>

@@ -9,6 +9,7 @@ import WriteArticle from './pages/WriteArticle';
 import EditArticle from './pages/EditArticle';
 import AuthorProfile from './pages/AuthorProfile';
 import AdminDashboard from './pages/AdminDashboard';
+import OurStory from './pages/OurStory';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -31,9 +32,10 @@ function Layout({ children }) {
   const location = useLocation();
   const isHome = location.pathname === '/';
   const isAuth = ['/login', '/register'].includes(location.pathname);
+  const isSelfNavbared = isHome || isAuth || location.pathname === '/our-story';
 
-  // Home and auth pages manage their own navbar
-  if (isHome || isAuth) return <>{children}</>;
+  if (isSelfNavbared) return <>{children}</>;
+
 
   return (
     <div className="min-h-screen bg-white">
@@ -51,6 +53,7 @@ export default function App() {
         <Route path="/article/:slug" element={<Article />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/our-story" element={<OurStory />} />
         <Route path="/profile/:id" element={<AuthorProfile />} />
         <Route path="/write" element={<ProtectedRoute><WriteArticle /></ProtectedRoute>} />
         <Route path="/edit/:id" element={<ProtectedRoute><EditArticle /></ProtectedRoute>} />
