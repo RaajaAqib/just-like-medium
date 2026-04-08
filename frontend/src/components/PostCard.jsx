@@ -1,13 +1,43 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { FiBookmark } from 'react-icons/fi';
 import { MdOutlineWavingHand } from 'react-icons/md';
+import { useAuth } from '../context/AuthContext';
+import api from '../utils/axios';
+import toast from 'react-hot-toast';
 
-export default function PostCard({ post }) {
+export default function PostCard({ post, initialSaved = false }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [saved, setSaved] = useState(initialSaved);
+  const [saving, setSaving] = useState(false);
+
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
 
+  const handleSave = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) {
+      toast.error('Please sign in to save stories');
+      navigate('/login');
+      return;
+    }
+    if (saving) return;
+    setSaving(true);
+    try {
+      const res = await api.post(`/users/save-post/${post._id}`);
+      setSaved(res.data.saved);
+      toast.success(res.data.saved ? 'Saved to library' : 'Removed from library');
+    } catch {
+      toast.error('Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <article className="py-8 border-b border-medium-border group">
+    <article className="py-6 sm:py-8 border-b border-medium-border group">
       {/* Author row */}
       <Link to={`/profile/${post.author?._id}`} className="flex items-center gap-2 mb-3">
         <img
@@ -19,10 +49,10 @@ export default function PostCard({ post }) {
       </Link>
 
       {/* Content row */}
-      <div className="flex gap-8 items-start">
+      <div className="flex gap-4 sm:gap-8 items-start">
         <div className="flex-1 min-w-0">
           <Link to={`/article/${post.slug}`}>
-            <h2 className="text-xl font-bold text-medium-black leading-snug mb-1 line-clamp-2 group-hover:underline decoration-1 underline-offset-2">
+            <h2 className="text-base sm:text-xl font-bold text-medium-black leading-snug mb-1 line-clamp-2 group-hover:underline decoration-1 underline-offset-2">
               {post.title}
             </h2>
             <p className="text-medium-gray text-sm leading-relaxed line-clamp-2 hidden sm:block">
@@ -31,12 +61,12 @@ export default function PostCard({ post }) {
           </Link>
 
           {/* Meta row */}
-          <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center justify-between mt-3 sm:mt-4">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <span className="text-xs text-medium-gray">{timeAgo}</span>
               {post.tags?.slice(0, 1).map(tag => (
                 <Link key={tag} to={`/?tag=${tag}`}
-                  className="text-xs bg-gray-100 hover:bg-gray-200 text-medium-black px-3 py-1 rounded-full transition">
+                  className="text-xs bg-gray-100 hover:bg-gray-200 text-medium-black px-2.5 sm:px-3 py-1 rounded-full transition">
                   {tag}
                 </Link>
               ))}
@@ -48,8 +78,19 @@ export default function PostCard({ post }) {
                 </span>
               )}
             </div>
-            <button className="p-1 text-medium-gray hover:text-medium-black transition flex-shrink-0">
-              <FiBookmark className="text-base" />
+
+            {/* Bookmark button */}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              title={saved ? 'Remove from library' : 'Save to library'}
+              className={`p-1.5 rounded-full transition flex-shrink-0 ${
+                saved
+                  ? 'text-medium-black'
+                  : 'text-medium-gray hover:text-medium-black hover:bg-gray-100'
+              } ${saving ? 'opacity-50 cursor-wait' : ''}`}
+            >
+              <FiBookmark className={`text-base ${saved ? 'fill-current' : ''}`} />
             </button>
           </div>
         </div>
@@ -60,7 +101,7 @@ export default function PostCard({ post }) {
             <img
               src={post.coverImage}
               alt={post.title}
-              className="w-28 h-20 sm:w-36 sm:h-24 object-cover rounded-sm"
+              className="w-20 h-14 sm:w-32 sm:h-20 object-cover rounded"
             />
           </Link>
         )}
