@@ -31,7 +31,7 @@ export default function StatsPage() {
 
   return (
     <SidebarLayout>
-      <div className="max-w-4xl mx-auto px-6 py-10">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         <h1 className="text-4xl font-bold font-serif text-medium-black mb-8">Stats</h1>
 
         {/* Tabs */}

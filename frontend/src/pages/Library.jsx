@@ -36,7 +36,7 @@ export default function Library() {
 
   return (
     <SidebarLayout>
-      <div className="max-w-3xl mx-auto px-6 py-10">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl font-bold font-serif text-medium-black">Your library</h1>
         </div>

@@ -28,12 +28,19 @@ export default function Article() {
   const fetchPost = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/posts/${slug}`);
-      const p = res.data.post;
+      const [postRes, savedRes] = await Promise.all([
+        api.get(`/posts/${slug}`),
+        user ? api.get('/users/me/saved').catch(() => ({ data: { savedPosts: [] } })) : Promise.resolve({ data: { savedPosts: [] } }),
+      ]);
+      const p = postRes.data.post;
       setPost(p);
       setLikesCount(p.likes?.length || 0);
       setClaps(p.claps || 0);
-      if (user) setLiked(p.likes?.includes(user._id));
+      if (user) {
+        setLiked(p.likes?.includes(user._id));
+        const savedIds = (savedRes.data.savedPosts || []).map(s => s._id || s);
+        setSaved(savedIds.includes(p._id));
+      }
     } catch {
       toast.error('Post not found');
       navigate('/');
@@ -94,7 +101,7 @@ export default function Article() {
   const isAuthor = user?._id === post.author?._id;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
       {/* Cover image */}
       {post.coverImage && (
         <img

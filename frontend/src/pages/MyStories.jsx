@@ -71,10 +71,10 @@ export default function MyStories() {
 
   return (
     <SidebarLayout>
-      <div className="max-w-4xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold font-serif text-medium-black">Stories</h1>
-          <button onClick={() => setImportOpen(true)} className="btn-black-outline text-sm px-5 py-2">Import a story</button>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+        <div className="flex items-center justify-between mb-6 sm:mb-8 gap-3">
+          <h1 className="text-3xl sm:text-4xl font-bold font-serif text-medium-black">Stories</h1>
+          <button onClick={() => setImportOpen(true)} className="btn-black-outline text-xs sm:text-sm px-3 sm:px-5 py-2 flex-shrink-0">Import a story</button>
         </div>
 
         {/* Tabs */}

@@ -22,22 +22,22 @@ export default function Navbar({ variant = 'default' }) {
   if (variant === 'hero') {
     return (
       <nav className="border-b border-medium-black bg-cream">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="text-3xl font-bold font-serif text-medium-black tracking-tight">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 h-14 sm:h-16 flex items-center justify-between">
+          <Link to="/" className="text-xl sm:text-3xl font-bold font-serif text-medium-black tracking-tight">
             Just Like Medium
           </Link>
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3 sm:gap-5">
             <Link to="/our-story" className="text-sm text-medium-black hover:text-medium-gray hidden md:block transition">Our story</Link>
             <Link to="/our-story" className="text-sm text-medium-black hover:text-medium-gray hidden md:block transition">Membership</Link>
             {user ? (
               <>
-                <Link to="/write" className="text-sm text-medium-black hover:text-medium-gray transition">Write</Link>
-                <Link to="/" className="btn-black text-sm">Start reading</Link>
+                <Link to="/write" className="text-sm text-medium-black hover:text-medium-gray transition hidden sm:block">Write</Link>
+                <Link to="/" className="btn-black text-sm px-4 py-2">Start reading</Link>
               </>
             ) : (
               <>
                 <Link to="/login" className="text-sm text-medium-black hover:text-medium-gray transition">Sign in</Link>
-                <Link to="/register" className="btn-black">Get started</Link>
+                <Link to="/register" className="btn-black text-sm px-4 py-2">Get started</Link>
               </>
             )}
           </div>

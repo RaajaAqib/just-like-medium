@@ -76,13 +76,13 @@ function LandingPage() {
     <div className="bg-cream min-h-screen flex flex-col">
       <Navbar variant="hero" />
       <div className="border-b border-medium-black flex-1">
-        <div className="max-w-7xl mx-auto px-6 py-16 md:py-24 flex items-center justify-between gap-12">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 py-12 md:py-24 flex items-center justify-between gap-8">
           <div className="flex-1 max-w-2xl">
-            <h1 className="text-6xl md:text-8xl font-bold font-serif text-medium-black leading-none mb-8 tracking-tight">
+            <h1 className="text-5xl sm:text-6xl md:text-8xl font-bold font-serif text-medium-black leading-none mb-6 md:mb-8 tracking-tight">
               Human<br />stories &amp;<br />ideas
             </h1>
-            <p className="text-xl text-medium-black mb-10">A place to read, write, and deepen your understanding.</p>
-            <Link to="/register" className="inline-block bg-medium-black text-white text-base px-8 py-3 rounded-full hover:bg-gray-700 transition-colors">
+            <p className="text-base sm:text-xl text-medium-black mb-8">A place to read, write, and deepen your understanding.</p>
+            <Link to="/register" className="inline-block bg-medium-black text-white text-sm sm:text-base px-6 sm:px-8 py-2.5 sm:py-3 rounded-full hover:bg-gray-700 transition-colors">
               Start reading
             </Link>
           </div>
@@ -133,7 +133,7 @@ function LoggedInFeed() {
 
   return (
     <SidebarLayout>
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-8 flex gap-10">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8 flex gap-10">
         {/* Feed */}
         <div className="flex-1 min-w-0 max-w-2xl">
           {/* Tabs */}
