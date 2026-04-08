@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(node server.js)",
+      "Bash(curl -s http://localhost:5500/api/health)",
+      "Bash(nslookup cluster0.xiwygam.mongodb.net)",
+      "Bash(curl -s https://api.ipify.org)",
+      "Bash(npm run:*)",
+      "Read(//tmp/**)",
+      "Bash(pkill -f \"node server.js\")",
+      "Bash(nslookup -type=SRV _mongodb._tcp.cluster0.xiwygam.mongodb.net 8.8.8.8)",
+      "Bash(nslookup -type=TXT cluster0.xiwygam.mongodb.net 8.8.8.8)",
+      "Bash(curl -s http://localhost:5500/api/posts)",
+      "Bash(curl -s http://localhost:5501/api/health)",
+      "Bash(curl -s http://localhost:5501/api/posts)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(curl -s http://localhost:5174/api/health)"
+    ]
+  }
+}
