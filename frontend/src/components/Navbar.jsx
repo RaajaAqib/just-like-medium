@@ -1,120 +1,143 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiEdit, FiSearch, FiBell, FiChevronDown } from 'react-icons/fi';
+import { FiEdit, FiSearch } from 'react-icons/fi';
 
-export default function Navbar() {
+export default function Navbar({ variant = 'default' }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [search, setSearch] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchVal, setSearchVal] = useState('');
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (search.trim()) {
-      navigate(`/?search=${encodeURIComponent(search.trim())}`);
+    if (searchVal.trim()) {
+      navigate(`/?search=${encodeURIComponent(searchVal.trim())}`);
+      setSearchOpen(false);
     }
   };
 
+  // Hero variant (landing page) — cream background, bordered bottom
+  if (variant === 'hero') {
+    return (
+      <nav className="border-b border-medium-black bg-cream">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link to="/" className="text-3xl font-bold font-serif text-medium-black tracking-tight">
+            Just Like Medium
+          </Link>
+          <div className="flex items-center gap-5">
+            <Link to="/" className="text-sm text-medium-black hover:text-medium-gray hidden md:block transition">Our story</Link>
+            <Link to="/" className="text-sm text-medium-black hover:text-medium-gray hidden md:block transition">Membership</Link>
+            {user ? (
+              <>
+                <Link to="/write" className="text-sm text-medium-black hover:text-medium-gray transition">Write</Link>
+                <Link to="/" className="btn-black text-sm">Start reading</Link>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="text-sm text-medium-black hover:text-medium-gray transition">Sign in</Link>
+                <Link to="/register" className="btn-black">Get started</Link>
+              </>
+            )}
+          </div>
+        </div>
+      </nav>
+    );
+  }
+
+  // Default variant — white background for inner pages
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+    <nav className="sticky top-0 z-50 bg-white border-b border-medium-border">
+      <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
         {/* Logo */}
-        <Link to="/" className="flex-shrink-0">
-          <span className="text-2xl font-bold tracking-tight text-gray-900 font-serif">
-            Just Like <span className="text-green-600">Medium</span>
-          </span>
+        <Link to="/" className="text-2xl font-bold font-serif text-medium-black tracking-tight flex-shrink-0">
+          Just Like Medium
         </Link>
 
         {/* Search */}
-        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-sm">
-          <div className="relative w-full">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
-            <input
-              type="text"
-              placeholder="Search posts..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-gray-100 rounded-full pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
-            />
-          </div>
-        </form>
+        <div className="flex-1 max-w-xs hidden md:block">
+          {searchOpen ? (
+            <form onSubmit={handleSearch} className="flex">
+              <input
+                autoFocus
+                type="text"
+                value={searchVal}
+                onChange={e => setSearchVal(e.target.value)}
+                onBlur={() => !searchVal && setSearchOpen(false)}
+                placeholder="Search..."
+                className="w-full bg-gray-100 rounded-full px-4 py-1.5 text-sm focus:outline-none"
+              />
+            </form>
+          ) : (
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex items-center gap-2 text-sm text-medium-gray hover:text-medium-black transition"
+            >
+              <FiSearch />
+              <span>Search</span>
+            </button>
+          )}
+        </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-3">
+        {/* Right side */}
+        <div className="flex items-center gap-4">
           {user ? (
             <>
-              <Link
-                to="/write"
-                className="hidden sm:flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition"
-              >
-                <FiEdit className="text-base" />
-                Write
+              <Link to="/write" className="hidden sm:flex items-center gap-1.5 text-sm text-medium-gray hover:text-medium-black transition">
+                <FiEdit />
+                <span>Write</span>
               </Link>
 
+              {/* Avatar + dropdown */}
               <div className="relative">
-                <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-1.5 focus:outline-none"
-                >
+                <button onClick={() => setDropdownOpen(!dropdownOpen)} className="focus:outline-none">
                   <img
                     src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
                     alt={user.name}
                     className="w-8 h-8 rounded-full object-cover"
                   />
-                  <FiChevronDown className="text-gray-500 text-xs" />
                 </button>
 
                 {dropdownOpen && (
                   <div
-                    className="absolute right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50"
+                    className="absolute right-0 mt-3 w-56 bg-white rounded shadow-lg border border-medium-border py-2 z-50"
                     onMouseLeave={() => setDropdownOpen(false)}
                   >
-                    <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="font-medium text-sm text-gray-900">{user.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    <div className="px-4 py-2 border-b border-medium-border mb-1">
+                      <p className="text-sm font-medium text-medium-black truncate">{user.name}</p>
+                      <p className="text-xs text-medium-gray truncate">{user.email}</p>
                     </div>
-                    <Link
-                      to={`/profile/${user._id}`}
-                      onClick={() => setDropdownOpen(false)}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    >
+                    <Link to={`/profile/${user._id}`} onClick={() => setDropdownOpen(false)}
+                      className="block px-4 py-2 text-sm text-medium-black hover:bg-gray-50">
                       Profile
                     </Link>
-                    <Link
-                      to="/write"
-                      onClick={() => setDropdownOpen(false)}
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 sm:hidden"
-                    >
+                    <Link to="/write" onClick={() => setDropdownOpen(false)}
+                      className="block px-4 py-2 text-sm text-medium-black hover:bg-gray-50 sm:hidden">
                       Write a story
                     </Link>
                     {user.isAdmin && (
-                      <Link
-                        to="/admin"
-                        onClick={() => setDropdownOpen(false)}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      >
+                      <Link to="/admin" onClick={() => setDropdownOpen(false)}
+                        className="block px-4 py-2 text-sm text-medium-black hover:bg-gray-50">
                         Admin Dashboard
                       </Link>
                     )}
-                    <button
-                      onClick={() => { logout(); setDropdownOpen(false); navigate('/'); }}
-                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 border-t border-gray-100 mt-1"
-                    >
-                      Sign out
-                    </button>
+                    <div className="border-t border-medium-border mt-1 pt-1">
+                      <button
+                        onClick={() => { logout(); setDropdownOpen(false); navigate('/'); }}
+                        className="block w-full text-left px-4 py-2 text-sm text-medium-gray hover:bg-gray-50"
+                      >
+                        Sign out
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
             </>
           ) : (
             <>
-              <Link to="/login" className="text-sm text-gray-700 hover:text-gray-900">
-                Sign in
-              </Link>
-              <Link to="/register" className="btn-primary">
-                Get started
-              </Link>
+              <Link to="/login" className="text-sm text-medium-black hover:text-medium-gray transition">Sign in</Link>
+              <Link to="/register" className="btn-black">Get started</Link>
             </>
           )}
         </div>

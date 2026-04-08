@@ -4,29 +4,15 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        serif: ['Georgia', 'Cambria', 'serif'],
+        sans: ['sohne', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        serif: ['gt-super', 'Georgia', 'Cambria', 'serif'],
       },
       colors: {
-        brand: {
-          50: '#fdf8ee',
-          100: '#faefd0',
-          200: '#f4db9d',
-          300: '#eec063',
-          400: '#e8a434',
-          500: '#e08c1b',
-          600: '#c46e13',
-          700: '#a35114',
-          800: '#844116',
-          900: '#6c3616',
-        },
-      },
-      typography: {
-        DEFAULT: {
-          css: {
-            maxWidth: 'none',
-          },
-        },
+        cream: '#faf9f7',
+        'medium-green': '#1a8917',
+        'medium-black': '#242424',
+        'medium-gray': '#6b6b6b',
+        'medium-border': '#e6e6e6',
       },
     },
   },

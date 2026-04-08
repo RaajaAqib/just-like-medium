@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -24,42 +24,39 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
-export default function App() {
+// Pages that manage their own Navbar
+const SELF_NAVBARED = ['/', '/login', '/register'];
+
+function Layout({ children }) {
+  const location = useLocation();
+  const isHome = location.pathname === '/';
+  const isAuth = ['/login', '/register'].includes(location.pathname);
+
+  // Home and auth pages manage their own navbar
+  if (isHome || isAuth) return <>{children}</>;
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
+      {children}
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Layout>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/article/:slug" element={<Article />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/profile/:id" element={<AuthorProfile />} />
-        <Route
-          path="/write"
-          element={
-            <ProtectedRoute>
-              <WriteArticle />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/edit/:id"
-          element={
-            <ProtectedRoute>
-              <EditArticle />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          }
-        />
+        <Route path="/write" element={<ProtectedRoute><WriteArticle /></ProtectedRoute>} />
+        <Route path="/edit/:id" element={<ProtectedRoute><EditArticle /></ProtectedRoute>} />
+        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </div>
+    </Layout>
   );
 }
