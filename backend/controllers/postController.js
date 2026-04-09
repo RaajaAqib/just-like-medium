@@ -218,6 +218,22 @@ const clapPost = async (req, res) => {
     post.claps += 1;
     await post.save({ validateBeforeSave: false });
 
+    // Notify author on first clap from this user (check if already notified today)
+    if (post.author.toString() !== req.user._id.toString()) {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const exists = await Notification.findOne({
+        recipient: post.author, fromUser: req.user._id,
+        type: 'clap', post: post._id, createdAt: { $gte: today },
+      });
+      if (!exists) {
+        await Notification.create({
+          recipient: post.author, fromUser: req.user._id,
+          type: 'clap', post: post._id,
+          postTitle: post.title, postSlug: post.slug,
+        });
+      }
+    }
+
     res.json({ success: true, claps: post.claps });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

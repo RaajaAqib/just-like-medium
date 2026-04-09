@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Post = require('../models/Post');
+const Notification = require('../models/Notification');
 
 // GET /api/users/:id
 const getUserProfile = async (req, res) => {
@@ -93,9 +94,14 @@ const followUser = async (req, res) => {
       currentUser.following = currentUser.following.filter((id) => id.toString() !== req.params.id);
       userToFollow.followers = userToFollow.followers.filter((id) => id.toString() !== req.user._id.toString());
     } else {
-      // Follow
+      // Follow — create notification
       currentUser.following.push(req.params.id);
       userToFollow.followers.push(req.user._id);
+      await Notification.create({
+        recipient: req.params.id,
+        fromUser: req.user._id,
+        type: 'follow',
+      });
     }
 
     await currentUser.save({ validateBeforeSave: false });

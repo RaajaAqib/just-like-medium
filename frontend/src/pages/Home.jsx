@@ -106,28 +106,15 @@ function LandingPage() {
 
 // Logged-in feed
 function LoggedInFeed() {
-  const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [activeTab, setActiveTab] = useState('foryou');
-  const [savedPostIds, setSavedPostIds] = useState(new Set());
   const [searchParams] = useSearchParams();
 
   const search = searchParams.get('search') || '';
   const tag = searchParams.get('tag') || '';
-
-  // Fetch user's saved post IDs once
-  useEffect(() => {
-    if (!user) return;
-    api.get('/users/me/saved')
-      .then(res => {
-        const ids = (res.data.savedPosts || []).map(p => p._id);
-        setSavedPostIds(new Set(ids));
-      })
-      .catch(() => {});
-  }, [user]);
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -188,7 +175,7 @@ function LoggedInFeed() {
             </div>
           ) : (
             <>
-              {posts.map(post => <PostCard key={post._id} post={post} initialSaved={savedPostIds.has(post._id)} />)}
+              {posts.map(post => <PostCard key={post._id} post={post} />)}
               {totalPages > 1 && (
                 <div className="flex justify-center gap-3 mt-10 pt-6 border-t border-medium-border">
                   <button onClick={() => setPage(p => Math.max(1,p-1))} disabled={page===1}

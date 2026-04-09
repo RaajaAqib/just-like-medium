@@ -1,18 +1,17 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { FiBookmark } from 'react-icons/fi';
 import { MdOutlineWavingHand } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
-import api from '../utils/axios';
+import { useSavedPosts } from '../context/SavedPostsContext';
 import toast from 'react-hot-toast';
 
-export default function PostCard({ post, initialSaved = false }) {
+export default function PostCard({ post }) {
   const { user } = useAuth();
+  const { isSaved, toggleSave } = useSavedPosts();
   const navigate = useNavigate();
-  const [saved, setSaved] = useState(initialSaved);
-  const [saving, setSaving] = useState(false);
 
+  const saved = isSaved(post._id);
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
 
   const handleSave = async (e) => {
@@ -23,16 +22,11 @@ export default function PostCard({ post, initialSaved = false }) {
       navigate('/login');
       return;
     }
-    if (saving) return;
-    setSaving(true);
-    try {
-      const res = await api.post(`/users/save-post/${post._id}`);
-      setSaved(res.data.saved);
-      toast.success(res.data.saved ? 'Saved to library' : 'Removed from library');
-    } catch {
+    const result = await toggleSave(post._id);
+    if (result === null) {
       toast.error('Failed to save');
-    } finally {
-      setSaving(false);
+    } else {
+      toast.success(result ? 'Saved to library' : 'Removed from library');
     }
   };
 
@@ -79,16 +73,13 @@ export default function PostCard({ post, initialSaved = false }) {
               )}
             </div>
 
-            {/* Bookmark button */}
+            {/* Bookmark — always consistent via context */}
             <button
               onClick={handleSave}
-              disabled={saving}
               title={saved ? 'Remove from library' : 'Save to library'}
               className={`p-1.5 rounded-full transition flex-shrink-0 ${
-                saved
-                  ? 'text-medium-black'
-                  : 'text-medium-gray hover:text-medium-black hover:bg-gray-100'
-              } ${saving ? 'opacity-50 cursor-wait' : ''}`}
+                saved ? 'text-medium-black' : 'text-medium-gray hover:text-medium-black hover:bg-gray-100'
+              }`}
             >
               <FiBookmark className={`text-base ${saved ? 'fill-current' : ''}`} />
             </button>

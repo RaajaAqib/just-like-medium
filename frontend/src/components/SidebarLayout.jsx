@@ -5,7 +5,7 @@ import api from '../utils/axios';
 import {
   FiHome, FiBookmark, FiUser, FiFileText, FiBarChart2,
   FiUserPlus, FiEdit, FiBell, FiSearch, FiMenu, FiX,
-  FiHeart, FiMessageCircle, FiPlus
+  FiHeart, FiMessageCircle, FiPlus, FiZap
 } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -68,24 +68,32 @@ export default function SidebarLayout({ children }) {
     }
   };
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (silent = false) => {
     if (!user) return;
-    setNotifLoading(true);
+    if (!silent) setNotifLoading(true);
     try {
       const res = await api.get('/notifications');
       setNotifications(res.data.notifications || []);
     } catch {
-      setNotifications([]);
+      if (!silent) setNotifications([]);
     } finally {
-      setNotifLoading(false);
+      if (!silent) setNotifLoading(false);
     }
   };
+
+  // Poll every 30 seconds for real-time notifications
+  useEffect(() => {
+    if (!user) return;
+    fetchNotifications(true);
+    const interval = setInterval(() => fetchNotifications(true), 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleBellClick = () => {
     const next = !notifOpen;
     setNotifOpen(next);
     setDropdownOpen(false);
-    if (next) fetchNotifications();
+    if (next) fetchNotifications(false);
   };
 
   const markAllRead = async () => {
@@ -228,19 +236,22 @@ export default function SidebarLayout({ children }) {
                   ) : (
                     notifications.map(n => (
                       <Link key={n._id}
-                        to={n.postSlug ? `/article/${n.postSlug}` : '#'}
+                        to={n.postSlug ? `/article/${n.postSlug}` : n.type === 'follow' ? `/profile/${n.fromUser?._id}` : '#'}
                         onClick={() => setNotifOpen(false)}
                         className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition border-b border-medium-border last:border-0 ${!n.read ? 'bg-blue-50/40' : ''}`}>
                         <div className="mt-0.5 flex-shrink-0">
-                          {n.type === 'like'
-                            ? <FiHeart className="text-red-500 text-base" />
-                            : <FiMessageCircle className="text-medium-green text-base" />}
+                          {n.type === 'like'    && <FiHeart className="text-red-500 text-base" />}
+                          {n.type === 'comment' && <FiMessageCircle className="text-medium-green text-base" />}
+                          {n.type === 'clap'    && <FiZap className="text-yellow-500 text-base" />}
+                          {n.type === 'follow'  && <FiUserPlus className="text-blue-500 text-base" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-medium-black leading-snug">
                             <span className="font-medium">{n.fromUser?.name || 'Someone'}</span>
-                            {' '}{n.type === 'like' ? 'liked' : 'commented on'}{' '}
-                            <span className="font-medium">"{n.postTitle}"</span>
+                            {n.type === 'like'    && <> liked your story <span className="font-medium">"{n.postTitle}"</span></>}
+                            {n.type === 'comment' && <> commented on <span className="font-medium">"{n.postTitle}"</span></>}
+                            {n.type === 'clap'    && <> clapped for <span className="font-medium">"{n.postTitle}"</span></>}
+                            {n.type === 'follow'  && <> started following you</>}
                           </p>
                           <p className="text-xs text-medium-gray mt-0.5">
                             {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}

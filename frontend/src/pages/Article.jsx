@@ -4,6 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { FiHeart, FiEdit2, FiTrash2, FiClock, FiEye, FiBookmark } from 'react-icons/fi';
 import { MdOutlineWavingHand } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
+import { useSavedPosts } from '../context/SavedPostsContext';
 import api from '../utils/axios';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -15,11 +16,11 @@ export default function Article() {
   const navigate = useNavigate();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { isSaved, toggleSave } = useSavedPosts();
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [claps, setClaps] = useState(0);
   const [clapCooldown, setClapCooldown] = useState(false);
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     fetchPost();
@@ -28,19 +29,12 @@ export default function Article() {
   const fetchPost = async () => {
     setLoading(true);
     try {
-      const [postRes, savedRes] = await Promise.all([
-        api.get(`/posts/${slug}`),
-        user ? api.get('/users/me/saved').catch(() => ({ data: { savedPosts: [] } })) : Promise.resolve({ data: { savedPosts: [] } }),
-      ]);
-      const p = postRes.data.post;
+      const res = await api.get(`/posts/${slug}`);
+      const p = res.data.post;
       setPost(p);
       setLikesCount(p.likes?.length || 0);
       setClaps(p.claps || 0);
-      if (user) {
-        setLiked(p.likes?.includes(user._id));
-        const savedIds = (savedRes.data.savedPosts || []).map(s => s._id || s);
-        setSaved(savedIds.includes(p._id));
-      }
+      if (user) setLiked(p.likes?.includes(user._id));
     } catch {
       toast.error('Post not found');
       navigate('/');
@@ -75,13 +69,8 @@ export default function Article() {
 
   const handleSave = async () => {
     if (!user) return toast.error('Please login to save');
-    try {
-      const res = await api.post(`/users/save-post/${post._id}`);
-      setSaved(res.data.saved);
-      toast.success(res.data.saved ? 'Saved to library' : 'Removed from library');
-    } catch {
-      toast.error('Failed to save');
-    }
+    const result = await toggleSave(post._id);
+    if (result !== null) toast.success(result ? 'Saved to library' : 'Removed from library');
   };
 
   const handleDelete = async () => {
@@ -193,11 +182,11 @@ export default function Article() {
         <button
           onClick={handleSave}
           className={`ml-auto flex items-center gap-2 text-sm transition ${
-            saved ? 'text-medium-black' : 'text-gray-400 hover:text-medium-black'
+            isSaved(post?._id) ? 'text-medium-black' : 'text-gray-400 hover:text-medium-black'
           }`}
-          title={saved ? 'Remove from library' : 'Save to library'}
+          title={isSaved(post?._id) ? 'Remove from library' : 'Save to library'}
         >
-          <FiBookmark className={`text-xl ${saved ? 'fill-current' : ''}`} />
+          <FiBookmark className={`text-xl ${isSaved(post?._id) ? 'fill-current' : ''}`} />
         </button>
       </div>
 
