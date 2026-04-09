@@ -28,44 +28,287 @@
   }
 }
 
-/* Tiptap editor */
-.ProseMirror { outline: none; min-height: 400px; }
+/* ═══════════════════════════════════════════════════════════════
+   TIPTAP EDITOR (ProseMirror) — Medium-style writing experience
+   ═══════════════════════════════════════════════════════════════ */
+
+.ProseMirror {
+  outline: none;
+  min-height: 420px;
+  caret-color: #242424;
+  font-family: charter, Georgia, Cambria, 'Times New Roman', Times, serif;
+  font-size: 1.15rem;
+  color: #242424;
+  line-height: 1.85;
+}
+
+/* Placeholder */
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
-  float: left; color: #b3b3b1; pointer-events: none; height: 0;
+  float: left;
+  color: #b3b3b1;
+  pointer-events: none;
+  height: 0;
+  font-family: charter, Georgia, Cambria, serif;
 }
-.ProseMirror h1 { font-size: 2rem; font-weight: 700; margin: 1.5rem 0 0.75rem; font-family: Georgia, serif; }
-.ProseMirror h2 { font-size: 1.5rem; font-weight: 700; margin: 1.25rem 0 0.5rem; font-family: Georgia, serif; }
-.ProseMirror h3 { font-size: 1.25rem; font-weight: 600; margin: 1rem 0 0.5rem; }
-.ProseMirror p  { margin: 0.75rem 0; line-height: 1.9; font-size: 1.1rem; }
-.ProseMirror ul { list-style: disc; padding-left: 1.5rem; margin: 0.75rem 0; }
-.ProseMirror ol { list-style: decimal; padding-left: 1.5rem; margin: 0.75rem 0; }
-.ProseMirror blockquote {
-  border-left: 3px solid #242424; padding-left: 1.5rem;
-  font-style: italic; color: #555; margin: 1.5rem 0; font-size: 1.2rem;
-}
-.ProseMirror code { background: #f2f2f2; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
-.ProseMirror pre { background: #1e1e1e; color: #d4d4d4; padding: 1.25rem; border-radius: 4px; margin: 1rem 0; overflow-x: auto; }
-.ProseMirror pre code { background: none; color: inherit; }
-.ProseMirror a { color: inherit; text-decoration: underline; }
-.ProseMirror img { max-width: 100%; border-radius: 2px; margin: 1.5rem auto; display: block; }
-.ProseMirror hr { border: none; border-top: 1px solid #e6e6e6; margin: 2rem 0; }
 
-/* Article reading */
-.article-content h1 { font-size: 2rem; font-weight: 700; margin: 2rem 0 1rem; font-family: Georgia, serif; line-height: 1.2; }
-.article-content h2 { font-size: 1.5rem; font-weight: 700; margin: 1.75rem 0 0.75rem; font-family: Georgia, serif; }
-.article-content h3 { font-size: 1.25rem; font-weight: 600; margin: 1.5rem 0 0.5rem; }
-.article-content p  { margin: 1.2rem 0; line-height: 2; font-size: 1.15rem; color: #242424; }
+/* Paragraphs */
+.ProseMirror p { margin: 0.9rem 0; line-height: 1.85; }
+
+/* Headings */
+.ProseMirror h1 {
+  font-size: 2.2rem; font-weight: 700; margin: 1.8rem 0 0.6rem;
+  font-family: gt-super, Georgia, serif; line-height: 1.2; letter-spacing: -0.022em;
+}
+.ProseMirror h2 {
+  font-size: 1.65rem; font-weight: 700; margin: 1.6rem 0 0.5rem;
+  font-family: gt-super, Georgia, serif; line-height: 1.3; letter-spacing: -0.016em;
+}
+.ProseMirror h3 {
+  font-size: 1.3rem; font-weight: 600; margin: 1.4rem 0 0.4rem;
+  font-family: gt-super, Georgia, serif; line-height: 1.35;
+}
+.ProseMirror h4 {
+  font-size: 1.1rem; font-weight: 600; margin: 1.2rem 0 0.4rem;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+.ProseMirror h5 {
+  font-size: 1rem; font-weight: 600; margin: 1rem 0 0.3rem;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+.ProseMirror h6 {
+  font-size: 0.9rem; font-weight: 600; margin: 0.9rem 0 0.3rem;
+  font-family: 'Helvetica Neue', Arial, sans-serif; color: #6b6b6b;
+}
+
+/* Lists */
+.ProseMirror ul { list-style: disc; padding-left: 2rem; margin: 0.75rem 0; }
+.ProseMirror ol { list-style: decimal; padding-left: 2rem; margin: 0.75rem 0; }
+.ProseMirror li { margin: 0.3rem 0; line-height: 1.8; }
+
+/* Blockquote — Medium style: large left bar, italic */
+.ProseMirror blockquote {
+  border-left: 3px solid #242424;
+  padding-left: 1.75rem;
+  font-style: italic;
+  color: #444;
+  margin: 2rem 0;
+  font-size: 1.25rem;
+  line-height: 1.7;
+}
+
+/* Inline code */
+.ProseMirror code {
+  background: #f2f2f2;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 0.88em;
+  font-family: 'Cascadia Code', 'Fira Code', Consolas, 'Courier New', monospace;
+  color: #c7254e;
+}
+
+/* Code block — set in CodeBlockView's <pre>, styled via below */
+.ProseMirror pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1.5rem 1.5rem 2.75rem; /* bottom padding for language picker */
+  border-radius: 8px;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  font-family: 'Cascadia Code', 'Fira Code', Consolas, 'Courier New', monospace;
+}
+.ProseMirror pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+
+/* Links */
+.ProseMirror a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
+/* Images */
+.ProseMirror img {
+  max-width: 100%;
+  border-radius: 4px;
+  margin: 1.75rem auto;
+  display: block;
+  height: auto;
+}
+
+/* Horizontal rule */
+.ProseMirror hr { border: none; border-top: 1px solid #e6e6e6; margin: 2.5rem 0; }
+
+/* Underline / Strikethrough */
+.ProseMirror u { text-decoration: underline; text-underline-offset: 2px; }
+.ProseMirror s { text-decoration: line-through; }
+
+/* Text align */
+.ProseMirror [style*="text-align: center"] { text-align: center; }
+.ProseMirror [style*="text-align: right"]  { text-align: right; }
+.ProseMirror [style*="text-align: left"]   { text-align: left; }
+
+/* ═══════════════════════════════════════════════════════════════
+   ARTICLE READING VIEW — .article-content
+   ═══════════════════════════════════════════════════════════════ */
+
+.article-content {
+  font-family: charter, Georgia, Cambria, 'Times New Roman', Times, serif;
+  font-size: 1.2rem;
+  color: #242424;
+  line-height: 1.9;
+}
+
+.article-content h1 {
+  font-size: 2.2rem; font-weight: 700; margin: 2rem 0 0.75rem;
+  font-family: gt-super, Georgia, serif; line-height: 1.2; letter-spacing: -0.022em;
+}
+.article-content h2 {
+  font-size: 1.65rem; font-weight: 700; margin: 1.75rem 0 0.65rem;
+  font-family: gt-super, Georgia, serif; line-height: 1.3;
+}
+.article-content h3 {
+  font-size: 1.3rem; font-weight: 600; margin: 1.5rem 0 0.5rem;
+  font-family: gt-super, Georgia, serif;
+}
+.article-content h4 {
+  font-size: 1.1rem; font-weight: 600; margin: 1.3rem 0 0.4rem;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+.article-content h5 {
+  font-size: 1rem; font-weight: 600; margin: 1.1rem 0 0.4rem;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+.article-content h6 {
+  font-size: 0.9rem; font-weight: 600; margin: 1rem 0 0.3rem;
+  font-family: 'Helvetica Neue', Arial, sans-serif; color: #6b6b6b;
+}
+
+.article-content p  { margin: 1.3rem 0; line-height: 1.9; }
+
 .article-content ul { list-style: disc; padding-left: 2rem; margin: 1rem 0; }
 .article-content ol { list-style: decimal; padding-left: 2rem; margin: 1rem 0; }
-.article-content li { margin: 0.4rem 0; line-height: 1.9; font-size: 1.1rem; }
+.article-content li { margin: 0.4rem 0; line-height: 1.85; font-size: 1.15rem; }
+
 .article-content blockquote {
-  border-left: 3px solid #242424; padding-left: 1.5rem;
-  font-style: italic; color: #555; margin: 2rem 0; font-size: 1.3rem; line-height: 1.7;
+  border-left: 3px solid #242424;
+  padding-left: 1.75rem;
+  font-style: italic;
+  color: #444;
+  margin: 2rem 0;
+  font-size: 1.3rem;
+  line-height: 1.7;
 }
-.article-content code { background: #f2f2f2; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
-.article-content pre { background: #1e1e1e; color: #d4d4d4; padding: 1.25rem; border-radius: 4px; margin: 1.5rem 0; overflow-x: auto; }
-.article-content pre code { background: none; color: inherit; }
-.article-content a { color: inherit; text-decoration: underline; }
-.article-content img { max-width: 100%; border-radius: 2px; margin: 2rem auto; display: block; }
-.article-content hr { border: none; border-top: 1px solid #e6e6e6; margin: 3rem auto; width: 30%; }
+
+.article-content code {
+  background: #f2f2f2;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 0.88em;
+  font-family: 'Cascadia Code', 'Fira Code', Consolas, 'Courier New', monospace;
+  color: #c7254e;
+}
+.article-content pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin: 1.75rem 0;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  font-family: 'Cascadia Code', 'Fira Code', Consolas, 'Courier New', monospace;
+}
+.article-content pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+
+.article-content a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.article-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 2rem auto;
+  display: block;
+}
+.article-content hr {
+  border: none;
+  border-top: 1px solid #e6e6e6;
+  margin: 3rem auto;
+  width: 30%;
+}
+.article-content u  { text-decoration: underline; text-underline-offset: 2px; }
+.article-content s  { text-decoration: line-through; }
+
+/* Text align passthrough */
+.article-content [style*="text-align: center"] { text-align: center; }
+.article-content [style*="text-align: right"]  { text-align: right; }
+.article-content [style*="text-align: left"]   { text-align: left; }
+
+/* ═══════════════════════════════════════════════════════════════
+   SYNTAX HIGHLIGHTING — VS Code Dark+ theme
+   Applied to both editor (.ProseMirror) and reader (.article-content)
+   ═══════════════════════════════════════════════════════════════ */
+
+.hljs-comment,
+.hljs-quote          { color: #6a9955; font-style: italic; }
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal        { color: #569cd6; }
+
+.hljs-number,
+.hljs-symbol,
+.hljs-bullet         { color: #b5cea8; }
+
+.hljs-string,
+.hljs-doctag,
+.hljs-regexp         { color: #ce9178; }
+
+.hljs-title,
+.hljs-section        { color: #dcdcaa; }
+
+.hljs-type,
+.hljs-class .hljs-title,
+.hljs-name,
+.hljs-built_in,
+.hljs-builtin-name   { color: #4ec9b0; }
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-meta           { color: #9cdcfe; }
+
+.hljs-tag            { color: #808080; }
+
+.hljs-selector-class,
+.hljs-selector-attr,
+.hljs-selector-pseudo { color: #d7ba7d; }
+
+.hljs-link           { color: #d16969; text-decoration: underline; }
+
+.hljs-deletion       { color: #f44747; background: rgba(244, 71, 71, 0.15); }
+.hljs-addition       { color: #b5cea8; background: rgba(181, 206, 168, 0.15); }
+
+.hljs-emphasis       { font-style: italic; }
+.hljs-strong         { font-weight: bold; }
+
+.hljs-function,
+.hljs-params         { color: #dcdcaa; }
+
+.hljs-operator,
+.hljs-punctuation    { color: #d4d4d4; }
+
+.hljs-property       { color: #9cdcfe; }

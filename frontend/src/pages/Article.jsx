@@ -96,7 +96,7 @@ export default function Article() {
         <img
           src={post.coverImage}
           alt={post.title}
-          className="w-full h-72 object-cover rounded-2xl mb-8"
+          className="w-full h-auto max-h-[600px] object-contain bg-gray-50 rounded-2xl mb-8"
         />
       )}
 

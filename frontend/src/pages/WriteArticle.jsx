@@ -101,19 +101,24 @@ export default function WriteArticle() {
       {/* Cover Image */}
       <div className="mb-6">
         {coverPreview ? (
-          <div className="relative">
-            <img src={coverPreview} alt="Cover" className="w-full h-56 object-cover rounded-xl" />
+          <div className="relative group">
+            <img
+              src={coverPreview}
+              alt="Cover"
+              className="w-full h-auto max-h-[500px] object-contain bg-gray-50 rounded-xl"
+            />
             <button
               onClick={() => { setCoverImage(null); setCoverPreview(''); }}
-              className="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow hover:bg-gray-100"
+              className="absolute top-2 right-2 p-1.5 bg-white rounded-full shadow hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <FiX />
             </button>
           </div>
         ) : (
-          <label className="flex items-center justify-center gap-2 w-full h-32 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-gray-300 transition text-gray-400 text-sm">
-            <FiUpload />
-            <span>Add a cover image</span>
+          <label className="flex flex-col items-center justify-center gap-2 w-full h-36 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition text-gray-400 text-sm">
+            <FiUpload className="text-xl" />
+            <span>Add a cover photo</span>
+            <span className="text-xs text-gray-300">Any size — auto-adjusts to fit</span>
             <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
           </label>
         )}
