@@ -18,6 +18,21 @@ router.get('/admin/all', protect, adminOnly, getAllUsersAdmin);
 router.delete('/admin/:id', protect, adminOnly, deleteUserAdmin);
 router.put('/admin/:id/toggle-admin', protect, adminOnly, toggleAdmin);
 
+// Admin ban/unban user
+router.put('/admin/:id/ban', protect, adminOnly, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    user.banned = !user.banned;
+    user.banReason = user.banned ? (req.body.reason || 'Violated community guidelines') : '';
+    await user.save({ validateBeforeSave: false });
+    res.json({ success: true, banned: user.banned, banReason: user.banReason });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Protected
 router.put('/profile', protect, upload.single('avatar'), updateProfile);
 router.put('/change-password', protect, changePassword);
