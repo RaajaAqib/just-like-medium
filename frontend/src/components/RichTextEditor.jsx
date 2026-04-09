@@ -122,7 +122,7 @@ export default function RichTextEditor({ content, onChange }) {
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
       {/* ── Toolbar ── */}
-      <div className="flex flex-wrap items-center gap-0 px-2 py-1.5 border-b border-gray-200 bg-gray-50 sticky top-14 z-20">
+      <div className="flex flex-wrap items-center gap-0 px-2 py-1.5 border-b border-gray-200 bg-gray-50">
 
         {/* Text formatting */}
         <Btn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold (Ctrl+B)">
@@ -202,7 +202,7 @@ export default function RichTextEditor({ content, onChange }) {
       {/* ── Editor body ── */}
       <EditorContent
         editor={editor}
-        className="prose-editor px-7 py-6 min-h-[420px]"
+        className="prose-editor px-7 pt-8 pb-8 min-h-[420px]"
       />
     </div>
   );
