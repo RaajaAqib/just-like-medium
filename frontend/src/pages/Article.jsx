@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
-import { FiHeart, FiEdit2, FiTrash2, FiClock, FiEye, FiBookmark } from 'react-icons/fi';
+import {
+  FiHeart, FiEdit2, FiTrash2, FiClock, FiEye, FiBookmark,
+  FiMoreHorizontal, FiFlag, FiX
+} from 'react-icons/fi';
 import { MdOutlineWavingHand } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
 import { useSavedPosts } from '../context/SavedPostsContext';
@@ -9,6 +12,54 @@ import api from '../utils/axios';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 import CommentSection from '../components/CommentSection';
+
+const REPORT_REASONS = [
+  'Spam or misleading content',
+  'Harassment or bullying',
+  'Hate speech',
+  'Misinformation',
+  'Copyright infringement',
+  'Graphic or violent content',
+  'Privacy violation (doxing)',
+  'Other',
+];
+
+// ─── Report story dialog ──────────────────────────────────────────────────────
+function ReportStoryDialog({ onConfirm, onCancel }) {
+  const [reason, setReason] = useState(REPORT_REASONS[0]);
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-gray-900">Report this story</h3>
+          <button onClick={onCancel} className="p-1 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100 transition">
+            <FiX />
+          </button>
+        </div>
+        <p className="text-sm text-gray-500 mb-4">Select a reason for reporting:</p>
+        <div className="space-y-2 mb-5">
+          {REPORT_REASONS.map(r => (
+            <label key={r} className="flex items-center gap-2.5 cursor-pointer">
+              <input type="radio" name="story-reason" value={r} checked={reason === r}
+                onChange={() => setReason(r)} className="accent-medium-green" />
+              <span className="text-sm text-gray-700">{r}</span>
+            </label>
+          ))}
+        </div>
+        <div className="flex gap-3 justify-end">
+          <button onClick={onCancel}
+            className="px-4 py-2 text-sm text-gray-500 hover:text-gray-800 transition">
+            Cancel
+          </button>
+          <button onClick={() => onConfirm(reason)}
+            className="px-4 py-2 text-sm bg-red-500 text-white rounded-full hover:bg-red-600 transition">
+            Submit report
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Article() {
   const { slug } = useParams();
@@ -22,9 +73,22 @@ export default function Article() {
   const [claps, setClaps] = useState(0);
   const [clapCooldown, setClapCooldown] = useState(false);
 
+  // Three-dot menu + report dialog
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const menuRef = useRef(null);
+
   useEffect(() => {
     fetchPost();
   }, [slug]);
+
+  // Close three-dot menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = e => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
 
   const fetchPost = async () => {
     setLoading(true);
@@ -49,8 +113,8 @@ export default function Article() {
       const res = await api.post(`/posts/${post._id}/like`);
       setLiked(res.data.liked);
       setLikesCount(res.data.likesCount);
-    } catch {
-      toast.error('Failed to like post');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to like post');
     }
   };
 
@@ -62,8 +126,8 @@ export default function Article() {
     try {
       const res = await api.post(`/posts/${post._id}/clap`);
       setClaps(res.data.claps);
-    } catch {
-      toast.error('Failed to clap');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to clap');
     }
   };
 
@@ -84,10 +148,22 @@ export default function Article() {
     }
   };
 
+  const handleReport = async (reason) => {
+    try {
+      await api.post(`/posts/${post._id}/report`, { reason });
+      toast.success('Story reported — our team will review it');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to report');
+    } finally {
+      setShowReport(false);
+    }
+  };
+
   if (loading) return <LoadingSpinner />;
   if (!post) return null;
 
   const isAuthor = user?._id === post.author?._id;
+  const canReport = user && !isAuthor && !user.isAdmin;
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
@@ -138,17 +214,39 @@ export default function Article() {
           </div>
         </Link>
 
-        {/* Author actions */}
-        {isAuthor && (
-          <div className="flex items-center gap-2">
-            <Link to={`/edit/${post._id}`} className="p-2 text-gray-400 hover:text-gray-700 transition">
-              <FiEdit2 />
-            </Link>
-            <button onClick={handleDelete} className="p-2 text-gray-400 hover:text-red-500 transition">
-              <FiTrash2 />
-            </button>
-          </div>
-        )}
+        {/* Right side: author actions OR three-dot menu for readers */}
+        <div className="flex items-center gap-1">
+          {isAuthor ? (
+            <>
+              <Link to={`/edit/${post._id}`} className="p-2 text-gray-400 hover:text-gray-700 transition">
+                <FiEdit2 />
+              </Link>
+              <button onClick={handleDelete} className="p-2 text-gray-400 hover:text-red-500 transition">
+                <FiTrash2 />
+              </button>
+            </>
+          ) : canReport && (
+            <div ref={menuRef} className="relative">
+              <button
+                onClick={() => setMenuOpen(v => !v)}
+                className="p-2 text-gray-300 hover:text-gray-600 transition rounded"
+                title="More options"
+              >
+                <FiMoreHorizontal />
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-9 z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 w-44">
+                  <button
+                    onClick={() => { setMenuOpen(false); setShowReport(true); }}
+                    className="w-full flex items-center gap-2.5 text-left px-4 py-2.5 text-sm text-red-600 hover:bg-gray-50 transition"
+                  >
+                    <FiFlag className="text-sm" /> Report story
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Content */}
@@ -214,6 +312,14 @@ export default function Article() {
 
       {/* Comments */}
       <CommentSection postId={post._id} postAuthorId={post.author?._id} />
+
+      {/* Report story dialog */}
+      {showReport && (
+        <ReportStoryDialog
+          onConfirm={handleReport}
+          onCancel={() => setShowReport(false)}
+        />
+      )}
     </div>
   );
 }

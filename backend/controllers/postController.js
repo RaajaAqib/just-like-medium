@@ -267,4 +267,107 @@ const getAllPostsAdmin = async (req, res) => {
   }
 };
 
-module.exports = { getPosts, getPost, createPost, updatePost, deletePost, likePost, clapPost, getAllPostsAdmin };
+// ─── POST /api/posts/:id/report ───────────────────────────────────────────────
+const reportPost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    const userId = req.user._id.toString();
+    if (post.reportedBy.some(id => id.toString() === userId)) {
+      return res.status(400).json({ success: false, message: 'You have already reported this story' });
+    }
+    if (post.author.toString() === userId) {
+      return res.status(400).json({ success: false, message: 'You cannot report your own story' });
+    }
+
+    post.reported         = true;
+    post.reportReason     = req.body.reason || 'No reason given';
+    post.moderationStatus = 'pending';
+    post.reportedBy.push(req.user._id);
+    await post.save({ validateBeforeSave: false });
+
+    res.json({ success: true, message: 'Story reported successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ─── ADMIN: GET /api/posts/admin/reports ──────────────────────────────────────
+const getPostReports = async (req, res) => {
+  try {
+    const { status = 'pending', page = 1, limit = 20 } = req.query;
+    const query = { reported: true };
+    if (status !== 'all') query.moderationStatus = status;
+
+    const skip  = (parseInt(page) - 1) * parseInt(limit);
+    const total = await Post.countDocuments(query);
+
+    const posts = await Post.find(query)
+      .populate('author',      'name avatar email')
+      .populate('reportedBy',  'name email')
+      .populate('moderatedBy', 'name')
+      .select('title slug excerpt coverImage author reportReason reportedBy moderationStatus moderationNote moderatedBy moderatedAt createdAt')
+      .sort({ 'reportedBy': -1, createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    res.json({
+      success: true,
+      posts,
+      total,
+      totalPages:  Math.ceil(total / parseInt(limit)),
+      currentPage: parseInt(page),
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ─── ADMIN: POST /api/posts/admin/:id/dismiss ─────────────────────────────────
+const dismissPostReport = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    post.moderationStatus = 'dismissed';
+    post.reported         = false;
+    post.moderationNote   = req.body.note || 'Report dismissed — content does not violate guidelines';
+    post.moderatedBy      = req.user._id;
+    post.moderatedAt      = new Date();
+    await post.save({ validateBeforeSave: false });
+
+    res.json({ success: true, message: 'Post report dismissed' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ─── ADMIN: DELETE /api/posts/admin/:id/reported ──────────────────────────────
+const deleteReportedPost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    // Send moderation notification to author
+    await Notification.create({
+      recipient:        post.author,
+      fromUser:         req.user._id,
+      type:             'moderation',
+      moderationAction: 'delete',
+      postTitle:        post.title,
+      postSlug:         post.slug,
+    }).catch(() => {}); // non-fatal
+
+    await post.deleteOne();
+    res.json({ success: true, message: 'Post deleted by admin' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = {
+  getPosts, getPost, createPost, updatePost, deletePost,
+  likePost, clapPost, getAllPostsAdmin,
+  reportPost, getPostReports, dismissPostReport, deleteReportedPost,
+};

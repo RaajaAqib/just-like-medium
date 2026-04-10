@@ -13,8 +13,9 @@ const {
   banCommentAuthor,
   deleteReportedComment,
 } = require('../controllers/commentController');
-const { protect }    = require('../middleware/auth');
-const { adminOnly }  = require('../middleware/adminAuth');
+const { protect }             = require('../middleware/auth');
+const { adminOnly }           = require('../middleware/adminAuth');
+const { checkRestrictions }   = require('../middleware/checkRestrictions');
 
 // ── Admin: all comments (generic list) ───────────────────────────────────────
 router.get('/admin/all', protect, adminOnly, async (req, res) => {
@@ -46,7 +47,7 @@ router.delete('/admin/:id/reported', protect, adminOnly, deleteReportedComment);
 
 // ── Public / user routes ──────────────────────────────────────────────────────
 router.get('/:postId',      getComments);
-router.post('/:postId',     protect, createComment);
+router.post('/:postId',     protect, checkRestrictions, createComment);
 router.delete('/:id',       protect, deleteComment);
 router.post('/:id/like',    protect, likeComment);
 router.post('/:id/report',  protect, reportComment);

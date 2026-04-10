@@ -9,9 +9,14 @@ const {
   likePost,
   clapPost,
   getAllPostsAdmin,
+  reportPost,
+  getPostReports,
+  dismissPostReport,
+  deleteReportedPost,
 } = require('../controllers/postController');
 const { protect, optionalAuth } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/adminAuth');
+const { checkRestrictions } = require('../middleware/checkRestrictions');
 const { upload } = require('../utils/cloudinary');
 
 // Admin routes
@@ -142,15 +147,21 @@ router.get('/id/:id', protect, async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 
+// Admin: reported posts
+router.get('/admin/reports',         protect, adminOnly, getPostReports);
+router.post('/admin/:id/dismiss',    protect, adminOnly, dismissPostReport);
+router.delete('/admin/:id/reported', protect, adminOnly, deleteReportedPost);
+
 // Public
 router.get('/', getPosts);
 router.get('/:slug', optionalAuth, getPost);
 
-// Protected
-router.post('/', protect, upload.single('coverImage'), createPost);
-router.put('/:id', protect, upload.single('coverImage'), updatePost);
+// Protected — write actions blocked for banned/suspended users
+router.post('/',      protect, checkRestrictions, upload.single('coverImage'), createPost);
+router.put('/:id',   protect, checkRestrictions, upload.single('coverImage'), updatePost);
 router.delete('/:id', protect, deletePost);
-router.post('/:id/like', protect, likePost);
-router.post('/:id/clap', protect, clapPost);
+router.post('/:id/like',   protect, checkRestrictions, likePost);
+router.post('/:id/clap',   protect, checkRestrictions, clapPost);
+router.post('/:id/report', protect, reportPost); // reporting itself is always allowed
 
 module.exports = router;

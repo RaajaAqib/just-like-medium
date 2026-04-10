@@ -62,6 +62,14 @@ const postSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // ── Moderation ──────────────────────────────────────────────────────────
+    reported:         { type: Boolean, default: false },
+    reportReason:     { type: String,  default: '' },
+    reportedBy:       [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    moderationStatus: { type: String, enum: ['pending', 'dismissed', 'actioned'] },
+    moderationNote:   { type: String, default: '' },
+    moderatedBy:      { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    moderatedAt:      { type: Date, default: null },
   },
   { timestamps: true }
 );

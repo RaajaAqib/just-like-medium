@@ -399,6 +399,7 @@ function UsersTab() {
                   <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Email</th>
                   <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Role</th>
                   <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Status</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Actions</th>
                   <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Followers</th>
                   <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Joined</th>
                   <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Actions</th>
@@ -426,9 +427,36 @@ function UsersTab() {
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                        u.banned ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                        {u.banned ? 'Banned' : 'Active'}
+                        u.banned      ? 'bg-red-100 text-red-600' :
+                        u.isSuspended ? 'bg-orange-100 text-orange-600' :
+                                        'bg-green-100 text-green-600'}`}>
+                        {u.banned ? 'Banned' : u.isSuspended ? 'Suspended' : 'Active'}
                       </span>
+                    </td>
+                    {/* Active moderation badges */}
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {u.warnings?.length > 0 && (
+                          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium"
+                            title={`${u.warnings.length} warning${u.warnings.length > 1 ? 's' : ''}`}>
+                            {u.warnings.length}× warned
+                          </span>
+                        )}
+                        {u.isSuspended && u.suspendedUntil && (
+                          <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium"
+                            title={`Until ${new Date(u.suspendedUntil).toLocaleDateString()}`}>
+                            Susp. until {new Date(u.suspendedUntil).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}
+                          </span>
+                        )}
+                        {u.banned && (
+                          <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                            Banned
+                          </span>
+                        )}
+                        {!u.warnings?.length && !u.isSuspended && !u.banned && (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-gray-500">{u.followers?.length || 0}</td>
                     <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
@@ -459,7 +487,7 @@ function UsersTab() {
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-400">No users found</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-400">No users found</td></tr>
                 )}
               </tbody>
             </table>
@@ -912,43 +940,83 @@ function ModerationModal({ comment, onClose, onDone }) {
 
 // ─── Reports Tab ──────────────────────────────────────────────────────────────
 function ReportsTab() {
-  const [reports, setReports]     = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [statusFilter, setFilter] = useState('pending');
-  const [page, setPage]           = useState(1);
-  const [totalPages, setTotal]    = useState(1);
-  const [totalCount, setCount]    = useState(0);
-  const [selected, setSelected]   = useState(null); // comment for modal
+  const [reportType, setReportType]   = useState('comments'); // 'comments' | 'stories'
+  const [reports, setReports]         = useState([]);
+  const [loading, setLoading]         = useState(true);
+  const [statusFilter, setFilter]     = useState('pending');
+  const [page, setPage]               = useState(1);
+  const [totalPages, setTotal]        = useState(1);
+  const [totalCount, setCount]        = useState(0);
+  const [selected, setSelected]       = useState(null);
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/comments/admin/reports?status=${statusFilter}&page=${page}&limit=15`);
-      setReports(res.data.comments);
-      setTotal(res.data.totalPages);
-      setCount(res.data.total);
+      if (reportType === 'comments') {
+        const res = await api.get(`/comments/admin/reports?status=${statusFilter}&page=${page}&limit=15`);
+        setReports(res.data.comments);
+        setTotal(res.data.totalPages);
+        setCount(res.data.total);
+      } else {
+        const res = await api.get(`/posts/admin/reports?status=${statusFilter}&page=${page}&limit=15`);
+        setReports(res.data.posts);
+        setTotal(res.data.totalPages);
+        setCount(res.data.total);
+      }
     } catch { toast.error('Failed to load reports'); }
     finally { setLoading(false); }
-  }, [statusFilter, page]);
+  }, [reportType, statusFilter, page]);
 
   useEffect(() => { fetchReports(); }, [fetchReports]);
-  useEffect(() => { setPage(1); }, [statusFilter]);
+  useEffect(() => { setPage(1); setReports([]); }, [reportType, statusFilter]);
 
   const STATUS_BADGE = {
-    pending:    'bg-amber-100 text-amber-700',
-    dismissed:  'bg-gray-100 text-gray-500',
-    actioned:   'bg-red-100 text-red-600',
+    pending:   'bg-amber-100 text-amber-700',
+    dismissed: 'bg-gray-100 text-gray-500',
+    actioned:  'bg-red-100 text-red-600',
+  };
+
+  const dismissStory = async (postId) => {
+    try {
+      await api.post(`/posts/admin/${postId}/dismiss`);
+      toast.success('Report dismissed');
+      fetchReports();
+    } catch { toast.error('Failed to dismiss'); }
+  };
+
+  const deleteStory = async (postId) => {
+    if (!window.confirm('Delete this story permanently?')) return;
+    try {
+      await api.delete(`/posts/admin/${postId}/reported`);
+      toast.success('Story deleted');
+      fetchReports();
+    } catch { toast.error('Failed to delete'); }
   };
 
   return (
     <div>
-      {/* Header + filters */}
+      {/* Type toggle */}
+      <div className="flex items-center gap-2 mb-4">
+        {[{ id: 'comments', label: 'Comments' }, { id: 'stories', label: 'Stories' }].map(t => (
+          <button key={t.id} onClick={() => setReportType(t.id)}
+            className={`px-4 py-1.5 text-sm rounded-full border transition-colors font-medium ${
+              reportType === t.id
+                ? 'bg-gray-900 text-white border-gray-900'
+                : 'border-gray-200 text-gray-500 hover:border-gray-400'}`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Header + status filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
-          <h2 className="font-semibold text-gray-900">Reports Queue</h2>
-          <p className="text-xs text-gray-400 mt-0.5">{totalCount} total reported comments</p>
+          <h2 className="font-semibold text-gray-900">
+            Reported {reportType === 'comments' ? 'Comments' : 'Stories'}
+          </h2>
+          <p className="text-xs text-gray-400 mt-0.5">{totalCount} total</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {['pending','all','dismissed','actioned'].map(s => (
             <button key={s} onClick={() => setFilter(s)}
               className={`px-3 py-1.5 text-xs rounded-full border transition-colors font-medium ${
@@ -969,91 +1037,124 @@ function ReportsTab() {
       ) : (
         <>
           <div className="space-y-3">
-            {reports.map(c => (
-              <div key={c._id}
-                className={`bg-white rounded-xl border p-4 shadow-sm ${
-                  c.isHidden ? 'border-amber-200 bg-amber-50/30' : 'border-gray-200'}`}>
-                <div className="flex items-start gap-3">
-                  {/* Author avatar */}
-                  <img
-                    src={c.author?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.author?.name || 'U')}&background=random&size=36`}
-                    alt={c.author?.name}
-                    className="w-9 h-9 rounded-full object-cover flex-shrink-0 mt-0.5"
-                  />
-                  <div className="flex-1 min-w-0">
-                    {/* Top row */}
-                    <div className="flex items-start justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-sm text-gray-900">{c.author?.name}</span>
-                        <span className="text-xs text-gray-400">{c.author?.email}</span>
-                        {c.isHidden && (
-                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
-                            Auto-hidden
+            {reports.map(item => {
+              const isStory = reportType === 'stories';
+              const author  = item.author;
+              const status  = item.moderationStatus || 'pending';
+              return (
+                <div key={item._id}
+                  className={`bg-white rounded-xl border p-4 shadow-sm ${
+                    item.isHidden ? 'border-amber-200 bg-amber-50/30' : 'border-gray-200'}`}>
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={author?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(author?.name || 'U')}&background=random&size=36`}
+                      alt={author?.name}
+                      className="w-9 h-9 rounded-full object-cover flex-shrink-0 mt-0.5"
+                    />
+                    <div className="flex-1 min-w-0">
+                      {/* Top row */}
+                      <div className="flex items-start justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-sm text-gray-900">{author?.name}</span>
+                          <span className="text-xs text-gray-400">{author?.email}</span>
+                          {item.isHidden && (
+                            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                              Auto-hidden
+                            </span>
+                          )}
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[status]}`}>
+                            {status}
                           </span>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2 flex-shrink-0">
+                          {isStory ? (
+                            <>
+                              <button
+                                onClick={() => dismissStory(item._id)}
+                                disabled={status !== 'pending'}
+                                className="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 rounded-full hover:border-gray-400 transition disabled:opacity-40">
+                                <FiCheckCircle className="text-green-500" /> Dismiss
+                              </button>
+                              <button
+                                onClick={() => deleteStory(item._id)}
+                                disabled={status === 'actioned'}
+                                className="flex items-center gap-1 px-3 py-1.5 text-xs bg-red-500 text-white rounded-full hover:bg-red-600 transition disabled:opacity-40">
+                                <FiTrash2 /> Delete
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => setSelected(item)}
+                              disabled={status === 'dismissed' || status === 'actioned'}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-900 text-white rounded-full
+                                hover:bg-gray-700 transition disabled:opacity-40 disabled:cursor-default">
+                              <FiShield className="text-xs" /> Moderate
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Content preview */}
+                      {isStory ? (
+                        <div className="mt-2">
+                          <Link to={`/article/${item.slug}`} target="_blank"
+                            className="text-sm font-medium text-gray-900 hover:underline line-clamp-1">
+                            {item.title}
+                          </Link>
+                          {item.excerpt && (
+                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{item.excerpt}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-700 mt-2 leading-relaxed line-clamp-3">{item.content}</p>
+                      )}
+
+                      {/* Meta */}
+                      <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
+                        <span className="flex items-center gap-1">
+                          <FiAlertTriangle className="text-amber-500" />
+                          {item.reportedBy?.length || 0} report{item.reportedBy?.length !== 1 ? 's' : ''}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <FiClock /> {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+                        </span>
+                        {!isStory && item.post && (
+                          <Link to={`/article/${item.post.slug}`} target="_blank"
+                            className="text-medium-green hover:underline line-clamp-1 max-w-[180px]">
+                            {item.post.title}
+                          </Link>
                         )}
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[c.moderationStatus] || STATUS_BADGE.pending}`}>
-                          {c.moderationStatus || 'pending'}
-                        </span>
                       </div>
-                      <button
-                        onClick={() => setSelected(c)}
-                        disabled={c.moderationStatus === 'dismissed' || c.moderationStatus === 'actioned'}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-900 text-white rounded-full
-                          hover:bg-gray-700 transition disabled:opacity-40 disabled:cursor-default flex-shrink-0">
-                        <FiShield className="text-xs" /> Moderate
-                      </button>
+
+                      {/* Report reason */}
+                      {item.reportReason && (
+                        <div className="mt-2 px-2.5 py-1.5 bg-amber-50 border border-amber-100 rounded-lg">
+                          <span className="text-xs text-amber-600">
+                            <span className="font-medium">Reason: </span>{item.reportReason}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Reporters */}
+                      {item.reportedBy?.length > 0 && (
+                        <div className="mt-1.5 text-xs text-gray-400">
+                          Reported by: {item.reportedBy.slice(0, 3).map(u => u.name || u.email).join(', ')}
+                          {item.reportedBy.length > 3 && ` +${item.reportedBy.length - 3} more`}
+                        </div>
+                      )}
+
+                      {item.moderationNote && (
+                        <p className="mt-1.5 text-xs text-gray-500 italic">Admin note: {item.moderationNote}</p>
+                      )}
                     </div>
-
-                    {/* Comment content */}
-                    <p className="text-sm text-gray-700 mt-2 leading-relaxed line-clamp-3">{c.content}</p>
-
-                    {/* Meta row */}
-                    <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
-                      <span className="flex items-center gap-1">
-                        <FiAlertTriangle className="text-amber-500" />
-                        {c.reportedBy?.length || 0} report{c.reportedBy?.length !== 1 ? 's' : ''}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <FiClock /> {formatDistanceToNow(new Date(c.createdAt), { addSuffix: true })}
-                      </span>
-                      {c.post ? (
-                        <Link to={`/article/${c.post.slug}`} target="_blank"
-                          className="text-medium-green hover:underline line-clamp-1 max-w-[180px]">
-                          {c.post.title}
-                        </Link>
-                      ) : <span className="text-gray-300">Article deleted</span>}
-                    </div>
-
-                    {/* Report reason */}
-                    {c.reportReason && (
-                      <div className="mt-2 px-2.5 py-1.5 bg-amber-50 border border-amber-100 rounded-lg">
-                        <span className="text-xs text-amber-600">
-                          <span className="font-medium">Reason: </span>{c.reportReason}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Reporters list */}
-                    {c.reportedBy?.length > 0 && (
-                      <div className="mt-2 text-xs text-gray-400">
-                        Reported by: {c.reportedBy.slice(0, 3).map(u => u.name || u.email).join(', ')}
-                        {c.reportedBy.length > 3 && ` +${c.reportedBy.length - 3} more`}
-                      </div>
-                    )}
-
-                    {/* Moderation note */}
-                    {c.moderationNote && (
-                      <div className="mt-2 text-xs text-gray-500 italic">
-                        Admin note: {c.moderationNote}
-                      </div>
-                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 mt-5">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
@@ -1066,7 +1167,6 @@ function ReportsTab() {
         </>
       )}
 
-      {/* Moderation modal */}
       {selected && (
         <ModerationModal
           comment={selected}

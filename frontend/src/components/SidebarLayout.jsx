@@ -238,7 +238,7 @@ export default function SidebarLayout({ children }) {
                       <Link key={n._id}
                         to={
                           n.type === 'moderation'
-                            ? '/appeals'
+                            ? (n.postSlug ? `/article/${n.postSlug}` : '/appeals')
                             : n.postSlug
                               ? `/article/${n.postSlug}`
                               : n.type === 'follow'
@@ -366,6 +366,24 @@ export default function SidebarLayout({ children }) {
 
         {/* Main content */}
         <main className="flex-1 min-w-0 overflow-x-hidden">
+          {/* Ban / suspension banner */}
+          {user?.banned && (
+            <div className="bg-red-600 text-white px-4 py-2.5 text-sm flex items-center justify-between gap-3">
+              <span>
+                <strong>Your account has been banned.</strong> You cannot post or comment.{' '}
+                <Link to="/appeals" className="underline hover:no-underline font-medium">Submit an appeal →</Link>
+              </span>
+            </div>
+          )}
+          {!user?.banned && user?.isSuspended && user?.suspendedUntil && new Date(user.suspendedUntil) > new Date() && (
+            <div className="bg-orange-500 text-white px-4 py-2.5 text-sm flex items-center justify-between gap-3">
+              <span>
+                <strong>Your account is suspended</strong> until {new Date(user.suspendedUntil).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}.
+                You cannot post or comment.{' '}
+                <Link to="/appeals" className="underline hover:no-underline font-medium">Appeal →</Link>
+              </span>
+            </div>
+          )}
           {children}
         </main>
       </div>

@@ -11,6 +11,7 @@ const {
 } = require('../controllers/userController');
 const { protect } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/adminAuth');
+const { checkRestrictions } = require('../middleware/checkRestrictions');
 const { upload } = require('../utils/cloudinary');
 
 // Admin routes
@@ -36,10 +37,10 @@ router.put('/admin/:id/ban', protect, adminOnly, async (req, res) => {
 // Protected
 router.put('/profile', protect, upload.single('avatar'), updateProfile);
 router.put('/change-password', protect, changePassword);
-router.post('/:id/follow', protect, followUser);
+router.post('/:id/follow', protect, checkRestrictions, followUser);
 
 // Save / unsave a post
-router.post('/save-post/:postId', protect, async (req, res) => {
+router.post('/save-post/:postId', protect, checkRestrictions, async (req, res) => {
   try {
     const user = await require('../models/User').findById(req.user._id);
     const postId = req.params.postId;

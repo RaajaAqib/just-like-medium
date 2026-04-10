@@ -52,22 +52,6 @@ const createComment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Comment content is required' });
     }
 
-    // Enforce moderation restrictions
-    const author = await User.findById(req.user._id).select('banned isSuspended suspendedUntil');
-    if (author.banned) {
-      return res.status(403).json({ success: false, message: 'You are banned from commenting' });
-    }
-    if (author.isSuspended && author.suspendedUntil && author.suspendedUntil > new Date()) {
-      return res.status(403).json({
-        success: false,
-        message: `Your commenting is suspended until ${author.suspendedUntil.toLocaleDateString()}`,
-      });
-    }
-    // Lift expired suspension automatically
-    if (author.isSuspended && author.suspendedUntil && author.suspendedUntil <= new Date()) {
-      await User.findByIdAndUpdate(req.user._id, { isSuspended: false, suspendedUntil: null });
-    }
-
     const post = await Post.findById(req.params.postId);
     if (!post) {
       return res.status(404).json({ success: false, message: 'Post not found' });
