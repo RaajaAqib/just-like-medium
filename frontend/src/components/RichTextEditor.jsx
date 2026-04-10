@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import {
   useEditor, EditorContent,
   NodeViewWrapper, NodeViewContent, ReactNodeViewRenderer, Node,
@@ -187,10 +187,21 @@ const Sep = () => <span className="w-px h-5 bg-gray-200 mx-1 self-center flex-sh
 // ── Is URL string ─────────────────────────────────────────────────────────────
 const URL_RE = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
 
+// ── Insert a link-preview card via the schema directly (position-safe) ────────
+function insertPreviewCard(editor, attrs) {
+  const { state, view } = editor;
+  const nodeType = state.schema.nodes.linkPreview;
+  if (!nodeType) return false;
+  const node = nodeType.create(attrs);
+  const tr = state.tr.replaceSelectionWith(node);
+  view.dispatch(tr);
+  return true;
+}
+
 // ── Editor ────────────────────────────────────────────────────────────────────
 export default function RichTextEditor({ content, onChange }) {
-  // Ref so paste handler always has the current editor instance
-  const editorRef = useRef(null);
+  const editorRef   = useRef(null);
+  const [fetchingPreview, setFetchingPreview] = useState(false);
 
   const editor = useEditor({
     extensions: [
@@ -217,44 +228,39 @@ export default function RichTextEditor({ content, onChange }) {
         event.preventDefault();
         const url = text;
 
-        // Insert a plain link as immediate fallback while we fetch the preview
-        editorRef.current?.chain().focus().insertContent(` ${url} `).run();
+        // Show a brief loading state — nothing inserted yet
+        setFetchingPreview(true);
 
-        // Fetch preview and replace the plain text with a card
-        api.get(`/link-preview?url=${encodeURIComponent(url)}`).then(res => {
-          const d = res.data;
-          // Only insert card if we got at least a title
-          if (!d.title && !d.description) return;
+        api.get(`/link-preview?url=${encodeURIComponent(url)}`)
+          .then(res => {
+            const d = res.data;
+            const e = editorRef.current;
+            if (!e) return;
 
-          // Remove the fallback plain URL that was just typed
-          const { state, dispatch } = editorRef.current.view;
-          const { doc, tr } = state;
-          let from = -1, to = -1;
-          doc.descendants((node, pos) => {
-            if (node.isText && node.text?.includes(url)) {
-              from = pos + node.text.indexOf(url);
-              to   = from + url.length;
+            if (d.title || d.description || d.image) {
+              // Insert the preview card at current cursor
+              insertPreviewCard(e, {
+                url:         d.url         || url,
+                title:       d.title       || '',
+                description: d.description || '',
+                image:       d.image       || null,
+                siteName:    d.siteName    || d.domain || '',
+                domain:      d.domain      || '',
+              });
+            } else {
+              // No useful metadata — insert as a plain hyperlink
+              e.chain().focus()
+                .insertContent(`<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`)
+                .run();
             }
-          });
-          if (from >= 0) {
-            dispatch(tr.delete(from, to));
-          }
-
-          // Insert the preview card
-          editorRef.current?.chain().focus().insertContent({
-            type: 'linkPreview',
-            attrs: {
-              url:         d.url         || url,
-              title:       d.title       || '',
-              description: d.description || '',
-              image:       d.image       || null,
-              siteName:    d.siteName    || d.domain || '',
-              domain:      d.domain      || '',
-            },
-          }).run();
-        }).catch(() => {
-          // Keep the plain URL that was already inserted — no action needed
-        });
+          })
+          .catch(() => {
+            // Network error — insert as plain text hyperlink
+            editorRef.current?.chain().focus()
+              .insertContent(`<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`)
+              .run();
+          })
+          .finally(() => setFetchingPreview(false));
 
         return true;
       },
@@ -266,6 +272,32 @@ export default function RichTextEditor({ content, onChange }) {
   const addLink = () => {
     const url = window.prompt('Enter URL:');
     if (url) editor.chain().focus().setLink({ href: url }).run();
+  };
+
+  const addLinkPreview = async () => {
+    const url = window.prompt('Paste a URL to generate a preview card:');
+    if (!url || !URL_RE.test(url.trim())) return;
+    setFetchingPreview(true);
+    try {
+      const res = await api.get(`/link-preview?url=${encodeURIComponent(url.trim())}`);
+      const d = res.data;
+      if (d.title || d.description || d.image) {
+        insertPreviewCard(editor, {
+          url:         d.url         || url,
+          title:       d.title       || '',
+          description: d.description || '',
+          image:       d.image       || null,
+          siteName:    d.siteName    || d.domain || '',
+          domain:      d.domain      || '',
+        });
+      } else {
+        alert('Could not fetch a preview for that URL. Try a different link.');
+      }
+    } catch {
+      alert('Failed to fetch link preview. Check the URL and try again.');
+    } finally {
+      setFetchingPreview(false);
+    }
   };
 
   const addImage = async () => {
@@ -293,6 +325,17 @@ export default function RichTextEditor({ content, onChange }) {
 
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+      {/* Fetching preview indicator */}
+      {fetchingPreview && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-xs text-blue-600 border-b border-blue-100">
+          <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+          </svg>
+          Fetching link preview…
+        </div>
+      )}
+
       {/* ── Toolbar ── */}
       <div className="flex flex-wrap items-center gap-0 px-2 py-1.5 border-b border-gray-200 bg-gray-50">
 
@@ -355,6 +398,9 @@ export default function RichTextEditor({ content, onChange }) {
 
         <Btn onClick={addLink} active={editor.isActive('link')} title="Insert link">
           <FiLink className="text-base" />
+        </Btn>
+        <Btn onClick={addLinkPreview} title="Insert link preview card (or paste a URL directly)">
+          <FiExternalLink className="text-base" />
         </Btn>
         <Btn onClick={addImage} title="Insert image">
           <FiImage className="text-base" />
