@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/axios';
 import toast from 'react-hot-toast';
@@ -9,6 +10,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -50,11 +52,22 @@ export default function Login() {
               </div>
               <div>
                 <label className="block text-sm text-medium-black mb-1.5">Password</label>
-                <input
-                  type="password" name="password" value={form.password}
-                  onChange={handleChange} placeholder="••••••••"
-                  required className="input-field"
-                />
+                <div className="relative">
+                  <input
+                    type={showPw ? 'text' : 'password'}
+                    name="password" value={form.password}
+                    onChange={handleChange} placeholder="••••••••"
+                    required className="input-field pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-medium-gray hover:text-medium-black transition"
+                    aria-label={showPw ? 'Hide password' : 'Show password'}
+                  >
+                    {showPw ? <FiEyeOff className="text-base" /> : <FiEye className="text-base" />}
+                  </button>
+                </div>
               </div>
               <button type="submit" disabled={loading}
                 className="w-full btn-black py-3 text-sm font-medium">

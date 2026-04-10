@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/axios';
 import toast from 'react-hot-toast';
@@ -9,12 +10,16 @@ export default function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const [showPw, setShowPw] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [confirm, setConfirm] = useState('');
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async e => {
     e.preventDefault();
     if (form.password.length < 6) return toast.error('Password must be at least 6 characters');
+    if (form.password !== confirm) return toast.error('Passwords do not match');
     setLoading(true);
     try {
       const res = await api.post('/auth/register', form);
@@ -27,6 +32,9 @@ export default function Register() {
       setLoading(false);
     }
   };
+
+  const passwordsMatch = confirm.length > 0 && form.password === confirm;
+  const passwordsMismatch = confirm.length > 0 && form.password !== confirm;
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -51,11 +59,57 @@ export default function Register() {
                 <input type="email" name="email" value={form.email} onChange={handleChange}
                   placeholder="you@example.com" required className="input-field" />
               </div>
+
+              {/* Password */}
               <div>
                 <label className="block text-sm text-medium-black mb-1.5">Password</label>
-                <input type="password" name="password" value={form.password} onChange={handleChange}
-                  placeholder="At least 6 characters" required className="input-field" />
+                <div className="relative">
+                  <input
+                    type={showPw ? 'text' : 'password'}
+                    name="password" value={form.password} onChange={handleChange}
+                    placeholder="At least 6 characters" required className="input-field pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-medium-gray hover:text-medium-black transition"
+                    aria-label={showPw ? 'Hide password' : 'Show password'}
+                  >
+                    {showPw ? <FiEyeOff className="text-base" /> : <FiEye className="text-base" />}
+                  </button>
+                </div>
               </div>
+
+              {/* Confirm password */}
+              <div>
+                <label className="block text-sm text-medium-black mb-1.5">Confirm password</label>
+                <div className="relative">
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    value={confirm} onChange={e => setConfirm(e.target.value)}
+                    placeholder="Re-enter your password" required
+                    className={`input-field pr-10 ${
+                      passwordsMismatch ? 'border-red-400 focus:border-red-400' :
+                      passwordsMatch    ? 'border-green-500 focus:border-green-500' : ''
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-medium-gray hover:text-medium-black transition"
+                    aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                  >
+                    {showConfirm ? <FiEyeOff className="text-base" /> : <FiEye className="text-base" />}
+                  </button>
+                </div>
+                {passwordsMismatch && (
+                  <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
+                )}
+                {passwordsMatch && (
+                  <p className="text-xs text-green-600 mt-1">Passwords match</p>
+                )}
+              </div>
+
               <button type="submit" disabled={loading} className="w-full btn-black py-3 text-sm font-medium">
                 {loading ? 'Creating account...' : 'Create account'}
               </button>
