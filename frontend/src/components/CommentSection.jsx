@@ -336,8 +336,7 @@ export default function CommentSection({ postId }) {
             {/* Panel input */}
             {user ? (
               <div className="px-6 py-4 border-b border-gray-100 flex-shrink-0">
-                <ResponseInput user={user} value={newComment} onChange={setNewComment}
-                  onSubmit={submitComment} submitting={submitting} />
+                <ResponseInput user={user} onSubmit={submitComment} />
               </div>
             ) : (
               <p className="px-6 py-4 text-sm text-gray-500 border-b border-gray-100 flex-shrink-0">
