@@ -145,27 +145,44 @@ function CommentItem({
   );
 }
 
-// ─── Top-level response input — module-level for same reason ─────────────────
-function TopLevelInput({ user, value, onChange, onSubmit, submitting }) {
+// ─── Response input — module-level, manages its OWN text state ───────────────
+// Keeping text state local means typing ONLY re-renders this one component,
+// never the parent CommentSection or anything else in the tree.
+function ResponseInput({ user, onSubmit }) {
+  const [text, setText]           = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
   if (!user) return null;
+
+  const handleSubmit = async () => {
+    if (!text.trim() || submitting) return;
+    setSubmitting(true);
+    try {
+      await onSubmit(text.trim());
+      setText('');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="flex items-start gap-3">
       <img src={avatarUrl(user)} alt={user.name} className="w-9 h-9 rounded-full object-cover flex-shrink-0 mt-0.5" />
       <div className="flex-1">
         <p className="text-sm font-medium text-gray-900 mb-1.5">{user.name}</p>
         <textarea
-          value={value}
-          onChange={e => onChange(e.target.value)}
+          value={text}
+          onChange={e => setText(e.target.value)}
           placeholder="What are your thoughts?"
           rows={3}
           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-gray-400 transition-colors bg-white"
         />
-        {value.trim() && (
+        {text.trim() && (
           <div className="flex gap-2 justify-end mt-1.5">
-            <button onClick={() => onChange('')} className="text-xs text-gray-400 hover:text-gray-700 px-3 py-1 transition">
+            <button onClick={() => setText('')} className="text-xs text-gray-400 hover:text-gray-700 px-3 py-1 transition">
               Cancel
             </button>
-            <button onClick={onSubmit} disabled={submitting || !value.trim()}
+            <button onClick={handleSubmit} disabled={submitting}
               className="btn-green text-xs px-4 py-1.5 disabled:opacity-40">
               {submitting ? 'Posting…' : 'Respond'}
             </button>
@@ -182,8 +199,6 @@ export default function CommentSection({ postId }) {
 
   const [comments, setComments]               = useState([]);
   const [loading, setLoading]                 = useState(false);
-  const [newComment, setNewComment]           = useState('');
-  const [submitting, setSubmitting]           = useState(false);
   const [expandedReplies, setExpandedReplies] = useState(new Set());
   const [panelOpen, setPanelOpen]             = useState(false);
 
@@ -203,19 +218,11 @@ export default function CommentSection({ postId }) {
     }
   };
 
-  const submitComment = async () => {
-    if (!newComment.trim() || submitting) return;
-    setSubmitting(true);
-    try {
-      const res = await api.post(`/comments/${postId}`, { content: newComment });
-      setComments(prev => [...prev, { ...res.data.comment, replies: [] }]);
-      setNewComment('');
-      toast.success('Response posted!');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to post');
-    } finally {
-      setSubmitting(false);
-    }
+  // Called by ResponseInput with the trimmed text — no state here
+  const submitComment = async (text) => {
+    const res = await api.post(`/comments/${postId}`, { content: text });
+    setComments(prev => [...prev, { ...res.data.comment, replies: [] }]);
+    toast.success('Response posted!');
   };
 
   const handleReplySubmit = async (parentId, text) => {
@@ -295,8 +302,7 @@ export default function CommentSection({ postId }) {
       {/* Inline input */}
       {user ? (
         <div className="mb-8 bg-gray-50 rounded-xl p-4 border border-gray-100">
-          <TopLevelInput user={user} value={newComment} onChange={setNewComment}
-            onSubmit={submitComment} submitting={submitting} />
+          <ResponseInput user={user} onSubmit={submitComment} />
         </div>
       ) : (
         <p className="text-sm text-gray-500 mb-8">
@@ -330,7 +336,7 @@ export default function CommentSection({ postId }) {
             {/* Panel input */}
             {user ? (
               <div className="px-6 py-4 border-b border-gray-100 flex-shrink-0">
-                <TopLevelInput user={user} value={newComment} onChange={setNewComment}
+                <ResponseInput user={user} value={newComment} onChange={setNewComment}
                   onSubmit={submitComment} submitting={submitting} />
               </div>
             ) : (
