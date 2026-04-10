@@ -310,13 +310,30 @@ export default function CommentSection({ postId }) {
         </p>
       )}
 
-      {/* Inline list */}
+      {/* Inline list — show first 3 only */}
       {loading ? (
         <p className="text-gray-400 text-sm">Loading responses…</p>
       ) : comments.length === 0 ? (
         <p className="text-gray-400 text-sm">No responses yet. Be the first!</p>
       ) : (
-        <div className="space-y-1">{commentListJSX(false)}</div>
+        <>
+          <div className="space-y-1">
+            {comments.slice(0, 3).map(c => (
+              <CommentItem key={c._id} comment={c} isReply={false} parentId={null}
+                onOpenPanel={() => setPanelOpen(true)}
+                {...itemProps} />
+            ))}
+          </div>
+          {comments.length > 3 && (
+            <button
+              onClick={() => setPanelOpen(true)}
+              className="mt-6 w-full py-2.5 border border-gray-300 rounded-full text-sm text-gray-700
+                hover:border-gray-500 hover:text-gray-900 transition-colors font-medium"
+            >
+              See all responses ({totalCount})
+            </button>
+          )}
+        </>
       )}
 
       {/* Side panel */}
