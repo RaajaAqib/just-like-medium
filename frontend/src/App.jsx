@@ -13,6 +13,7 @@ import Library from './pages/Library';
 import MyStories from './pages/MyStories';
 import StatsPage from './pages/StatsPage';
 import FollowingPage from './pages/FollowingPage';
+import AppealPage from './pages/AppealPage';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -46,6 +47,7 @@ export default function App() {
       <Route path="/my-stories" element={<ProtectedRoute><MyStories /></ProtectedRoute>} />
       <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
       <Route path="/following" element={<ProtectedRoute><FollowingPage /></ProtectedRoute>} />
+      <Route path="/appeals" element={<ProtectedRoute><AppealPage /></ProtectedRoute>} />
       <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />

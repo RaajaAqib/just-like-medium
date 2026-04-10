@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom';
 import { formatDistanceToNow, format } from 'date-fns';
 import {
   FiTrash2, FiShield, FiEye, FiUsers, FiFileText, FiMessageCircle,
-  FiBarChart2, FiTag, FiSettings, FiStar, FiSlash, FiCheckCircle,
-  FiAlertCircle, FiSearch, FiFilter, FiTrendingUp, FiHeart, FiZap,
-  FiGrid, FiToggleLeft, FiToggleRight, FiX
+  FiBarChart2, FiTag, FiStar, FiSlash, FiCheckCircle,
+  FiAlertCircle, FiSearch, FiHeart, FiZap,
+  FiGrid, FiToggleLeft, FiToggleRight, FiX, FiFlag, FiAlertTriangle,
+  FiClock, FiBell, FiUserX, FiUserCheck
 } from 'react-icons/fi';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  LineChart, Line, PieChart, Pie, Cell, Legend
+  PieChart, Pie, Cell, Legend
 } from 'recharts';
 import api from '../utils/axios';
 import toast from 'react-hot-toast';
@@ -17,11 +18,13 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 const TABS = [
   { id: 'overview',  label: 'Overview',   icon: FiGrid },
-  { id: 'articles', label: 'Articles',    icon: FiFileText },
-  { id: 'users',    label: 'Users',       icon: FiUsers },
-  { id: 'comments', label: 'Comments',    icon: FiMessageCircle },
-  { id: 'analytics',label: 'Analytics',   icon: FiBarChart2 },
-  { id: 'tags',     label: 'Tags',        icon: FiTag },
+  { id: 'articles',  label: 'Articles',   icon: FiFileText },
+  { id: 'users',     label: 'Users',      icon: FiUsers },
+  { id: 'comments',  label: 'Comments',   icon: FiMessageCircle },
+  { id: 'reports',   label: 'Reports',    icon: FiFlag },
+  { id: 'appeals',   label: 'Appeals',    icon: FiAlertCircle },
+  { id: 'analytics', label: 'Analytics',  icon: FiBarChart2 },
+  { id: 'tags',      label: 'Tags',       icon: FiTag },
 ];
 
 const PIE_COLORS = ['#1a8917', '#242424', '#6b6b6b', '#d1d5db', '#86efac'];
@@ -774,6 +777,500 @@ function TagsTab() {
   );
 }
 
+// ─── Moderation Action Modal ──────────────────────────────────────────────────
+function ModerationModal({ comment, onClose, onDone }) {
+  const [action, setAction]   = useState('dismiss');
+  const [reason, setReason]   = useState('');
+  const [days, setDays]       = useState(7);
+  const [loading, setLoading] = useState(false);
+
+  const ACTIONS = [
+    { id: 'dismiss',  label: 'Dismiss report',      icon: FiCheckCircle,  color: 'text-green-600' },
+    { id: 'delete',   label: 'Delete comment',       icon: FiTrash2,       color: 'text-red-600' },
+    { id: 'warn',     label: 'Warn user',            icon: FiBell,         color: 'text-yellow-600' },
+    { id: 'suspend',  label: 'Suspend user',         icon: FiUserX,        color: 'text-orange-600' },
+    { id: 'ban',      label: 'Ban user permanently', icon: FiSlash,        color: 'text-red-700' },
+  ];
+
+  const submit = async () => {
+    setLoading(true);
+    try {
+      const body = { reason: reason || undefined, days: action === 'suspend' ? days : undefined };
+      if (action === 'dismiss') {
+        await api.post(`/comments/admin/${comment._id}/dismiss`, body);
+      } else if (action === 'delete') {
+        await api.delete(`/comments/admin/${comment._id}/reported`, { data: body });
+      } else if (action === 'warn') {
+        await api.post(`/comments/admin/${comment._id}/warn`, body);
+      } else if (action === 'suspend') {
+        await api.post(`/comments/admin/${comment._id}/suspend`, body);
+      } else if (action === 'ban') {
+        await api.post(`/comments/admin/${comment._id}/ban`, body);
+      }
+      toast.success('Moderation action applied');
+      onDone();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Action failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="font-semibold text-gray-900 text-base">Moderate reported comment</h3>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {comment.reportedBy?.length || 0} report{comment.reportedBy?.length !== 1 ? 's' : ''} ·{' '}
+              by <span className="font-medium text-gray-600">{comment.author?.name}</span>
+            </p>
+          </div>
+          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100 transition">
+            <FiX />
+          </button>
+        </div>
+
+        {/* Reported comment preview */}
+        <div className="bg-gray-50 rounded-xl p-3 mb-4 border border-gray-100">
+          <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">{comment.content}</p>
+          <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+            {comment.post && (
+              <Link to={`/article/${comment.post.slug}`} target="_blank"
+                className="text-medium-green hover:underline line-clamp-1 max-w-[200px]">
+                {comment.post.title}
+              </Link>
+            )}
+            <span>{formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}</span>
+          </div>
+        </div>
+
+        {/* Report reasons summary */}
+        {comment.reportReason && (
+          <div className="mb-4 px-3 py-2 bg-amber-50 border border-amber-100 rounded-lg">
+            <p className="text-xs font-medium text-amber-700 mb-0.5">Latest report reason</p>
+            <p className="text-xs text-amber-600">{comment.reportReason}</p>
+          </div>
+        )}
+
+        {/* Action selector */}
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Choose action</p>
+        <div className="grid grid-cols-1 gap-1.5 mb-4">
+          {ACTIONS.map(a => {
+            const Icon = a.icon;
+            return (
+              <label key={a.id}
+                className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                  action === a.id ? 'border-gray-400 bg-gray-50' : 'border-gray-100 hover:border-gray-300'}`}>
+                <input type="radio" name="action" value={a.id} checked={action === a.id}
+                  onChange={() => setAction(a.id)} className="accent-gray-800" />
+                <Icon className={`text-base flex-shrink-0 ${a.color}`} />
+                <span className="text-sm text-gray-700">{a.label}</span>
+              </label>
+            );
+          })}
+        </div>
+
+        {/* Suspend days */}
+        {action === 'suspend' && (
+          <div className="mb-4">
+            <label className="block text-xs font-medium text-gray-500 mb-1">Suspension duration</label>
+            <select value={days} onChange={e => setDays(Number(e.target.value))}
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 bg-white">
+              {[1,3,7,14,30].map(d => <option key={d} value={d}>{d} day{d > 1 ? 's' : ''}</option>)}
+            </select>
+          </div>
+        )}
+
+        {/* Optional reason/note */}
+        {action !== 'dismiss' && (
+          <div className="mb-5">
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              {action === 'delete' ? 'Internal note (optional)' : 'Reason sent to user (optional)'}
+            </label>
+            <textarea value={reason} onChange={e => setReason(e.target.value)}
+              rows={2} placeholder="Violation of community guidelines…"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-gray-400" />
+          </div>
+        )}
+
+        <div className="flex gap-3 justify-end">
+          <button onClick={onClose}
+            className="px-4 py-2 text-sm text-gray-500 hover:text-gray-800 transition">
+            Cancel
+          </button>
+          <button onClick={submit} disabled={loading}
+            className="px-5 py-2 text-sm bg-gray-900 text-white rounded-full hover:bg-gray-700 transition disabled:opacity-40">
+            {loading ? 'Applying…' : 'Apply action'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Reports Tab ──────────────────────────────────────────────────────────────
+function ReportsTab() {
+  const [reports, setReports]     = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [statusFilter, setFilter] = useState('pending');
+  const [page, setPage]           = useState(1);
+  const [totalPages, setTotal]    = useState(1);
+  const [totalCount, setCount]    = useState(0);
+  const [selected, setSelected]   = useState(null); // comment for modal
+
+  const fetchReports = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get(`/comments/admin/reports?status=${statusFilter}&page=${page}&limit=15`);
+      setReports(res.data.comments);
+      setTotal(res.data.totalPages);
+      setCount(res.data.total);
+    } catch { toast.error('Failed to load reports'); }
+    finally { setLoading(false); }
+  }, [statusFilter, page]);
+
+  useEffect(() => { fetchReports(); }, [fetchReports]);
+  useEffect(() => { setPage(1); }, [statusFilter]);
+
+  const STATUS_BADGE = {
+    pending:    'bg-amber-100 text-amber-700',
+    dismissed:  'bg-gray-100 text-gray-500',
+    actioned:   'bg-red-100 text-red-600',
+  };
+
+  return (
+    <div>
+      {/* Header + filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+        <div>
+          <h2 className="font-semibold text-gray-900">Reports Queue</h2>
+          <p className="text-xs text-gray-400 mt-0.5">{totalCount} total reported comments</p>
+        </div>
+        <div className="flex gap-2">
+          {['pending','all','dismissed','actioned'].map(s => (
+            <button key={s} onClick={() => setFilter(s)}
+              className={`px-3 py-1.5 text-xs rounded-full border transition-colors font-medium ${
+                statusFilter === s
+                  ? 'bg-gray-900 text-white border-gray-900'
+                  : 'border-gray-200 text-gray-500 hover:border-gray-400'}`}>
+              {s.charAt(0).toUpperCase() + s.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? <LoadingSpinner /> : reports.length === 0 ? (
+        <div className="text-center py-16 text-gray-400">
+          <FiFlag className="text-3xl mx-auto mb-3 opacity-40" />
+          <p className="text-sm">No {statusFilter !== 'all' ? statusFilter : ''} reports</p>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-3">
+            {reports.map(c => (
+              <div key={c._id}
+                className={`bg-white rounded-xl border p-4 shadow-sm ${
+                  c.isHidden ? 'border-amber-200 bg-amber-50/30' : 'border-gray-200'}`}>
+                <div className="flex items-start gap-3">
+                  {/* Author avatar */}
+                  <img
+                    src={c.author?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.author?.name || 'U')}&background=random&size=36`}
+                    alt={c.author?.name}
+                    className="w-9 h-9 rounded-full object-cover flex-shrink-0 mt-0.5"
+                  />
+                  <div className="flex-1 min-w-0">
+                    {/* Top row */}
+                    <div className="flex items-start justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm text-gray-900">{c.author?.name}</span>
+                        <span className="text-xs text-gray-400">{c.author?.email}</span>
+                        {c.isHidden && (
+                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                            Auto-hidden
+                          </span>
+                        )}
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[c.moderationStatus] || STATUS_BADGE.pending}`}>
+                          {c.moderationStatus || 'pending'}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setSelected(c)}
+                        disabled={c.moderationStatus === 'dismissed' || c.moderationStatus === 'actioned'}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-900 text-white rounded-full
+                          hover:bg-gray-700 transition disabled:opacity-40 disabled:cursor-default flex-shrink-0">
+                        <FiShield className="text-xs" /> Moderate
+                      </button>
+                    </div>
+
+                    {/* Comment content */}
+                    <p className="text-sm text-gray-700 mt-2 leading-relaxed line-clamp-3">{c.content}</p>
+
+                    {/* Meta row */}
+                    <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
+                      <span className="flex items-center gap-1">
+                        <FiAlertTriangle className="text-amber-500" />
+                        {c.reportedBy?.length || 0} report{c.reportedBy?.length !== 1 ? 's' : ''}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <FiClock /> {formatDistanceToNow(new Date(c.createdAt), { addSuffix: true })}
+                      </span>
+                      {c.post ? (
+                        <Link to={`/article/${c.post.slug}`} target="_blank"
+                          className="text-medium-green hover:underline line-clamp-1 max-w-[180px]">
+                          {c.post.title}
+                        </Link>
+                      ) : <span className="text-gray-300">Article deleted</span>}
+                    </div>
+
+                    {/* Report reason */}
+                    {c.reportReason && (
+                      <div className="mt-2 px-2.5 py-1.5 bg-amber-50 border border-amber-100 rounded-lg">
+                        <span className="text-xs text-amber-600">
+                          <span className="font-medium">Reason: </span>{c.reportReason}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Reporters list */}
+                    {c.reportedBy?.length > 0 && (
+                      <div className="mt-2 text-xs text-gray-400">
+                        Reported by: {c.reportedBy.slice(0, 3).map(u => u.name || u.email).join(', ')}
+                        {c.reportedBy.length > 3 && ` +${c.reportedBy.length - 3} more`}
+                      </div>
+                    )}
+
+                    {/* Moderation note */}
+                    {c.moderationNote && (
+                      <div className="mt-2 text-xs text-gray-500 italic">
+                        Admin note: {c.moderationNote}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 mt-5">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="px-4 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">← Prev</button>
+              <span className="text-sm text-gray-500">{page} / {totalPages}</span>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="px-4 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">Next →</button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Moderation modal */}
+      {selected && (
+        <ModerationModal
+          comment={selected}
+          onClose={() => setSelected(null)}
+          onDone={() => { setSelected(null); fetchReports(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Appeals Tab ──────────────────────────────────────────────────────────────
+function AppealsTab() {
+  const [appeals, setAppeals]     = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [statusFilter, setFilter] = useState('pending');
+  const [page, setPage]           = useState(1);
+  const [totalPages, setTotal]    = useState(1);
+  const [totalCount, setCount]    = useState(0);
+  const [reviewing, setReviewing] = useState(null); // { appeal, decision: 'approve'|'reject' }
+  const [note, setNote]           = useState('');
+  const [submitting, setSub]      = useState(false);
+
+  const fetchAppeals = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get(`/appeals/admin?status=${statusFilter}&page=${page}&limit=15`);
+      setAppeals(res.data.appeals);
+      setTotal(res.data.totalPages);
+      setCount(res.data.total);
+    } catch { toast.error('Failed to load appeals'); }
+    finally { setLoading(false); }
+  }, [statusFilter, page]);
+
+  useEffect(() => { fetchAppeals(); }, [fetchAppeals]);
+  useEffect(() => { setPage(1); }, [statusFilter]);
+
+  const submitReview = async () => {
+    if (!reviewing) return;
+    setSub(true);
+    try {
+      const endpoint = `/appeals/admin/${reviewing.appeal._id}/${reviewing.decision}`;
+      await api.put(endpoint, { note });
+      toast.success(reviewing.decision === 'approve' ? 'Appeal approved' : 'Appeal rejected');
+      setReviewing(null);
+      setNote('');
+      fetchAppeals();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to review');
+    } finally {
+      setSub(false);
+    }
+  };
+
+  const ACTION_LABELS = {
+    warn:    { label: 'Warning',   color: 'bg-yellow-100 text-yellow-700' },
+    suspend: { label: 'Suspension',color: 'bg-orange-100 text-orange-700' },
+    ban:     { label: 'Ban',       color: 'bg-red-100 text-red-700' },
+    delete:  { label: 'Deleted comment', color: 'bg-gray-100 text-gray-600' },
+  };
+
+  const STATUS_BADGE = {
+    pending:  'bg-amber-100 text-amber-700',
+    approved: 'bg-green-100 text-green-700',
+    rejected: 'bg-red-100 text-red-600',
+  };
+
+  return (
+    <div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+        <div>
+          <h2 className="font-semibold text-gray-900">Appeals</h2>
+          <p className="text-xs text-gray-400 mt-0.5">{totalCount} total appeals submitted by users</p>
+        </div>
+        <div className="flex gap-2">
+          {['pending','all','approved','rejected'].map(s => (
+            <button key={s} onClick={() => setFilter(s)}
+              className={`px-3 py-1.5 text-xs rounded-full border transition-colors font-medium ${
+                statusFilter === s
+                  ? 'bg-gray-900 text-white border-gray-900'
+                  : 'border-gray-200 text-gray-500 hover:border-gray-400'}`}>
+              {s.charAt(0).toUpperCase() + s.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? <LoadingSpinner /> : appeals.length === 0 ? (
+        <div className="text-center py-16 text-gray-400">
+          <FiAlertCircle className="text-3xl mx-auto mb-3 opacity-40" />
+          <p className="text-sm">No {statusFilter !== 'all' ? statusFilter : ''} appeals</p>
+        </div>
+      ) : (
+        <>
+          <div className="space-y-3">
+            {appeals.map(a => {
+              const actionMeta = ACTION_LABELS[a.action] || { label: a.action, color: 'bg-gray-100 text-gray-600' };
+              return (
+                <div key={a._id} className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={a.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.user?.name || 'U')}&background=random&size=36`}
+                      alt={a.user?.name}
+                      className="w-9 h-9 rounded-full object-cover flex-shrink-0 mt-0.5"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-sm text-gray-900">{a.user?.name}</span>
+                          <span className="text-xs text-gray-400">{a.user?.email}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${actionMeta.color}`}>
+                            Appealing: {actionMeta.label}
+                          </span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_BADGE[a.status]}`}>
+                            {a.status}
+                          </span>
+                        </div>
+
+                        {a.status === 'pending' && (
+                          <div className="flex gap-2 flex-shrink-0">
+                            <button onClick={() => setReviewing({ appeal: a, decision: 'approve' })}
+                              className="flex items-center gap-1 px-3 py-1.5 text-xs bg-green-600 text-white rounded-full hover:bg-green-700 transition">
+                              <FiUserCheck /> Approve
+                            </button>
+                            <button onClick={() => setReviewing({ appeal: a, decision: 'reject' })}
+                              className="flex items-center gap-1 px-3 py-1.5 text-xs bg-red-500 text-white rounded-full hover:bg-red-600 transition">
+                              <FiUserX /> Reject
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Original comment snapshot */}
+                      <div className="mt-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                        <p className="text-xs text-gray-400 mb-1 font-medium">Reported comment</p>
+                        <p className="text-sm text-gray-700 line-clamp-3">{a.commentContent}</p>
+                      </div>
+
+                      {/* Appeal reason */}
+                      <div className="mt-2">
+                        <p className="text-xs font-medium text-gray-500 mb-0.5">Appeal reason</p>
+                        <p className="text-sm text-gray-700">{a.reason}</p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-3 mt-2 text-xs text-gray-400">
+                        <span className="flex items-center gap-1"><FiClock /> {formatDistanceToNow(new Date(a.createdAt), { addSuffix: true })}</span>
+                        {a.reviewedBy && (
+                          <span>Reviewed by <span className="font-medium text-gray-600">{a.reviewedBy.name}</span></span>
+                        )}
+                        {a.adminNote && (
+                          <span className="italic text-gray-500">Note: {a.adminNote}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 mt-5">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                className="px-4 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">← Prev</button>
+              <span className="text-sm text-gray-500">{page} / {totalPages}</span>
+              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                className="px-4 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">Next →</button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Approve / reject confirm modal */}
+      {reviewing && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="font-semibold text-gray-900 mb-1">
+              {reviewing.decision === 'approve' ? 'Approve appeal' : 'Reject appeal'}
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              {reviewing.decision === 'approve'
+                ? 'Approving will reverse the moderation action and notify the user.'
+                : 'Rejecting will keep the moderation action in place and notify the user.'}
+            </p>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Admin note (optional)</label>
+            <textarea value={note} onChange={e => setNote(e.target.value)}
+              rows={3} placeholder="Internal or user-facing note…"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none mb-4 focus:outline-none focus:border-gray-400" />
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => { setReviewing(null); setNote(''); }}
+                className="px-4 py-2 text-sm text-gray-500 hover:text-gray-800 transition">Cancel</button>
+              <button onClick={submitReview} disabled={submitting}
+                className={`px-5 py-2 text-sm text-white rounded-full transition disabled:opacity-40 ${
+                  reviewing.decision === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-500 hover:bg-red-600'}`}>
+                {submitting ? 'Saving…' : reviewing.decision === 'approve' ? 'Approve' : 'Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main AdminDashboard ──────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -783,6 +1280,8 @@ export default function AdminDashboard() {
     articles:  <ArticlesTab />,
     users:     <UsersTab />,
     comments:  <CommentsTab />,
+    reports:   <ReportsTab />,
+    appeals:   <AppealsTab />,
     analytics: <AnalyticsTab />,
     tags:      <TagsTab />,
   };

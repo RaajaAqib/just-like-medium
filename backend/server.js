@@ -12,6 +12,7 @@ const commentRoutes = require('./routes/comments');
 const userRoutes = require('./routes/users');
 const notificationRoutes = require('./routes/notifications');
 const linkPreviewRoutes  = require('./routes/linkPreview');
+const appealRoutes       = require('./routes/appeals');
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/link-preview', linkPreviewRoutes);
+app.use('/api/appeals',     appealRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

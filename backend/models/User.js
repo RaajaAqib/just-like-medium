@@ -42,8 +42,15 @@ const userSchema = new mongoose.Schema(
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     savedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],
-    banned: { type: Boolean, default: false },
-    banReason: { type: String, default: '' },
+    banned:           { type: Boolean, default: false },
+    banReason:        { type: String,  default: '' },
+    isSuspended:      { type: Boolean, default: false },
+    suspendedUntil:   { type: Date,    default: null },
+    warnings:         [{
+      reason:  { type: String },
+      date:    { type: Date, default: Date.now },
+      adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    }],
   },
   { timestamps: true }
 );
