@@ -233,14 +233,58 @@ export default function RichTextEditor({ content, onChange }) {
       onChange(e.getHTML());
     },
     editorProps: {
+      // ── Enter key: convert a lone URL line → preview card ──────────────────
+      handleKeyDown(view, event) {
+        if (event.key !== 'Enter') return false;
+
+        const { state } = view;
+        const { $from } = state.selection;
+        const node = $from.node();
+
+        // Must be a plain paragraph containing only a URL
+        if (node.type.name !== 'paragraph') return false;
+        const lineText = node.textContent.trim();
+        if (!URL_RE.test(lineText) || lineText.includes(' ')) return false;
+
+        event.preventDefault();
+        const url = lineText;
+
+        // Delete the current paragraph (the URL line) and show loading
+        const { tr } = state;
+        const start = $from.before();
+        const end   = $from.after();
+        view.dispatch(tr.delete(start, end));
+
+        setFetchingPreview(true);
+
+        api.get(`/link-preview?url=${encodeURIComponent(url)}`)
+          .then(res => {
+            const d = res.data;
+            const e = editorRef.current;
+            if (!e) return;
+            if (d.title || d.description || d.image) {
+              insertPreviewCard(e, buildAttrs(d, url));
+            } else {
+              // No OG data — insert URL as text then move to new line
+              e.chain().focus().insertContent(url + '\n').run();
+            }
+          })
+          .catch(() => {
+            const e = editorRef.current;
+            if (e) e.chain().focus().insertContent(url + '\n').run();
+          })
+          .finally(() => setFetchingPreview(false));
+
+        return true;
+      },
+
+      // ── Paste a bare URL → fetch preview immediately ───────────────────────
       handlePaste(view, event) {
         const text = event.clipboardData?.getData('text/plain')?.trim() || '';
-        if (!URL_RE.test(text)) return false; // let Tiptap handle normally
+        if (!URL_RE.test(text) || text.includes(' ')) return false;
 
         event.preventDefault();
         const url = text;
-
-        // Show a brief loading state — nothing inserted yet
         setFetchingPreview(true);
 
         api.get(`/link-preview?url=${encodeURIComponent(url)}`)
