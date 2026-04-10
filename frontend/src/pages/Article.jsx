@@ -163,7 +163,7 @@ export default function Article() {
   if (!post) return null;
 
   const isAuthor = user?._id === post.author?._id;
-  const canReport = user && !isAuthor && !user.isAdmin;
+  const canReport = user && !isAuthor;
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
@@ -214,8 +214,21 @@ export default function Article() {
           </div>
         </Link>
 
-        {/* Right side: author actions OR three-dot menu for readers */}
+        {/* Right side: save + author actions OR three-dot menu */}
         <div className="flex items-center gap-1">
+          {/* Save button always visible for logged-in users */}
+          {user && (
+            <button
+              onClick={handleSave}
+              className={`p-2 transition ${
+                isSaved(post?._id) ? 'text-medium-black' : 'text-gray-300 hover:text-medium-black'
+              }`}
+              title={isSaved(post?._id) ? 'Remove from library' : 'Save to library'}
+            >
+              <FiBookmark className={isSaved(post?._id) ? 'fill-current' : ''} />
+            </button>
+          )}
+
           {isAuthor ? (
             <>
               <Link to={`/edit/${post._id}`} className="p-2 text-gray-400 hover:text-gray-700 transition">
