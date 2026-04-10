@@ -17,6 +17,7 @@ import {
 } from 'react-icons/fi';
 import { MdFormatListNumbered, MdFormatQuote, MdFormatUnderlined, MdFormatStrikethrough } from 'react-icons/md';
 import api from '../utils/axios';
+import toast from 'react-hot-toast';
 
 // ── Language list for code block selector ─────────────────────────────────────
 const CODE_LANGS = [
@@ -187,15 +188,26 @@ const Sep = () => <span className="w-px h-5 bg-gray-200 mx-1 self-center flex-sh
 // ── Is URL string ─────────────────────────────────────────────────────────────
 const URL_RE = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
 
-// ── Insert a link-preview card via the schema directly (position-safe) ────────
+// ── Build preview attrs object ────────────────────────────────────────────────
+function buildAttrs(d, url) {
+  return {
+    url:         d.url         || url,
+    title:       d.title       || '',
+    description: d.description || '',
+    image:       d.image       || null,
+    siteName:    d.siteName    || d.domain || '',
+    domain:      d.domain      || '',
+  };
+}
+
+// ── Insert preview card using chain (safe after async) ────────────────────────
 function insertPreviewCard(editor, attrs) {
-  const { state, view } = editor;
-  const nodeType = state.schema.nodes.linkPreview;
-  if (!nodeType) return false;
-  const node = nodeType.create(attrs);
-  const tr = state.tr.replaceSelectionWith(node);
-  view.dispatch(tr);
-  return true;
+  editor.chain().focus().insertContent({ type: 'linkPreview', attrs }).run();
+}
+
+// ── Insert plain-text URL as fallback ────────────────────────────────────────
+function insertPlainUrl(editor, url) {
+  editor.chain().focus().insertContent(url).run();
 }
 
 // ── Editor ────────────────────────────────────────────────────────────────────
@@ -236,29 +248,15 @@ export default function RichTextEditor({ content, onChange }) {
             const d = res.data;
             const e = editorRef.current;
             if (!e) return;
-
             if (d.title || d.description || d.image) {
-              // Insert the preview card at current cursor
-              insertPreviewCard(e, {
-                url:         d.url         || url,
-                title:       d.title       || '',
-                description: d.description || '',
-                image:       d.image       || null,
-                siteName:    d.siteName    || d.domain || '',
-                domain:      d.domain      || '',
-              });
+              insertPreviewCard(e, buildAttrs(d, url));
             } else {
-              // No useful metadata — insert as a plain hyperlink
-              e.chain().focus()
-                .insertContent(`<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`)
-                .run();
+              insertPlainUrl(e, url);
             }
           })
           .catch(() => {
-            // Network error — insert as plain text hyperlink
-            editorRef.current?.chain().focus()
-              .insertContent(`<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`)
-              .run();
+            const e = editorRef.current;
+            if (e) insertPlainUrl(e, url);
           })
           .finally(() => setFetchingPreview(false));
 
@@ -282,19 +280,14 @@ export default function RichTextEditor({ content, onChange }) {
       const res = await api.get(`/link-preview?url=${encodeURIComponent(url.trim())}`);
       const d = res.data;
       if (d.title || d.description || d.image) {
-        insertPreviewCard(editor, {
-          url:         d.url         || url,
-          title:       d.title       || '',
-          description: d.description || '',
-          image:       d.image       || null,
-          siteName:    d.siteName    || d.domain || '',
-          domain:      d.domain      || '',
-        });
+        insertPreviewCard(editor, buildAttrs(d, url.trim()));
       } else {
-        alert('Could not fetch a preview for that URL. Try a different link.');
+        insertPlainUrl(editor, url.trim());
+        toast.error('No preview available — inserted as plain link');
       }
     } catch {
-      alert('Failed to fetch link preview. Check the URL and try again.');
+      insertPlainUrl(editor, url.trim());
+      toast.error('Could not fetch preview — inserted as plain link');
     } finally {
       setFetchingPreview(false);
     }
