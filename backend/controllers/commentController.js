@@ -61,16 +61,31 @@ const createComment = async (req, res) => {
 
     await comment.populate('author', 'name avatar');
 
-    // Notify post author on new top-level comment (skip self-comments)
-    if (!parentComment && post.author.toString() !== req.user._id.toString()) {
-      await Notification.create({
-        recipient: post.author,
-        fromUser: req.user._id,
-        type: 'comment',
-        post: post._id,
-        postTitle: post.title,
-        postSlug: post.slug,
-      });
+    if (parentComment) {
+      // Notify the parent comment's author when someone replies (skip self-replies)
+      const parentCommentDoc = await Comment.findById(parentComment).select('author');
+      if (parentCommentDoc && parentCommentDoc.author.toString() !== req.user._id.toString()) {
+        await Notification.create({
+          recipient: parentCommentDoc.author,
+          fromUser: req.user._id,
+          type: 'comment',
+          post: post._id,
+          postTitle: post.title,
+          postSlug: post.slug,
+        });
+      }
+    } else {
+      // Notify post author on new top-level comment (skip self-comments)
+      if (post.author.toString() !== req.user._id.toString()) {
+        await Notification.create({
+          recipient: post.author,
+          fromUser: req.user._id,
+          type: 'comment',
+          post: post._id,
+          postTitle: post.title,
+          postSlug: post.slug,
+        });
+      }
     }
 
     res.status(201).json({ success: true, comment });

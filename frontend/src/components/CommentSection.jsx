@@ -11,28 +11,38 @@ const avatar = (user, size = 36) =>
   user?.avatar ||
   `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=random&size=${size}`;
 
-// ─── Single comment card — defined at MODULE level to avoid reconciliation ────
+// ─── Single comment card — MODULE level (never recreated on parent re-render) ─
+// Reply text state lives INSIDE this component so typing never triggers a
+// parent re-render that would reset the textarea cursor (reverse-type bug).
 function CommentItem({
   comment,
   user,
   isReply,
   parentId,
-  replyingTo,
-  replyText,
   expandedReplies,
   onLike,
   onDelete,
-  onReplyToggle,
-  onReplyChange,
-  onReplySubmit,
+  onReplySubmit,   // (parentId, text) => void
   onToggleReplies,
   onOpenPanel,
 }) {
-  const isLiked    = comment.likes?.some((id) => id === user?._id || id?._id === user?._id);
-  const canDelete  = user?._id === comment.author?._id || user?.isAdmin;
+  const [showReply, setShowReply]   = useState(false);
+  const [replyText, setReplyText]   = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const isLiked   = comment.likes?.some((id) => id === user?._id || id?._id === user?._id);
+  const canDelete = user?._id === comment.author?._id || user?.isAdmin;
   const isExpanded = !isReply && expandedReplies?.has(comment._id);
   const hasReplies = !isReply && (comment.replies?.length || 0) > 0;
-  const isReplying = !isReply && replyingTo === comment._id;
+
+  const handleReply = async () => {
+    if (!replyText.trim() || submitting) return;
+    setSubmitting(true);
+    await onReplySubmit(comment._id, replyText.trim());
+    setReplyText('');
+    setShowReply(false);
+    setSubmitting(false);
+  };
 
   return (
     <div className={isReply ? 'ml-11 pl-4 border-l-2 border-gray-100 mt-3' : 'mt-1'}>
@@ -92,10 +102,13 @@ function CommentItem({
             {/* Reply (top-level only, logged-in only) */}
             {!isReply && user && (
               <button
-                onClick={() => { onReplyToggle(comment._id); onOpenPanel && onOpenPanel(); }}
+                onClick={() => {
+                  setShowReply((v) => !v);
+                  onOpenPanel && onOpenPanel();
+                }}
                 className="text-xs text-gray-400 hover:text-gray-700 transition"
               >
-                Reply
+                {showReply ? 'Cancel' : 'Reply'}
               </button>
             )}
 
@@ -128,12 +141,12 @@ function CommentItem({
         </div>
       </div>
 
-      {/* Reply input */}
-      {isReplying && (
+      {/* Reply input — local state, no parent re-renders on typing */}
+      {showReply && (
         <div className="ml-12 mt-2" onClick={(e) => e.stopPropagation()}>
           <textarea
             value={replyText}
-            onChange={(e) => onReplyChange(e.target.value)}
+            onChange={(e) => setReplyText(e.target.value)}
             placeholder={`Reply to ${comment.author?.name}…`}
             rows={2}
             autoFocus
@@ -142,17 +155,17 @@ function CommentItem({
           />
           <div className="flex gap-2 justify-end mt-1.5">
             <button
-              onClick={() => { onReplyToggle(null); onReplyChange(''); }}
+              onClick={() => { setShowReply(false); setReplyText(''); }}
               className="text-xs text-gray-400 hover:text-gray-700 px-3 py-1 transition"
             >
               Cancel
             </button>
             <button
-              onClick={() => onReplySubmit(comment._id)}
-              disabled={!replyText.trim()}
+              onClick={handleReply}
+              disabled={!replyText.trim() || submitting}
               className="btn-green text-xs px-4 py-1.5 disabled:opacity-40"
             >
-              Respond
+              {submitting ? 'Posting…' : 'Respond'}
             </button>
           </div>
         </div>
@@ -167,14 +180,10 @@ function CommentItem({
             user={user}
             isReply
             parentId={comment._id}
-            replyingTo={null}
-            replyText=""
             expandedReplies={new Set()}
             onLike={onLike}
             onDelete={onDelete}
-            onReplyToggle={() => {}}
-            onReplyChange={() => {}}
-            onReplySubmit={() => {}}
+            onReplySubmit={onReplySubmit}
             onToggleReplies={() => {}}
             onOpenPanel={null}
           />
@@ -184,7 +193,7 @@ function CommentItem({
 }
 
 // ─── Comment input box (shared between inline + panel) ────────────────────────
-function CommentInput({ user, value, onChange, onSubmit, submitting, placeholder = 'What are your thoughts?' }) {
+function CommentInput({ user, value, onChange, onSubmit, submitting }) {
   if (!user) return null;
   return (
     <div className="flex items-start gap-3">
@@ -194,7 +203,7 @@ function CommentInput({ user, value, onChange, onSubmit, submitting, placeholder
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
+          placeholder="What are your thoughts?"
           rows={3}
           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none
             focus:outline-none focus:border-gray-400 transition-colors bg-white"
@@ -222,18 +231,15 @@ function CommentInput({ user, value, onChange, onSubmit, submitting, placeholder
 export default function CommentSection({ postId }) {
   const { user } = useAuth();
 
-  const [comments, setComments]             = useState([]);
-  const [loading, setLoading]               = useState(false);
-  const [newComment, setNewComment]         = useState('');
-  const [submitting, setSubmitting]         = useState(false);
-  const [replyingTo, setReplyingTo]         = useState(null);   // commentId | null
-  const [replyText, setReplyText]           = useState('');
+  const [comments, setComments]               = useState([]);
+  const [loading, setLoading]                 = useState(false);
+  const [newComment, setNewComment]           = useState('');
+  const [submitting, setSubmitting]           = useState(false);
   const [expandedReplies, setExpandedReplies] = useState(new Set());
-  const [panelOpen, setPanelOpen]           = useState(false);
+  const [panelOpen, setPanelOpen]             = useState(false);
 
   const totalCount = comments.reduce((s, c) => s + 1 + (c.replies?.length || 0), 0);
 
-  // ── Fetch ────────────────────────────────────────────────────────────────────
   useEffect(() => { fetchComments(); }, [postId]);
 
   const fetchComments = async () => {
@@ -248,13 +254,12 @@ export default function CommentSection({ postId }) {
     }
   };
 
-  // ── Submit top-level comment ─────────────────────────────────────────────────
+  // ── Top-level comment ────────────────────────────────────────────────────────
   const submitComment = async () => {
     if (!newComment.trim() || submitting) return;
     setSubmitting(true);
     try {
       const res = await api.post(`/comments/${postId}`, { content: newComment });
-      // Oldest-first → append at end
       setComments((prev) => [...prev, { ...res.data.comment, replies: [] }]);
       setNewComment('');
       toast.success('Response posted!');
@@ -265,12 +270,11 @@ export default function CommentSection({ postId }) {
     }
   };
 
-  // ── Submit reply ──────────────────────────────────────────────────────────────
-  const handleReplySubmit = async (parentId) => {
-    if (!replyText.trim()) return;
+  // ── Reply — called from CommentItem with local state ──────────────────────
+  const handleReplySubmit = async (parentId, text) => {
     try {
       const res = await api.post(`/comments/${postId}`, {
-        content: replyText,
+        content: text,
         parentComment: parentId,
       });
       setComments((prev) =>
@@ -280,9 +284,6 @@ export default function CommentSection({ postId }) {
             : c
         )
       );
-      setReplyText('');
-      setReplyingTo(null);
-      // Auto-expand replies so new reply is visible
       setExpandedReplies((prev) => new Set([...prev, parentId]));
       toast.success('Reply posted!');
     } catch (err) {
@@ -290,7 +291,7 @@ export default function CommentSection({ postId }) {
     }
   };
 
-  // ── Like (works for both top-level and replies) ───────────────────────────────
+  // ── Like ─────────────────────────────────────────────────────────────────────
   const handleLike = async (commentId, isReply, parentId) => {
     if (!user) return toast.error('Please login to like');
     try {
@@ -301,13 +302,11 @@ export default function CommentSection({ postId }) {
           ? [...(c.likes || []), user._id]
           : (c.likes || []).filter((id) => id !== user._id),
       });
-
       setComments((prev) =>
         prev.map((c) => {
           if (!isReply && c._id === commentId) return updateLikes(c);
-          if (isReply && c._id === parentId) {
+          if (isReply && c._id === parentId)
             return { ...c, replies: c.replies.map((r) => r._id === commentId ? updateLikes(r) : r) };
-          }
           return c;
         })
       );
@@ -316,7 +315,7 @@ export default function CommentSection({ postId }) {
     }
   };
 
-  // ── Delete (also removes replies for top-level comments) ─────────────────────
+  // ── Delete ───────────────────────────────────────────────────────────────────
   const handleDelete = async (commentId, isReply, parentId) => {
     if (!window.confirm('Delete this comment?')) return;
     try {
@@ -338,13 +337,6 @@ export default function CommentSection({ postId }) {
     }
   };
 
-  // ── Toggle reply input ────────────────────────────────────────────────────────
-  const toggleReplyInput = (commentId) => {
-    setReplyingTo((prev) => (prev === commentId ? null : commentId));
-    setReplyText('');
-  };
-
-  // ── Toggle expanded replies ───────────────────────────────────────────────────
   const toggleReplies = (commentId) => {
     setExpandedReplies((prev) => {
       const next = new Set(prev);
@@ -353,21 +345,17 @@ export default function CommentSection({ postId }) {
     });
   };
 
-  // ── Shared item props (avoids repetition) ────────────────────────────────────
-  const itemProps = {
+  // ── Shared props for CommentItem ──────────────────────────────────────────────
+  const sharedItemProps = {
     user,
-    replyingTo,
-    replyText,
     expandedReplies,
     onLike: handleLike,
     onDelete: handleDelete,
-    onReplyToggle: toggleReplyInput,
-    onReplyChange: setReplyText,
     onReplySubmit: handleReplySubmit,
     onToggleReplies: toggleReplies,
   };
 
-  // ── Comment list (reused in both inline + panel) ─────────────────────────────
+  // ── Comment list ─────────────────────────────────────────────────────────────
   const CommentList = ({ inPanel }) => (
     <div className="space-y-1">
       {comments.map((c) => (
@@ -377,20 +365,17 @@ export default function CommentSection({ postId }) {
           isReply={false}
           parentId={null}
           onOpenPanel={inPanel ? null : () => setPanelOpen(true)}
-          {...itemProps}
+          {...sharedItemProps}
         />
       ))}
     </div>
   );
 
-  // ── Panel body ────────────────────────────────────────────────────────────────
+  // ── Panel ────────────────────────────────────────────────────────────────────
   const PanelContent = () => (
     <div className="flex flex-col h-full">
-      {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
-        <h2 className="font-semibold text-gray-900">
-          Responses ({totalCount})
-        </h2>
+        <h2 className="font-semibold text-gray-900">Responses ({totalCount})</h2>
         <button
           onClick={() => setPanelOpen(false)}
           className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-full transition"
@@ -398,16 +383,11 @@ export default function CommentSection({ postId }) {
           <FiX className="text-lg" />
         </button>
       </div>
-
-      {/* Comment input */}
       {user ? (
         <div className="px-6 py-4 border-b border-gray-100 flex-shrink-0">
           <CommentInput
-            user={user}
-            value={newComment}
-            onChange={setNewComment}
-            onSubmit={submitComment}
-            submitting={submitting}
+            user={user} value={newComment} onChange={setNewComment}
+            onSubmit={submitComment} submitting={submitting}
           />
         </div>
       ) : (
@@ -415,8 +395,6 @@ export default function CommentSection({ postId }) {
           <Link to="/login" className="text-medium-green hover:underline">Sign in</Link> to respond.
         </p>
       )}
-
-      {/* Responses */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
         {loading ? (
           <p className="text-sm text-gray-400">Loading…</p>
@@ -432,28 +410,18 @@ export default function CommentSection({ postId }) {
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <section className="mt-12">
-      {/* Section heading */}
       <div className="flex items-center gap-2 mb-6">
-        <button
-          onClick={() => setPanelOpen(true)}
-          className="flex items-center gap-2 group"
-        >
-          <h3 className="text-xl font-bold text-gray-900">
-            Responses ({totalCount})
-          </h3>
+        <button onClick={() => setPanelOpen(true)} className="flex items-center gap-2 group">
+          <h3 className="text-xl font-bold text-gray-900">Responses ({totalCount})</h3>
           <FiMessageSquare className="text-gray-400 group-hover:text-gray-700 transition text-base" />
         </button>
       </div>
 
-      {/* Inline comment input */}
       {user ? (
         <div className="mb-8 bg-gray-50 rounded-xl p-4 border border-gray-100">
           <CommentInput
-            user={user}
-            value={newComment}
-            onChange={setNewComment}
-            onSubmit={submitComment}
-            submitting={submitting}
+            user={user} value={newComment} onChange={setNewComment}
+            onSubmit={submitComment} submitting={submitting}
           />
         </div>
       ) : (
@@ -462,7 +430,6 @@ export default function CommentSection({ postId }) {
         </p>
       )}
 
-      {/* Inline comment list */}
       {loading ? (
         <p className="text-gray-400 text-sm">Loading responses…</p>
       ) : comments.length === 0 ? (
@@ -471,15 +438,9 @@ export default function CommentSection({ postId }) {
         <CommentList inPanel={false} />
       )}
 
-      {/* ── Side panel ── */}
       {panelOpen && (
         <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40 bg-black/25"
-            onClick={() => setPanelOpen(false)}
-          />
-          {/* Drawer */}
+          <div className="fixed inset-0 z-40 bg-black/25" onClick={() => setPanelOpen(false)} />
           <div className="fixed inset-y-0 right-0 z-50 w-full max-w-[420px] bg-white shadow-2xl border-l border-gray-200 responses-panel">
             <PanelContent />
           </div>
