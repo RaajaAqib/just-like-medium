@@ -24,6 +24,9 @@ const commentSchema = new mongoose.Schema(
       ref: 'Comment',
       default: null,
     },
+    reported:     { type: Boolean, default: false },
+    reportReason: { type: String,  default: '' },
+    reportedBy:   [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   },
   { timestamps: true }
 );

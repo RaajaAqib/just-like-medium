@@ -136,4 +136,28 @@ const likeComment = async (req, res) => {
   }
 };
 
-module.exports = { getComments, createComment, deleteComment, likeComment };
+// POST /api/comments/:id/report
+const reportComment = async (req, res) => {
+  try {
+    const comment = await Comment.findById(req.params.id);
+    if (!comment) return res.status(404).json({ success: false, message: 'Comment not found' });
+
+    const userId = req.user._id.toString();
+
+    // Prevent duplicate reports from same user
+    if (comment.reportedBy.some(id => id.toString() === userId)) {
+      return res.status(400).json({ success: false, message: 'You have already reported this comment' });
+    }
+
+    comment.reported     = true;
+    comment.reportReason = req.body.reason || 'No reason given';
+    comment.reportedBy.push(req.user._id);
+    await comment.save({ validateBeforeSave: false });
+
+    res.json({ success: true, message: 'Comment reported successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+module.exports = { getComments, createComment, deleteComment, likeComment, reportComment };

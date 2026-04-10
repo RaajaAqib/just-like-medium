@@ -213,7 +213,7 @@ export default function Article() {
       </div>
 
       {/* Comments */}
-      <CommentSection postId={post._id} />
+      <CommentSection postId={post._id} postAuthorId={post.author?._id} />
     </div>
   );
 }

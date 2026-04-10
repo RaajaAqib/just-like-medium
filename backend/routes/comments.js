@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getComments, createComment, deleteComment, likeComment } = require('../controllers/commentController');
+const { getComments, createComment, deleteComment, likeComment, reportComment } = require('../controllers/commentController');
 const { protect } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/adminAuth');
 
@@ -28,5 +28,6 @@ router.get('/:postId', getComments);
 router.post('/:postId', protect, createComment);
 router.delete('/:id', protect, deleteComment);
 router.post('/:id/like', protect, likeComment);
+router.post('/:id/report', protect, reportComment);
 
 module.exports = router;
