@@ -27,7 +27,7 @@ const commentSchema = new mongoose.Schema(
     reported:          { type: Boolean, default: false },
     reportReason:      { type: String,  default: '' },
     reportedBy:        [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-    moderationStatus:  { type: String, enum: ['pending', 'dismissed', 'actioned'], default: null },
+    moderationStatus:  { type: String, enum: ['pending', 'dismissed', 'actioned'] },
     isHidden:          { type: Boolean, default: false },
     moderationNote:    { type: String,  default: '' },
     moderatedBy:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
