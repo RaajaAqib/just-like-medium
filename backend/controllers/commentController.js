@@ -2,12 +2,35 @@ const Comment = require('../models/Comment');
 const Post = require('../models/Post');
 const Notification = require('../models/Notification');
 
-// GET /api/comments/:postId
+// GET /api/comments/:postId  — oldest first, replies nested under parents
 const getComments = async (req, res) => {
   try {
-    const comments = await Comment.find({ post: req.params.postId, parentComment: null })
+    // 1. Top-level comments, oldest first
+    const topLevel = await Comment.find({ post: req.params.postId, parentComment: null })
       .populate('author', 'name avatar')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: 1 });
+
+    // 2. All replies for this post, oldest first
+    const allReplies = await Comment.find({
+      post: req.params.postId,
+      parentComment: { $ne: null },
+    })
+      .populate('author', 'name avatar')
+      .sort({ createdAt: 1 });
+
+    // 3. Group replies by parentComment id
+    const replyMap = {};
+    for (const reply of allReplies) {
+      const pid = reply.parentComment.toString();
+      if (!replyMap[pid]) replyMap[pid] = [];
+      replyMap[pid].push(reply.toObject());
+    }
+
+    // 4. Attach replies to their parents
+    const comments = topLevel.map((c) => ({
+      ...c.toObject(),
+      replies: replyMap[c._id.toString()] || [],
+    }));
 
     res.json({ success: true, comments });
   } catch (error) {
@@ -38,7 +61,7 @@ const createComment = async (req, res) => {
 
     await comment.populate('author', 'name avatar');
 
-    // Notify post author (not if commenting on own post)
+    // Notify post author on new top-level comment (skip self-comments)
     if (!parentComment && post.author.toString() !== req.user._id.toString()) {
       await Notification.create({
         recipient: post.author,
@@ -60,15 +83,14 @@ const createComment = async (req, res) => {
 const deleteComment = async (req, res) => {
   try {
     const comment = await Comment.findById(req.params.id);
-
-    if (!comment) {
-      return res.status(404).json({ success: false, message: 'Comment not found' });
-    }
+    if (!comment) return res.status(404).json({ success: false, message: 'Comment not found' });
 
     if (comment.author.toString() !== req.user._id.toString() && !req.user.isAdmin) {
-      return res.status(403).json({ success: false, message: 'Not authorized to delete this comment' });
+      return res.status(403).json({ success: false, message: 'Not authorized' });
     }
 
+    // Also delete any replies to this comment
+    await Comment.deleteMany({ parentComment: comment._id });
     await comment.deleteOne();
 
     res.json({ success: true, message: 'Comment deleted' });
@@ -81,13 +103,10 @@ const deleteComment = async (req, res) => {
 const likeComment = async (req, res) => {
   try {
     const comment = await Comment.findById(req.params.id);
-
-    if (!comment) {
-      return res.status(404).json({ success: false, message: 'Comment not found' });
-    }
+    if (!comment) return res.status(404).json({ success: false, message: 'Comment not found' });
 
     const userId = req.user._id;
-    const isLiked = comment.likes.includes(userId);
+    const isLiked = comment.likes.some((id) => id.toString() === userId.toString());
 
     if (isLiked) {
       comment.likes = comment.likes.filter((id) => id.toString() !== userId.toString());
@@ -96,7 +115,6 @@ const likeComment = async (req, res) => {
     }
 
     await comment.save({ validateBeforeSave: false });
-
     res.json({ success: true, liked: !isLiked, likesCount: comment.likes.length });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

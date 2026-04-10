@@ -1,6 +1,7 @@
+import { useRef } from 'react';
 import {
   useEditor, EditorContent,
-  NodeViewWrapper, NodeViewContent, ReactNodeViewRenderer,
+  NodeViewWrapper, NodeViewContent, ReactNodeViewRenderer, Node,
 } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -12,19 +13,19 @@ import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
 import { lowlight } from 'lowlight';
 import {
   FiBold, FiItalic, FiList, FiLink, FiImage, FiMinus,
-  FiAlignLeft, FiAlignCenter, FiAlignRight,
+  FiAlignLeft, FiAlignCenter, FiAlignRight, FiExternalLink,
 } from 'react-icons/fi';
 import { MdFormatListNumbered, MdFormatQuote, MdFormatUnderlined, MdFormatStrikethrough } from 'react-icons/md';
 import api from '../utils/axios';
 
-// ── Language list for code block selector ────────────────────────────────────
+// ── Language list for code block selector ─────────────────────────────────────
 const CODE_LANGS = [
   'auto', 'javascript', 'typescript', 'python', 'java', 'c', 'cpp', 'csharp',
   'go', 'rust', 'php', 'ruby', 'swift', 'kotlin', 'html', 'css', 'scss',
   'json', 'xml', 'yaml', 'bash', 'shell', 'sql', 'graphql', 'markdown', 'dockerfile',
 ];
 
-// ── Custom code-block node view with language picker ─────────────────────────
+// ── Code block node view with language picker ─────────────────────────────────
 function CodeBlockView({ node, updateAttributes }) {
   const language = node.attrs.language || 'auto';
   return (
@@ -33,7 +34,6 @@ function CodeBlockView({ node, updateAttributes }) {
         <pre className="!m-0">
           <NodeViewContent as="code" />
         </pre>
-        {/* language selector — bottom-right, non-editable */}
         <div className="absolute bottom-2.5 right-3 z-10" contentEditable={false}>
           <select
             value={language}
@@ -50,13 +50,125 @@ function CodeBlockView({ node, updateAttributes }) {
 }
 
 const CodeBlockWithPicker = CodeBlockLowlight.extend({
+  addNodeView() { return ReactNodeViewRenderer(CodeBlockView); },
+});
+
+// ── Link preview node view (editor) ──────────────────────────────────────────
+function LinkPreviewView({ node, deleteNode }) {
+  const { url, title, description, image, siteName, domain } = node.attrs;
+  return (
+    <NodeViewWrapper contentEditable={false}>
+      <div className="link-preview-card my-4 group relative" data-drag-handle>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={e => e.stopPropagation()}
+          className="flex gap-4 no-underline"
+        >
+          <div className="flex-1 min-w-0 p-4">
+            {siteName && (
+              <p className="text-xs text-gray-400 mb-1">{siteName}</p>
+            )}
+            <p className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 mb-1">
+              {title || url}
+            </p>
+            {description && (
+              <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{description}</p>
+            )}
+            <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+              <FiExternalLink className="text-[10px]" />
+              {domain || url}
+            </p>
+          </div>
+          {image && (
+            <div className="flex-shrink-0 w-28 h-full">
+              <img
+                src={image}
+                alt={title}
+                className="w-28 h-full object-cover rounded-r-lg"
+              />
+            </div>
+          )}
+        </a>
+        {/* Remove button */}
+        <button
+          contentEditable={false}
+          onClick={deleteNode}
+          className="absolute top-2 right-2 p-1 bg-white rounded-full shadow text-gray-400
+            hover:text-red-500 transition opacity-0 group-hover:opacity-100"
+          title="Remove preview"
+        >
+          ×
+        </button>
+      </div>
+    </NodeViewWrapper>
+  );
+}
+
+// ── Link preview Tiptap node definition ──────────────────────────────────────
+const LinkPreviewNode = Node.create({
+  name: 'linkPreview',
+  group: 'block',
+  atom: true,
+  draggable: true,
+
+  addAttributes() {
+    return {
+      url:         { default: null },
+      title:       { default: null },
+      description: { default: null },
+      image:       { default: null },
+      siteName:    { default: null },
+      domain:      { default: null },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'div[data-link-preview]', getAttrs: el => ({
+      url:         el.getAttribute('data-url'),
+      title:       el.getAttribute('data-title'),
+      description: el.getAttribute('data-description'),
+      image:       el.getAttribute('data-image'),
+      siteName:    el.getAttribute('data-site-name'),
+      domain:      el.getAttribute('data-domain'),
+    }) }];
+  },
+
+  renderHTML({ HTMLAttributes: a }) {
+    // This HTML is stored in the DB and rendered in Article.jsx via dangerouslySetInnerHTML
+    const children = [
+      ['div', { class: 'link-preview-body' },
+        ...(a.siteName ? [['p', { class: 'link-preview-site' }, a.siteName]] : []),
+        ['p', { class: 'link-preview-title' }, a.title || a.url || ''],
+        ...(a.description ? [['p', { class: 'link-preview-desc' }, a.description]] : []),
+        ['p', { class: 'link-preview-domain' }, a.domain || a.url || ''],
+      ],
+      ...(a.image ? [['img', { src: a.image, alt: a.title || '', class: 'link-preview-image' }]] : []),
+    ];
+
+    return ['a', {
+      href: a.url,
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      'data-link-preview': 'true',
+      'data-url': a.url,
+      'data-title': a.title,
+      'data-description': a.description,
+      'data-image': a.image,
+      'data-site-name': a.siteName,
+      'data-domain': a.domain,
+      class: 'link-preview-card',
+    }, ...children];
+  },
+
   addNodeView() {
-    return ReactNodeViewRenderer(CodeBlockView);
+    return ReactNodeViewRenderer(LinkPreviewView);
   },
 });
 
 // ── Toolbar helpers ───────────────────────────────────────────────────────────
-const Btn = ({ onClick, active, title, children, className = '' }) => (
+const Btn = ({ onClick, active, title, children }) => (
   <button
     type="button"
     onMouseDown={e => { e.preventDefault(); onClick(); }}
@@ -65,16 +177,21 @@ const Btn = ({ onClick, active, title, children, className = '' }) => (
       active
         ? 'bg-gray-900 text-white'
         : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
-    } ${className}`}
+    }`}
   >
     {children}
   </button>
 );
-
 const Sep = () => <span className="w-px h-5 bg-gray-200 mx-1 self-center flex-shrink-0" />;
+
+// ── Is URL string ─────────────────────────────────────────────────────────────
+const URL_RE = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
 
 // ── Editor ────────────────────────────────────────────────────────────────────
 export default function RichTextEditor({ content, onChange }) {
+  // Ref so paste handler always has the current editor instance
+  const editorRef = useRef(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ codeBlock: false }),
@@ -84,9 +201,64 @@ export default function RichTextEditor({ content, onChange }) {
       Placeholder.configure({ placeholder: 'Tell your story…' }),
       Underline,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      LinkPreviewNode,
     ],
     content: content || '',
-    onUpdate: ({ editor }) => onChange(editor.getHTML()),
+    onCreate: ({ editor: e }) => { editorRef.current = e; },
+    onUpdate:  ({ editor: e }) => {
+      editorRef.current = e;
+      onChange(e.getHTML());
+    },
+    editorProps: {
+      handlePaste(view, event) {
+        const text = event.clipboardData?.getData('text/plain')?.trim() || '';
+        if (!URL_RE.test(text)) return false; // let Tiptap handle normally
+
+        event.preventDefault();
+        const url = text;
+
+        // Insert a plain link as immediate fallback while we fetch the preview
+        editorRef.current?.chain().focus().insertContent(` ${url} `).run();
+
+        // Fetch preview and replace the plain text with a card
+        api.get(`/link-preview?url=${encodeURIComponent(url)}`).then(res => {
+          const d = res.data;
+          // Only insert card if we got at least a title
+          if (!d.title && !d.description) return;
+
+          // Remove the fallback plain URL that was just typed
+          const { state, dispatch } = editorRef.current.view;
+          const { doc, tr } = state;
+          let from = -1, to = -1;
+          doc.descendants((node, pos) => {
+            if (node.isText && node.text?.includes(url)) {
+              from = pos + node.text.indexOf(url);
+              to   = from + url.length;
+            }
+          });
+          if (from >= 0) {
+            dispatch(tr.delete(from, to));
+          }
+
+          // Insert the preview card
+          editorRef.current?.chain().focus().insertContent({
+            type: 'linkPreview',
+            attrs: {
+              url:         d.url         || url,
+              title:       d.title       || '',
+              description: d.description || '',
+              image:       d.image       || null,
+              siteName:    d.siteName    || d.domain || '',
+              domain:      d.domain      || '',
+            },
+          }).run();
+        }).catch(() => {
+          // Keep the plain URL that was already inserted — no action needed
+        });
+
+        return true;
+      },
+    },
   });
 
   if (!editor) return null;
@@ -124,14 +296,13 @@ export default function RichTextEditor({ content, onChange }) {
       {/* ── Toolbar ── */}
       <div className="flex flex-wrap items-center gap-0 px-2 py-1.5 border-b border-gray-200 bg-gray-50">
 
-        {/* Text formatting */}
-        <Btn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold (Ctrl+B)">
+        <Btn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold">
           <strong className="font-extrabold text-[13px]">B</strong>
         </Btn>
-        <Btn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic (Ctrl+I)">
-          <em className="font-serif text-[13px] not-italic italic">I</em>
+        <Btn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} title="Italic">
+          <em className="font-serif text-[13px] italic">I</em>
         </Btn>
-        <Btn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title="Underline (Ctrl+U)">
+        <Btn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} title="Underline">
           <MdFormatUnderlined className="text-base" />
         </Btn>
         <Btn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} title="Strikethrough">
@@ -143,14 +314,11 @@ export default function RichTextEditor({ content, onChange }) {
 
         <Sep />
 
-        {/* Headings H1–H6 */}
         {[1, 2, 3, 4, 5, 6].map(level => (
-          <Btn
-            key={level}
+          <Btn key={level}
             onClick={() => editor.chain().focus().toggleHeading({ level }).run()}
             active={editor.isActive('heading', { level })}
             title={`Heading ${level}`}
-            className={level >= 4 ? 'text-xs' : ''}
           >
             <span className={`font-bold leading-none ${level <= 2 ? 'text-[13px]' : 'text-[11px]'}`}>H{level}</span>
           </Btn>
@@ -158,7 +326,6 @@ export default function RichTextEditor({ content, onChange }) {
 
         <Sep />
 
-        {/* Lists & blocks */}
         <Btn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} title="Bullet list">
           <FiList className="text-base" />
         </Btn>
@@ -174,7 +341,6 @@ export default function RichTextEditor({ content, onChange }) {
 
         <Sep />
 
-        {/* Alignment */}
         <Btn onClick={() => editor.chain().focus().setTextAlign('left').run()} active={editor.isActive({ textAlign: 'left' })} title="Align left">
           <FiAlignLeft className="text-base" />
         </Btn>
@@ -187,7 +353,6 @@ export default function RichTextEditor({ content, onChange }) {
 
         <Sep />
 
-        {/* Insert */}
         <Btn onClick={addLink} active={editor.isActive('link')} title="Insert link">
           <FiLink className="text-base" />
         </Btn>
