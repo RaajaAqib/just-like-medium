@@ -22,13 +22,90 @@ router.put('/admin/:id/toggle-admin', protect, adminOnly, toggleAdmin);
 // Admin ban/unban user
 router.put('/admin/:id/ban', protect, adminOnly, async (req, res) => {
   try {
-    const User = require('../models/User');
+    const User         = require('../models/User');
+    const Notification = require('../models/Notification');
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    user.banned = !user.banned;
+    user.banned    = !user.banned;
     user.banReason = user.banned ? (req.body.reason || 'Violated community guidelines') : '';
     await user.save({ validateBeforeSave: false });
+    if (user.banned) {
+      await Notification.create({
+        recipient: user._id, fromUser: req.user._id,
+        type: 'moderation', moderationAction: 'ban',
+      }).catch(() => {});
+    }
     res.json({ success: true, banned: user.banned, banReason: user.banReason });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Admin warn user directly
+router.post('/admin/:id/warn', protect, adminOnly, async (req, res) => {
+  try {
+    const User         = require('../models/User');
+    const Notification = require('../models/Notification');
+    const { reason = 'Violation of community guidelines' } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { $push: { warnings: { reason, date: new Date(), adminId: req.user._id } } },
+      { new: true }
+    );
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    await Notification.create({
+      recipient: user._id, fromUser: req.user._id,
+      type: 'moderation', moderationAction: 'warn',
+    }).catch(() => {});
+    res.json({ success: true, warnings: user.warnings });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Admin suspend user directly
+router.post('/admin/:id/suspend', protect, adminOnly, async (req, res) => {
+  try {
+    const User         = require('../models/User');
+    const Notification = require('../models/Notification');
+    const { days = 7, reason = 'Violation of community guidelines' } = req.body;
+    const suspendedUntil = new Date(Date.now() + parseInt(days) * 24 * 60 * 60 * 1000);
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        isSuspended: true,
+        suspendedUntil,
+        $push: { warnings: { reason: `Suspended ${days}d: ${reason}`, date: new Date(), adminId: req.user._id } },
+      },
+      { new: true }
+    );
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    await Notification.create({
+      recipient: user._id, fromUser: req.user._id,
+      type: 'moderation', moderationAction: 'suspend',
+    }).catch(() => {});
+    res.json({ success: true, isSuspended: user.isSuspended, suspendedUntil: user.suspendedUntil });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Admin remove all restrictions from a user
+router.post('/admin/:id/remove-restrictions', protect, adminOnly, async (req, res) => {
+  try {
+    const User         = require('../models/User');
+    const Notification = require('../models/Notification');
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { banned: false, banReason: '', isSuspended: false, suspendedUntil: null, warnings: [] },
+      { new: true }
+    );
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    await Notification.create({
+      recipient: user._id, fromUser: req.user._id,
+      type: 'moderation', moderationAction: 'appeal_approved',
+    }).catch(() => {});
+    res.json({ success: true, message: 'All restrictions removed' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

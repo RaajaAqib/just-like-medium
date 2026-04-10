@@ -6,15 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Just Like Medium - A modern blogging platform" />
     <title>Just Like Medium</title>
-    <!-- GitHub Pages SPA routing fix -->
+    <!-- GitHub Pages SPA routing fix (pairs with public/404.html ?/ encoding) -->
     <script>
-      (function () {
-        var redirect = sessionStorage.redirect;
-        delete sessionStorage.redirect;
-        if (redirect && redirect !== location.href) {
-          history.replaceState(null, null, redirect);
+      (function (l) {
+        if (l.search[1] === '/') {
+          var decoded = l.search.slice(1).split('&').map(function (s) {
+            return s.replace(/~and~/g, '&');
+          });
+          window.history.replaceState(
+            null, null,
+            l.pathname.slice(0, -1) + decoded[0] +
+            (decoded.slice(1).length ? '?' + decoded.slice(1).join('&') : '') +
+            l.hash
+          );
         }
-      })();
+      }(window.location));
     </script>
   </head>
   <body>

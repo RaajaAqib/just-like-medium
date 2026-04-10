@@ -325,6 +325,7 @@ function UsersTab() {
   const [roleFilter, setRoleFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [moderatingUser, setModeratingUser] = useState(null);
 
   const fetch = useCallback(async () => {
     setLoading(true);
@@ -482,6 +483,13 @@ function UsersTab() {
                           className="p-1.5 text-gray-300 hover:text-red-500 transition rounded" title="Delete user">
                           <FiTrash2 className="text-sm" />
                         </button>
+                        <button
+                          onClick={() => setModeratingUser(u)}
+                          className="p-1.5 text-gray-300 hover:text-orange-500 transition rounded"
+                          title="Moderate user"
+                        >
+                          <FiAlertTriangle className="text-sm" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -502,6 +510,14 @@ function UsersTab() {
             </div>
           )}
         </>
+      )}
+
+      {moderatingUser && (
+        <UserModerationModal
+          targetUser={moderatingUser}
+          onClose={() => setModeratingUser(null)}
+          onDone={() => { setModeratingUser(null); fetch(); }}
+        />
       )}
     </div>
   );
@@ -1367,6 +1383,121 @@ function AppealsTab() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── User Moderation Modal ────────────────────────────────────────────────────
+function UserModerationModal({ targetUser, onClose, onDone }) {
+  const [action, setAction]   = useState('warn');
+  const [reason, setReason]   = useState('');
+  const [days, setDays]       = useState(7);
+  const [loading, setLoading] = useState(false);
+
+  const ACTIONS = [
+    { id: 'warn',    label: 'Warn user',              icon: FiBell,      color: 'text-yellow-600' },
+    { id: 'suspend', label: 'Suspend user',            icon: FiUserX,     color: 'text-orange-600' },
+    { id: 'ban',     label: targetUser?.banned ? 'Unban user' : 'Ban user permanently', icon: FiSlash, color: 'text-red-700' },
+    { id: 'remove',  label: 'Remove all restrictions', icon: FiUserCheck, color: 'text-green-600' },
+  ];
+
+  const submit = async () => {
+    setLoading(true);
+    try {
+      const body = { reason: reason || undefined, days: action === 'suspend' ? days : undefined };
+      if (action === 'warn')    await api.post(`/users/admin/${targetUser._id}/warn`, body);
+      else if (action === 'suspend') await api.post(`/users/admin/${targetUser._id}/suspend`, body);
+      else if (action === 'ban')     await api.put(`/users/admin/${targetUser._id}/ban`, body);
+      else if (action === 'remove')  await api.post(`/users/admin/${targetUser._id}/remove-restrictions`);
+      toast.success('Action applied');
+      onDone();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Action failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="font-semibold text-gray-900 text-base">Moderate user</h3>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {targetUser?.name} · {targetUser?.email}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100 transition">
+            <FiX />
+          </button>
+        </div>
+
+        {/* Current status summary */}
+        <div className="bg-gray-50 rounded-xl px-3 py-2.5 mb-4 flex flex-wrap gap-2 text-xs">
+          <span className={`px-2 py-0.5 rounded-full font-medium ${
+            targetUser?.banned ? 'bg-red-100 text-red-600' :
+            targetUser?.isSuspended ? 'bg-orange-100 text-orange-600' :
+            'bg-green-100 text-green-600'}`}>
+            {targetUser?.banned ? 'Banned' : targetUser?.isSuspended ? 'Suspended' : 'Active'}
+          </span>
+          {targetUser?.warnings?.length > 0 && (
+            <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium">
+              {targetUser.warnings.length}× warned
+            </span>
+          )}
+        </div>
+
+        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Choose action</p>
+        <div className="grid grid-cols-1 gap-1.5 mb-4">
+          {ACTIONS.map(a => {
+            const Icon = a.icon;
+            return (
+              <label key={a.id}
+                className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                  action === a.id ? 'border-gray-400 bg-gray-50' : 'border-gray-100 hover:border-gray-300'}`}>
+                <input type="radio" name="user-action" value={a.id} checked={action === a.id}
+                  onChange={() => setAction(a.id)} className="accent-gray-800" />
+                <Icon className={`text-base flex-shrink-0 ${a.color}`} />
+                <span className="text-sm text-gray-700">{a.label}</span>
+              </label>
+            );
+          })}
+        </div>
+
+        {action === 'suspend' && (
+          <div className="mb-4">
+            <label className="block text-xs font-medium text-gray-500 mb-1">Suspension duration</label>
+            <select value={days} onChange={e => setDays(Number(e.target.value))}
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 bg-white">
+              {[1,3,7,14,30].map(d => <option key={d} value={d}>{d} day{d > 1 ? 's' : ''}</option>)}
+            </select>
+          </div>
+        )}
+
+        {(action === 'warn' || action === 'suspend' || action === 'ban') && action !== 'ban' && (
+          <div className="mb-5">
+            <label className="block text-xs font-medium text-gray-500 mb-1">Reason (sent to user, optional)</label>
+            <textarea value={reason} onChange={e => setReason(e.target.value)}
+              rows={2} placeholder="Violation of community guidelines…"
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-gray-400" />
+          </div>
+        )}
+
+        {action === 'remove' && (
+          <div className="mb-5 px-3 py-2.5 bg-green-50 border border-green-100 rounded-lg text-xs text-green-700">
+            This will clear the ban, suspension, and all warnings from this user's record.
+          </div>
+        )}
+
+        <div className="flex gap-3 justify-end">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-800 transition">Cancel</button>
+          <button onClick={submit} disabled={loading}
+            className="px-5 py-2 text-sm bg-gray-900 text-white rounded-full hover:bg-gray-700 transition disabled:opacity-40">
+            {loading ? 'Applying…' : 'Apply action'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
