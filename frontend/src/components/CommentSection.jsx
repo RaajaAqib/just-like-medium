@@ -84,7 +84,7 @@ function CommentItem({
 
             {!isReply && user && (
               <button
-                onClick={() => { setShowReply(v => !v); onOpenPanel?.(); }}
+                onClick={() => setShowReply(v => !v)}
                 className="text-xs text-gray-400 hover:text-gray-700 transition"
               >
                 {showReply ? 'Cancel' : 'Reply'}
