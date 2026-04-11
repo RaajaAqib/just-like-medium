@@ -35,6 +35,52 @@ export default function OurStory() {
           A space for thoughtful conversation more than drive-by takes, and substance over packaging.
         </p>
 
+        {/* About the builder */}
+        <div className="pt-8 border-t border-medium-border dark:border-gray-700">
+          <h2 className="text-2xl font-bold font-serif text-medium-black dark:text-gray-100 mb-4">
+            About the builder
+          </h2>
+          <div className="flex items-center gap-4 mb-5">
+            <div className="w-14 h-14 rounded-full bg-medium-black dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+              <span className="text-white dark:text-gray-200 text-xl font-bold">RA</span>
+            </div>
+            <div>
+              <p className="font-semibold text-medium-black dark:text-gray-100 text-base">Raja Aqib</p>
+              <p className="text-sm text-medium-gray dark:text-gray-400">Software Engineer &amp; ServiceNow Developer</p>
+            </div>
+          </div>
+          <p>
+            Hi, I'm <strong className="text-medium-black dark:text-gray-100">Raja Aqib</strong> — a Software Engineer
+            and ServiceNow Developer. I built Just Like Medium as a full-stack project to create a
+            modern, clean writing platform inspired by Medium.
+          </p>
+          <p className="mt-4">
+            Here's what I built into this platform:
+          </p>
+          <ul className="mt-3 space-y-2 text-base">
+            {[
+              'Full authentication — register, login, JWT-based sessions',
+              'Rich text editor with formatting, images, links, and embeds',
+              'Article publishing with cover photos, tags, and draft mode',
+              'Reading list (save articles for later) and reading history',
+              'Follow system — follow writers, get a personalised Following feed',
+              'Comments with nested replies, likes, and moderation',
+              'Likes and claps on articles',
+              'Author profiles with follower counts and published stories',
+              'Notifications for follows, likes, claps, and comments',
+              'Admin dashboard — manage users, articles, comments, tags, reports, and appeals',
+              'Content moderation — warn, suspend, or ban users; report and appeal system',
+              'Dark mode with system preference detection and manual toggle',
+              'Fully responsive design for mobile, tablet, and desktop',
+            ].map(item => (
+              <li key={item} className="flex items-start gap-2">
+                <span className="text-medium-green mt-1.5 text-sm flex-shrink-0">✓</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         <div className="pt-6 border-t border-medium-border dark:border-gray-700">
           <p className="text-medium-gray dark:text-gray-400 text-base mb-6">
             Join millions of curious readers and fearless writers on Just Like Medium.
