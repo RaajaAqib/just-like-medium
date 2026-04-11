@@ -32,13 +32,13 @@ const PIE_COLORS = ['#1a8917', '#242424', '#6b6b6b', '#d1d5db', '#86efac'];
 // ─── Stat Card ───────────────────────────────────────────────────────────────
 function StatCard({ label, value, icon: Icon, color, sub }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm">
       <div className={`inline-flex p-2.5 rounded-lg mb-3 ${color}`}>
         <Icon className="text-lg" />
       </div>
-      <p className="text-2xl font-bold text-gray-900">{value ?? '—'}</p>
-      <p className="text-xs font-medium text-gray-500 mt-0.5">{label}</p>
-      {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
+      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value ?? '—'}</p>
+      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
+      {sub && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{sub}</p>}
     </div>
   );
 }
@@ -82,10 +82,10 @@ function OverviewTab() {
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top posts bar chart */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <h3 className="font-semibold text-gray-800 mb-4 text-sm">Top Articles by Views</h3>
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4 text-sm">Top Articles by Views</h3>
           {topPosts.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">No data yet</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">No data yet</p>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={topPosts.map(p => ({ name: p.title.substring(0, 20) + (p.title.length > 20 ? '…' : ''), views: p.views }))}>
@@ -99,8 +99,8 @@ function OverviewTab() {
         </div>
 
         {/* Published vs Draft pie */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <h3 className="font-semibold text-gray-800 mb-4 text-sm">Content Status</h3>
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4 text-sm">Content Status</h3>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie data={publishedVsDraft} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, value }) => `${name}: ${value}`} labelLine={false}>
@@ -116,19 +116,19 @@ function OverviewTab() {
       {/* Top tags + Recent posts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top tags */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <h3 className="font-semibold text-gray-800 mb-4 text-sm">Top Tags</h3>
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4 text-sm">Top Tags</h3>
           {tagStats.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-4">No tags yet</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No tags yet</p>
           ) : (
             <div className="space-y-2">
               {tagStats.map(t => (
                 <div key={t._id} className="flex items-center gap-3">
-                  <span className="text-xs text-gray-600 w-28 truncate">#{t._id}</span>
-                  <div className="flex-1 bg-gray-100 rounded-full h-2">
+                  <span className="text-xs text-gray-600 dark:text-gray-400 w-28 truncate">#{t._id}</span>
+                  <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-2">
                     <div className="bg-medium-green h-2 rounded-full" style={{ width: `${(t.count / tagStats[0].count) * 100}%` }} />
                   </div>
-                  <span className="text-xs text-gray-500 w-6 text-right">{t.count}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 w-6 text-right">{t.count}</span>
                 </div>
               ))}
             </div>
@@ -136,17 +136,17 @@ function OverviewTab() {
         </div>
 
         {/* Recent posts */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <h3 className="font-semibold text-gray-800 mb-4 text-sm">Recently Published</h3>
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-4 text-sm">Recently Published</h3>
           <div className="space-y-3">
-            {recentPosts.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No posts yet</p>}
+            {recentPosts.length === 0 && <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No posts yet</p>}
             {recentPosts.map(p => (
               <div key={p._id} className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{p.title}</p>
-                  <p className="text-xs text-gray-400">{p.author?.name} · {formatDistanceToNow(new Date(p.createdAt), { addSuffix: true })}</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{p.title}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{p.author?.name} · {formatDistanceToNow(new Date(p.createdAt), { addSuffix: true })}</p>
                 </div>
-                <span className="text-xs text-gray-500 flex items-center gap-1 flex-shrink-0">
+                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 flex-shrink-0">
                   <FiEye className="text-xs" /> {p.views}
                 </span>
               </div>
@@ -222,10 +222,10 @@ function ArticlesTab() {
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search by title or author…"
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400" />
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 rounded-lg focus:outline-none focus:border-gray-400 dark:focus:border-gray-500" />
         </div>
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 bg-white">
+          className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-gray-200">
           <option value="all">All Status</option>
           <option value="published">Published</option>
           <option value="draft">Draft</option>
@@ -235,38 +235,38 @@ function ArticlesTab() {
 
       {loading ? <LoadingSpinner /> : (
         <>
-          <div className="overflow-x-auto rounded-xl border border-gray-200">
+          <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr className="text-left border-b border-gray-200">
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Title</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Author</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Status</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Views</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Likes</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Date</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Actions</th>
+              <thead className="bg-gray-50 dark:bg-gray-800/60">
+                <tr className="text-left border-b border-gray-200 dark:border-gray-700">
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Title</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Author</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Status</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Views</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Likes</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Date</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {filtered.map(post => (
-                  <tr key={post._id} className="hover:bg-gray-50 transition">
+                  <tr key={post._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {post.featured && <FiStar className="text-yellow-400 flex-shrink-0" title="Featured" />}
-                        <span className="font-medium text-gray-900 line-clamp-1 max-w-[200px]">{post.title}</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100 line-clamp-1 max-w-[200px]">{post.title}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{post.author?.name}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{post.author?.name}</td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                        post.published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                        post.published ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>
                         {post.published ? 'Published' : 'Draft'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{post.views}</td>
-                    <td className="px-4 py-3 text-gray-500">{post.likes?.length || 0}</td>
-                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{post.views}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{post.likes?.length || 0}</td>
+                    <td className="px-4 py-3 text-gray-400 dark:text-gray-500 text-xs whitespace-nowrap">
                       {format(new Date(post.createdAt), 'MMM d, yyyy')}
                     </td>
                     <td className="px-4 py-3">
@@ -278,17 +278,17 @@ function ArticlesTab() {
                           </Link>
                         )}
                         <button onClick={() => toggleFeature(post._id)}
-                          className={`p-1.5 rounded transition ${post.featured ? 'text-yellow-400 hover:text-gray-400' : 'text-gray-300 hover:text-yellow-400'}`}
+                          className={`p-1.5 rounded transition ${post.featured ? 'text-yellow-400 hover:text-gray-400' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-400'}`}
                           title={post.featured ? 'Unfeature' : 'Feature'}>
                           <FiStar className="text-sm" />
                         </button>
                         <button onClick={() => togglePublish(post._id)}
-                          className={`p-1.5 rounded transition ${post.published ? 'text-green-400 hover:text-gray-400' : 'text-gray-300 hover:text-green-400'}`}
+                          className={`p-1.5 rounded transition ${post.published ? 'text-green-400 hover:text-gray-400' : 'text-gray-300 dark:text-gray-600 hover:text-green-400'}`}
                           title={post.published ? 'Unpublish' : 'Publish'}>
                           {post.published ? <FiToggleRight className="text-sm" /> : <FiToggleLeft className="text-sm" />}
                         </button>
                         <button onClick={() => deletePost(post._id)}
-                          className="p-1.5 text-gray-300 hover:text-red-500 transition rounded" title="Delete">
+                          className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 transition rounded" title="Delete">
                           <FiTrash2 className="text-sm" />
                         </button>
                       </div>
@@ -296,7 +296,7 @@ function ArticlesTab() {
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-400">No articles found</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-10 text-center text-gray-400 dark:text-gray-500">No articles found</td></tr>
                 )}
               </tbody>
             </table>
@@ -305,10 +305,10 @@ function ArticlesTab() {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 mt-5">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="px-4 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">← Prev</button>
-              <span className="text-sm text-gray-500">{page} / {totalPages}</span>
+                className="px-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">← Prev</button>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{page} / {totalPages}</span>
               <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className="px-4 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">Next →</button>
+                className="px-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">Next →</button>
             </div>
           )}
         </>
@@ -380,10 +380,10 @@ function UsersTab() {
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search by name or email…"
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400" />
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 rounded-lg focus:outline-none focus:border-gray-400 dark:focus:border-gray-500" />
         </div>
         <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 bg-white">
+          className="text-sm border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 bg-white dark:bg-gray-800 dark:text-gray-200">
           <option value="all">All Users</option>
           <option value="admin">Admins</option>
           <option value="banned">Banned</option>
@@ -392,45 +392,45 @@ function UsersTab() {
 
       {loading ? <LoadingSpinner /> : (
         <>
-          <div className="overflow-x-auto rounded-xl border border-gray-200">
+          <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr className="text-left border-b border-gray-200">
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">User</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Email</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Role</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Status</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Actions</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Followers</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Joined</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Actions</th>
+              <thead className="bg-gray-50 dark:bg-gray-800/60">
+                <tr className="text-left border-b border-gray-200 dark:border-gray-700">
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">User</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Email</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Role</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Status</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Actions</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Followers</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Joined</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {filtered.map(u => (
-                  <tr key={u._id} className={`hover:bg-gray-50 transition ${u.banned ? 'opacity-60' : ''}`}>
+                  <tr key={u._id} className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition ${u.banned ? 'opacity-60' : ''}`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <img src={u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=random&size=32`}
                           alt={u.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
                         <div>
-                          <p className="font-medium text-gray-900">{u.name}</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{u.name}</p>
                           {u.banned && <p className="text-xs text-red-500">Banned</p>}
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">{u.email}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{u.email}</td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                        u.isAdmin ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-500'}`}>
+                        u.isAdmin ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'}`}>
                         {u.isAdmin ? 'Admin' : 'User'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                        u.banned      ? 'bg-red-100 text-red-600' :
-                        u.isSuspended ? 'bg-orange-100 text-orange-600' :
-                                        'bg-green-100 text-green-600'}`}>
+                        u.banned      ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' :
+                        u.isSuspended ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' :
+                                        'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'}`}>
                         {u.banned ? 'Banned' : u.isSuspended ? 'Suspended' : 'Active'}
                       </span>
                     </td>
@@ -438,29 +438,29 @@ function UsersTab() {
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
                         {u.warnings?.length > 0 && (
-                          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium"
+                          <span className="text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full font-medium"
                             title={`${u.warnings.length} warning${u.warnings.length > 1 ? 's' : ''}`}>
                             {u.warnings.length}× warned
                           </span>
                         )}
                         {u.isSuspended && u.suspendedUntil && (
-                          <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium"
+                          <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded-full font-medium"
                             title={`Until ${new Date(u.suspendedUntil).toLocaleDateString()}`}>
                             Susp. until {new Date(u.suspendedUntil).toLocaleDateString('en-GB', { day:'numeric', month:'short' })}
                           </span>
                         )}
                         {u.banned && (
-                          <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-medium">
+                          <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2 py-0.5 rounded-full font-medium">
                             Banned
                           </span>
                         )}
                         {!u.warnings?.length && !u.isSuspended && !u.banned && (
-                          <span className="text-xs text-gray-300">—</span>
+                          <span className="text-xs text-gray-300 dark:text-gray-600">—</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{u.followers?.length || 0}</td>
-                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{u.followers?.length || 0}</td>
+                    <td className="px-4 py-3 text-gray-400 dark:text-gray-500 text-xs whitespace-nowrap">
                       {format(new Date(u.createdAt), 'MMM d, yyyy')}
                     </td>
                     <td className="px-4 py-3">
@@ -470,22 +470,22 @@ function UsersTab() {
                           <FiEye className="text-sm" />
                         </Link>
                         <button onClick={() => toggleAdmin(u._id)}
-                          className={`p-1.5 rounded transition ${u.isAdmin ? 'text-purple-400 hover:text-gray-400' : 'text-gray-300 hover:text-purple-500'}`}
+                          className={`p-1.5 rounded transition ${u.isAdmin ? 'text-purple-400 hover:text-gray-400' : 'text-gray-300 dark:text-gray-600 hover:text-purple-500'}`}
                           title={u.isAdmin ? 'Remove admin' : 'Make admin'}>
                           <FiShield className="text-sm" />
                         </button>
                         <button onClick={() => toggleBan(u._id)}
-                          className={`p-1.5 rounded transition ${u.banned ? 'text-red-400 hover:text-gray-400' : 'text-gray-300 hover:text-red-500'}`}
+                          className={`p-1.5 rounded transition ${u.banned ? 'text-red-400 hover:text-gray-400' : 'text-gray-300 dark:text-gray-600 hover:text-red-500'}`}
                           title={u.banned ? 'Unban user' : 'Ban user'}>
                           <FiSlash className="text-sm" />
                         </button>
                         <button onClick={() => deleteUser(u._id)}
-                          className="p-1.5 text-gray-300 hover:text-red-500 transition rounded" title="Delete user">
+                          className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 transition rounded" title="Delete user">
                           <FiTrash2 className="text-sm" />
                         </button>
                         <button
                           onClick={() => setModeratingUser(u)}
-                          className="p-1.5 text-gray-300 hover:text-orange-500 transition rounded"
+                          className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-orange-500 transition rounded"
                           title="Moderate user"
                         >
                           <FiAlertTriangle className="text-sm" />
@@ -495,7 +495,7 @@ function UsersTab() {
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-400">No users found</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-400 dark:text-gray-500">No users found</td></tr>
                 )}
               </tbody>
             </table>
@@ -503,10 +503,10 @@ function UsersTab() {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 mt-5">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="px-4 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">← Prev</button>
-              <span className="text-sm text-gray-500">{page} / {totalPages}</span>
+                className="px-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">← Prev</button>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{page} / {totalPages}</span>
               <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className="px-4 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">Next →</button>
+                className="px-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">Next →</button>
             </div>
           )}
         </>
@@ -565,34 +565,34 @@ function CommentsTab() {
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search comments…"
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400" />
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 rounded-lg focus:outline-none focus:border-gray-400 dark:focus:border-gray-500" />
         </div>
       </div>
 
       {loading ? <LoadingSpinner /> : (
         <>
-          <div className="overflow-x-auto rounded-xl border border-gray-200">
+          <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr className="text-left border-b border-gray-200">
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Comment</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Author</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Article</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Date</th>
-                  <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Actions</th>
+              <thead className="bg-gray-50 dark:bg-gray-800/60">
+                <tr className="text-left border-b border-gray-200 dark:border-gray-700">
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Comment</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Author</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Article</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Date</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {filtered.map(c => (
-                  <tr key={c._id} className="hover:bg-gray-50 transition">
+                  <tr key={c._id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
                     <td className="px-4 py-3 max-w-xs">
-                      <p className="text-gray-800 line-clamp-2">{c.content}</p>
+                      <p className="text-gray-800 dark:text-gray-200 line-clamp-2">{c.content}</p>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <img src={c.author?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.author?.name || 'U')}&background=random&size=24`}
                           alt={c.author?.name} className="w-6 h-6 rounded-full object-cover" />
-                        <span className="text-gray-600 text-xs">{c.author?.name}</span>
+                        <span className="text-gray-600 dark:text-gray-400 text-xs">{c.author?.name}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -603,19 +603,19 @@ function CommentsTab() {
                         </Link>
                       ) : <span className="text-gray-400 text-xs">Deleted</span>}
                     </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
+                    <td className="px-4 py-3 text-gray-400 dark:text-gray-500 text-xs whitespace-nowrap">
                       {formatDistanceToNow(new Date(c.createdAt), { addSuffix: true })}
                     </td>
                     <td className="px-4 py-3">
                       <button onClick={() => deleteComment(c._id)}
-                        className="p-1.5 text-gray-300 hover:text-red-500 transition rounded" title="Delete">
+                        className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 transition rounded" title="Delete">
                         <FiTrash2 className="text-sm" />
                       </button>
                     </td>
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-10 text-center text-gray-400">No comments found</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-10 text-center text-gray-400 dark:text-gray-500">No comments found</td></tr>
                 )}
               </tbody>
             </table>
@@ -623,10 +623,10 @@ function CommentsTab() {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 mt-5">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="px-4 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">← Prev</button>
-              <span className="text-sm text-gray-500">{page} / {totalPages}</span>
+                className="px-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">← Prev</button>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{page} / {totalPages}</span>
               <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className="px-4 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">Next →</button>
+                className="px-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">Next →</button>
             </div>
           )}
         </>
@@ -664,11 +664,11 @@ function AnalyticsTab() {
   return (
     <div className="space-y-6">
       {/* Engagement chart */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-        <h3 className="font-semibold text-gray-800 mb-1 text-sm">Engagement by Article</h3>
-        <p className="text-xs text-gray-400 mb-4">Views, likes and claps for your top articles</p>
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm">
+        <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Engagement by Article</h3>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Views, likes and claps for your top articles</p>
         {engagementData.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">No data yet</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">No data yet</p>
         ) : (
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={engagementData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
@@ -686,11 +686,11 @@ function AnalyticsTab() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Tag distribution */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <h3 className="font-semibold text-gray-800 mb-1 text-sm">Tag Distribution</h3>
-          <p className="text-xs text-gray-400 mb-4">Most used tags across all articles</p>
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Tag Distribution</h3>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Most used tags across all articles</p>
           {tagPieData.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">No tags yet</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">No tags yet</p>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
@@ -704,26 +704,26 @@ function AnalyticsTab() {
         </div>
 
         {/* Top authors by total views */}
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-          <h3 className="font-semibold text-gray-800 mb-1 text-sm">Top Articles</h3>
-          <p className="text-xs text-gray-400 mb-4">Ranked by total views</p>
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm">
+          <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 text-sm">Top Articles</h3>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">Ranked by total views</p>
           <div className="space-y-3">
             {topPosts.map((p, i) => (
               <div key={p._id} className="flex items-center gap-3">
-                <span className="text-xl font-bold text-gray-200 w-7 flex-shrink-0 text-center">
+                <span className="text-xl font-bold text-gray-200 dark:text-gray-700 w-7 flex-shrink-0 text-center">
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{p.title}</p>
-                  <p className="text-xs text-gray-400">{p.author?.name}</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{p.title}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{p.author?.name}</p>
                 </div>
-                <div className="flex items-center gap-3 flex-shrink-0 text-xs text-gray-500">
+                <div className="flex items-center gap-3 flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
                   <span className="flex items-center gap-1"><FiEye className="text-xs" />{p.views}</span>
                   <span className="flex items-center gap-1"><FiHeart className="text-xs" />{p.likes?.length || 0}</span>
                 </div>
               </div>
             ))}
-            {topPosts.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No posts yet</p>}
+            {topPosts.length === 0 && <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-4">No posts yet</p>}
           </div>
         </div>
       </div>
@@ -766,37 +766,37 @@ function TagsTab() {
           <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder="Search tags…"
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-gray-400" />
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 rounded-lg focus:outline-none focus:border-gray-400 dark:focus:border-gray-500" />
         </div>
       </div>
 
       {loading ? <LoadingSpinner /> : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr className="text-left border-b border-gray-200">
-                <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Tag</th>
-                <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Usage</th>
-                <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Popularity</th>
-                <th className="px-4 py-3 font-medium text-gray-500 text-xs uppercase tracking-wide">Actions</th>
+            <thead className="bg-gray-50 dark:bg-gray-800/60">
+              <tr className="text-left border-b border-gray-200 dark:border-gray-700">
+                <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Tag</th>
+                <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Usage</th>
+                <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Popularity</th>
+                <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {filtered.map(t => (
-                <tr key={t._id} className="hover:bg-gray-50 transition">
+                <tr key={t._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition">
                   <td className="px-4 py-3">
                     <Link to={`/?tag=${t._id}`}
-                      className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-800 hover:text-medium-green transition">
-                      <span className="text-gray-400">#</span>{t._id}
+                      className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-medium-green transition">
+                      <span className="text-gray-400 dark:text-gray-500">#</span>{t._id}
                     </Link>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-medium">
+                    <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full font-medium">
                       {t.count} {t.count === 1 ? 'post' : 'posts'}
                     </span>
                   </td>
                   <td className="px-4 py-3 w-48">
-                    <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
                       <div className="bg-medium-green h-2 rounded-full transition-all"
                         style={{ width: `${(t.count / maxCount) * 100}%` }} />
                     </div>
@@ -804,14 +804,14 @@ function TagsTab() {
                   <td className="px-4 py-3">
                     <button onClick={() => deleteTag(t._id)}
                       disabled={deleting === t._id}
-                      className="p-1.5 text-gray-300 hover:text-red-500 transition rounded disabled:opacity-40" title="Remove tag">
-                      {deleting === t._id ? <span className="text-xs text-gray-400">…</span> : <FiTrash2 className="text-sm" />}
+                      className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 transition rounded disabled:opacity-40" title="Remove tag">
+                      {deleting === t._id ? <span className="text-xs text-gray-400 dark:text-gray-500">…</span> : <FiTrash2 className="text-sm" />}
                     </button>
                   </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={4} className="px-4 py-10 text-center text-gray-400">No tags found</td></tr>
+                <tr><td colSpan={4} className="px-4 py-10 text-center text-gray-400 dark:text-gray-500">No tags found</td></tr>
               )}
             </tbody>
           </table>
@@ -862,24 +862,24 @@ function ModerationModal({ comment, onClose, onDone }) {
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h3 className="font-semibold text-gray-900 text-base">Moderate reported comment</h3>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-base">Moderate reported comment</h3>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
               {comment.reportedBy?.length || 0} report{comment.reportedBy?.length !== 1 ? 's' : ''} ·{' '}
-              by <span className="font-medium text-gray-600">{comment.author?.name}</span>
+              by <span className="font-medium text-gray-600 dark:text-gray-300">{comment.author?.name}</span>
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100 transition">
+          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition">
             <FiX />
           </button>
         </div>
 
         {/* Reported comment preview */}
-        <div className="bg-gray-50 rounded-xl p-3 mb-4 border border-gray-100">
-          <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">{comment.content}</p>
-          <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 mb-4 border border-gray-100 dark:border-gray-700">
+          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-4">{comment.content}</p>
+          <div className="flex items-center gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500">
             {comment.post && (
               <Link to={`/article/${comment.post.slug}`} target="_blank"
                 className="text-medium-green hover:underline line-clamp-1 max-w-[200px]">
@@ -892,25 +892,25 @@ function ModerationModal({ comment, onClose, onDone }) {
 
         {/* Report reasons summary */}
         {comment.reportReason && (
-          <div className="mb-4 px-3 py-2 bg-amber-50 border border-amber-100 rounded-lg">
-            <p className="text-xs font-medium text-amber-700 mb-0.5">Latest report reason</p>
-            <p className="text-xs text-amber-600">{comment.reportReason}</p>
+          <div className="mb-4 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-lg">
+            <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-0.5">Latest report reason</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400">{comment.reportReason}</p>
           </div>
         )}
 
         {/* Action selector */}
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Choose action</p>
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Choose action</p>
         <div className="grid grid-cols-1 gap-1.5 mb-4">
           {ACTIONS.map(a => {
             const Icon = a.icon;
             return (
               <label key={a.id}
                 className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                  action === a.id ? 'border-gray-400 bg-gray-50' : 'border-gray-100 hover:border-gray-300'}`}>
+                  action === a.id ? 'border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-700' : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}>
                 <input type="radio" name="action" value={a.id} checked={action === a.id}
-                  onChange={() => setAction(a.id)} className="accent-gray-800" />
+                  onChange={() => setAction(a.id)} className="accent-gray-800 dark:accent-gray-300" />
                 <Icon className={`text-base flex-shrink-0 ${a.color}`} />
-                <span className="text-sm text-gray-700">{a.label}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{a.label}</span>
               </label>
             );
           })}
@@ -919,9 +919,9 @@ function ModerationModal({ comment, onClose, onDone }) {
         {/* Suspend days */}
         {action === 'suspend' && (
           <div className="mb-4">
-            <label className="block text-xs font-medium text-gray-500 mb-1">Suspension duration</label>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Suspension duration</label>
             <select value={days} onChange={e => setDays(Number(e.target.value))}
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 bg-white">
+              className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 bg-white dark:bg-gray-700 dark:text-gray-200">
               {[1,3,7,14,30].map(d => <option key={d} value={d}>{d} day{d > 1 ? 's' : ''}</option>)}
             </select>
           </div>
@@ -930,22 +930,22 @@ function ModerationModal({ comment, onClose, onDone }) {
         {/* Optional reason/note */}
         {action !== 'dismiss' && (
           <div className="mb-5">
-            <label className="block text-xs font-medium text-gray-500 mb-1">
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
               {action === 'delete' ? 'Internal note (optional)' : 'Reason sent to user (optional)'}
             </label>
             <textarea value={reason} onChange={e => setReason(e.target.value)}
               rows={2} placeholder="Violation of community guidelines…"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-gray-400" />
+              className="w-full text-sm border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-500 rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-gray-400 dark:focus:border-gray-500" />
           </div>
         )}
 
         <div className="flex gap-3 justify-end">
           <button onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-500 hover:text-gray-800 transition">
+            className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition">
             Cancel
           </button>
           <button onClick={submit} disabled={loading}
-            className="px-5 py-2 text-sm bg-gray-900 text-white rounded-full hover:bg-gray-700 transition disabled:opacity-40">
+            className="px-5 py-2 text-sm bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-full hover:bg-gray-700 dark:hover:bg-white transition disabled:opacity-40">
             {loading ? 'Applying…' : 'Apply action'}
           </button>
         </div>
@@ -1017,8 +1017,8 @@ function ReportsTab() {
           <button key={t.id} onClick={() => setReportType(t.id)}
             className={`px-4 py-1.5 text-sm rounded-full border transition-colors font-medium ${
               reportType === t.id
-                ? 'bg-gray-900 text-white border-gray-900'
-                : 'border-gray-200 text-gray-500 hover:border-gray-400'}`}>
+                ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100'
+                : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500'}`}>
             {t.label}
           </button>
         ))}
@@ -1027,18 +1027,18 @@ function ReportsTab() {
       {/* Header + status filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
-          <h2 className="font-semibold text-gray-900">
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100">
             Reported {reportType === 'comments' ? 'Comments' : 'Stories'}
           </h2>
-          <p className="text-xs text-gray-400 mt-0.5">{totalCount} total</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{totalCount} total</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           {['pending','all','dismissed','actioned'].map(s => (
             <button key={s} onClick={() => setFilter(s)}
               className={`px-3 py-1.5 text-xs rounded-full border transition-colors font-medium ${
                 statusFilter === s
-                  ? 'bg-gray-900 text-white border-gray-900'
-                  : 'border-gray-200 text-gray-500 hover:border-gray-400'}`}>
+                  ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100'
+                  : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500'}`}>
               {s.charAt(0).toUpperCase() + s.slice(1)}
             </button>
           ))}
@@ -1059,8 +1059,8 @@ function ReportsTab() {
               const status  = item.moderationStatus || 'pending';
               return (
                 <div key={item._id}
-                  className={`bg-white rounded-xl border p-4 shadow-sm ${
-                    item.isHidden ? 'border-amber-200 bg-amber-50/30' : 'border-gray-200'}`}>
+                  className={`bg-white dark:bg-gray-800 rounded-xl border p-4 shadow-sm ${
+                    item.isHidden ? 'border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-900/10' : 'border-gray-200 dark:border-gray-700'}`}>
                   <div className="flex items-start gap-3">
                     <img
                       src={author?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(author?.name || 'U')}&background=random&size=36`}
@@ -1071,10 +1071,10 @@ function ReportsTab() {
                       {/* Top row */}
                       <div className="flex items-start justify-between gap-2 flex-wrap">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-sm text-gray-900">{author?.name}</span>
-                          <span className="text-xs text-gray-400">{author?.email}</span>
+                          <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">{author?.name}</span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500">{author?.email}</span>
                           {item.isHidden && (
-                            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                            <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium">
                               Auto-hidden
                             </span>
                           )}
@@ -1090,7 +1090,7 @@ function ReportsTab() {
                               <button
                                 onClick={() => dismissStory(item._id)}
                                 disabled={status !== 'pending'}
-                                className="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 rounded-full hover:border-gray-400 transition disabled:opacity-40">
+                                className="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-full hover:border-gray-400 transition disabled:opacity-40">
                                 <FiCheckCircle className="text-green-500" /> Dismiss
                               </button>
                               <button
@@ -1116,19 +1116,19 @@ function ReportsTab() {
                       {isStory ? (
                         <div className="mt-2">
                           <Link to={`/article/${item.slug}`} target="_blank"
-                            className="text-sm font-medium text-gray-900 hover:underline line-clamp-1">
+                            className="text-sm font-medium text-gray-900 dark:text-gray-100 hover:underline line-clamp-1">
                             {item.title}
                           </Link>
                           {item.excerpt && (
-                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{item.excerpt}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">{item.excerpt}</p>
                           )}
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-700 mt-2 leading-relaxed line-clamp-3">{item.content}</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 leading-relaxed line-clamp-3">{item.content}</p>
                       )}
 
                       {/* Meta */}
-                      <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400">
+                      <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500">
                         <span className="flex items-center gap-1">
                           <FiAlertTriangle className="text-amber-500" />
                           {item.reportedBy?.length || 0} report{item.reportedBy?.length !== 1 ? 's' : ''}
@@ -1146,8 +1146,8 @@ function ReportsTab() {
 
                       {/* Report reason */}
                       {item.reportReason && (
-                        <div className="mt-2 px-2.5 py-1.5 bg-amber-50 border border-amber-100 rounded-lg">
-                          <span className="text-xs text-amber-600">
+                        <div className="mt-2 px-2.5 py-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-lg">
+                          <span className="text-xs text-amber-600 dark:text-amber-400">
                             <span className="font-medium">Reason: </span>{item.reportReason}
                           </span>
                         </div>
@@ -1155,14 +1155,14 @@ function ReportsTab() {
 
                       {/* Reporters */}
                       {item.reportedBy?.length > 0 && (
-                        <div className="mt-1.5 text-xs text-gray-400">
+                        <div className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
                           Reported by: {item.reportedBy.slice(0, 3).map(u => u.name || u.email).join(', ')}
                           {item.reportedBy.length > 3 && ` +${item.reportedBy.length - 3} more`}
                         </div>
                       )}
 
                       {item.moderationNote && (
-                        <p className="mt-1.5 text-xs text-gray-500 italic">Admin note: {item.moderationNote}</p>
+                        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400 italic">Admin note: {item.moderationNote}</p>
                       )}
                     </div>
                   </div>
@@ -1174,10 +1174,10 @@ function ReportsTab() {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 mt-5">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="px-4 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">← Prev</button>
-              <span className="text-sm text-gray-500">{page} / {totalPages}</span>
+                className="px-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">← Prev</button>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{page} / {totalPages}</span>
               <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className="px-4 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">Next →</button>
+                className="px-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">Next →</button>
             </div>
           )}
         </>
@@ -1254,16 +1254,16 @@ function AppealsTab() {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
-          <h2 className="font-semibold text-gray-900">Appeals</h2>
-          <p className="text-xs text-gray-400 mt-0.5">{totalCount} total appeals submitted by users</p>
+          <h2 className="font-semibold text-gray-900 dark:text-gray-100">Appeals</h2>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{totalCount} total appeals submitted by users</p>
         </div>
         <div className="flex gap-2">
           {['pending','all','approved','rejected'].map(s => (
             <button key={s} onClick={() => setFilter(s)}
               className={`px-3 py-1.5 text-xs rounded-full border transition-colors font-medium ${
                 statusFilter === s
-                  ? 'bg-gray-900 text-white border-gray-900'
-                  : 'border-gray-200 text-gray-500 hover:border-gray-400'}`}>
+                  ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100'
+                  : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500'}`}>
               {s.charAt(0).toUpperCase() + s.slice(1)}
             </button>
           ))}
@@ -1281,7 +1281,7 @@ function AppealsTab() {
             {appeals.map(a => {
               const actionMeta = ACTION_LABELS[a.action] || { label: a.action, color: 'bg-gray-100 text-gray-600' };
               return (
-                <div key={a._id} className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <div key={a._id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
                   <div className="flex items-start gap-3">
                     <img
                       src={a.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.user?.name || 'U')}&background=random&size=36`}
@@ -1291,8 +1291,8 @@ function AppealsTab() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 flex-wrap">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-sm text-gray-900">{a.user?.name}</span>
-                          <span className="text-xs text-gray-400">{a.user?.email}</span>
+                          <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">{a.user?.name}</span>
+                          <span className="text-xs text-gray-400 dark:text-gray-500">{a.user?.email}</span>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${actionMeta.color}`}>
                             Appealing: {actionMeta.label}
                           </span>
@@ -1316,24 +1316,24 @@ function AppealsTab() {
                       </div>
 
                       {/* Original comment snapshot */}
-                      <div className="mt-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
-                        <p className="text-xs text-gray-400 mb-1 font-medium">Reported comment</p>
-                        <p className="text-sm text-gray-700 line-clamp-3">{a.commentContent}</p>
+                      <div className="mt-2 bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mb-1 font-medium">Reported comment</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3">{a.commentContent}</p>
                       </div>
 
                       {/* Appeal reason */}
                       <div className="mt-2">
-                        <p className="text-xs font-medium text-gray-500 mb-0.5">Appeal reason</p>
-                        <p className="text-sm text-gray-700">{a.reason}</p>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">Appeal reason</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">{a.reason}</p>
                       </div>
 
-                      <div className="flex flex-wrap gap-3 mt-2 text-xs text-gray-400">
+                      <div className="flex flex-wrap gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500">
                         <span className="flex items-center gap-1"><FiClock /> {formatDistanceToNow(new Date(a.createdAt), { addSuffix: true })}</span>
                         {a.reviewedBy && (
-                          <span>Reviewed by <span className="font-medium text-gray-600">{a.reviewedBy.name}</span></span>
+                          <span>Reviewed by <span className="font-medium text-gray-600 dark:text-gray-400">{a.reviewedBy.name}</span></span>
                         )}
                         {a.adminNote && (
-                          <span className="italic text-gray-500">Note: {a.adminNote}</span>
+                          <span className="italic text-gray-500 dark:text-gray-400">Note: {a.adminNote}</span>
                         )}
                       </div>
                     </div>
@@ -1346,10 +1346,10 @@ function AppealsTab() {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 mt-5">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="px-4 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">← Prev</button>
-              <span className="text-sm text-gray-500">{page} / {totalPages}</span>
+                className="px-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">← Prev</button>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{page} / {totalPages}</span>
               <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-                className="px-4 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">Next →</button>
+                className="px-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">Next →</button>
             </div>
           )}
         </>
@@ -1358,22 +1358,22 @@ function AppealsTab() {
       {/* Approve / reject confirm modal */}
       {reviewing && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
-            <h3 className="font-semibold text-gray-900 mb-1">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
               {reviewing.decision === 'approve' ? 'Approve appeal' : 'Reject appeal'}
             </h3>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               {reviewing.decision === 'approve'
                 ? 'Approving will reverse the moderation action and notify the user.'
                 : 'Rejecting will keep the moderation action in place and notify the user.'}
             </p>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Admin note (optional)</label>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Admin note (optional)</label>
             <textarea value={note} onChange={e => setNote(e.target.value)}
               rows={3} placeholder="Internal or user-facing note…"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none mb-4 focus:outline-none focus:border-gray-400" />
+              className="w-full text-sm border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-500 rounded-lg px-3 py-2 resize-none mb-4 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500" />
             <div className="flex gap-3 justify-end">
               <button onClick={() => { setReviewing(null); setNote(''); }}
-                className="px-4 py-2 text-sm text-gray-500 hover:text-gray-800 transition">Cancel</button>
+                className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition">Cancel</button>
               <button onClick={submitReview} disabled={submitting}
                 className={`px-5 py-2 text-sm text-white rounded-full transition disabled:opacity-40 ${
                   reviewing.decision === 'approve' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-500 hover:bg-red-600'}`}>
@@ -1420,46 +1420,46 @@ function UserModerationModal({ targetUser, onClose, onDone }) {
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h3 className="font-semibold text-gray-900 text-base">Moderate user</h3>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-base">Moderate user</h3>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
               {targetUser?.name} · {targetUser?.email}
             </p>
           </div>
-          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-700 rounded-full hover:bg-gray-100 transition">
+          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition">
             <FiX />
           </button>
         </div>
 
         {/* Current status summary */}
-        <div className="bg-gray-50 rounded-xl px-3 py-2.5 mb-4 flex flex-wrap gap-2 text-xs">
+        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl px-3 py-2.5 mb-4 flex flex-wrap gap-2 text-xs">
           <span className={`px-2 py-0.5 rounded-full font-medium ${
-            targetUser?.banned ? 'bg-red-100 text-red-600' :
-            targetUser?.isSuspended ? 'bg-orange-100 text-orange-600' :
-            'bg-green-100 text-green-600'}`}>
+            targetUser?.banned ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' :
+            targetUser?.isSuspended ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' :
+            'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'}`}>
             {targetUser?.banned ? 'Banned' : targetUser?.isSuspended ? 'Suspended' : 'Active'}
           </span>
           {targetUser?.warnings?.length > 0 && (
-            <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium">
+            <span className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full font-medium">
               {targetUser.warnings.length}× warned
             </span>
           )}
         </div>
 
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Choose action</p>
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Choose action</p>
         <div className="grid grid-cols-1 gap-1.5 mb-4">
           {ACTIONS.map(a => {
             const Icon = a.icon;
             return (
               <label key={a.id}
                 className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
-                  action === a.id ? 'border-gray-400 bg-gray-50' : 'border-gray-100 hover:border-gray-300'}`}>
+                  action === a.id ? 'border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-700' : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}>
                 <input type="radio" name="user-action" value={a.id} checked={action === a.id}
-                  onChange={() => setAction(a.id)} className="accent-gray-800" />
+                  onChange={() => setAction(a.id)} className="accent-gray-800 dark:accent-gray-300" />
                 <Icon className={`text-base flex-shrink-0 ${a.color}`} />
-                <span className="text-sm text-gray-700">{a.label}</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">{a.label}</span>
               </label>
             );
           })}
@@ -1467,9 +1467,9 @@ function UserModerationModal({ targetUser, onClose, onDone }) {
 
         {action === 'suspend' && (
           <div className="mb-4">
-            <label className="block text-xs font-medium text-gray-500 mb-1">Suspension duration</label>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Suspension duration</label>
             <select value={days} onChange={e => setDays(Number(e.target.value))}
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 bg-white">
+              className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 bg-white dark:bg-gray-700 dark:text-gray-200">
               {[1,3,7,14,30].map(d => <option key={d} value={d}>{d} day{d > 1 ? 's' : ''}</option>)}
             </select>
           </div>
@@ -1477,23 +1477,23 @@ function UserModerationModal({ targetUser, onClose, onDone }) {
 
         {(action === 'warn' || action === 'suspend' || action === 'ban') && action !== 'ban' && (
           <div className="mb-5">
-            <label className="block text-xs font-medium text-gray-500 mb-1">Reason (sent to user, optional)</label>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Reason (sent to user, optional)</label>
             <textarea value={reason} onChange={e => setReason(e.target.value)}
               rows={2} placeholder="Violation of community guidelines…"
-              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-gray-400" />
+              className="w-full text-sm border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-500 rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-gray-400 dark:focus:border-gray-500" />
           </div>
         )}
 
         {action === 'remove' && (
-          <div className="mb-5 px-3 py-2.5 bg-green-50 border border-green-100 rounded-lg text-xs text-green-700">
+          <div className="mb-5 px-3 py-2.5 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-lg text-xs text-green-700 dark:text-green-400">
             This will clear the ban, suspension, and all warnings from this user's record.
           </div>
         )}
 
         <div className="flex gap-3 justify-end">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-800 transition">Cancel</button>
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition">Cancel</button>
           <button onClick={submit} disabled={loading}
-            className="px-5 py-2 text-sm bg-gray-900 text-white rounded-full hover:bg-gray-700 transition disabled:opacity-40">
+            className="px-5 py-2 text-sm bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-full hover:bg-gray-700 dark:hover:bg-white transition disabled:opacity-40">
             {loading ? 'Applying…' : 'Apply action'}
           </button>
         </div>
@@ -1518,12 +1518,12 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your platform — articles, users, comments, and more.</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Admin Dashboard</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your platform — articles, users, comments, and more.</p>
         </div>
 
         <div className="flex gap-6">
@@ -1536,8 +1536,8 @@ export default function AdminDashboard() {
                   <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                       activeTab === tab.id
-                        ? 'bg-white shadow-sm text-gray-900 font-semibold border border-gray-200'
-                        : 'text-gray-500 hover:text-gray-800 hover:bg-white/60'}`}>
+                        ? 'bg-white dark:bg-gray-800 shadow-sm text-gray-900 dark:text-gray-100 font-semibold border border-gray-200 dark:border-gray-700'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/60 dark:hover:bg-gray-800/60'}`}>
                     <Icon className="text-base flex-shrink-0" />
                     {tab.label}
                   </button>
@@ -1554,7 +1554,7 @@ export default function AdminDashboard() {
                 return (
                   <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                     className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs whitespace-nowrap transition-colors flex-shrink-0 ${
-                      activeTab === tab.id ? 'bg-white shadow-sm text-gray-900 font-semibold border border-gray-200' : 'text-gray-500 hover:bg-white/60'}`}>
+                      activeTab === tab.id ? 'bg-white dark:bg-gray-800 shadow-sm text-gray-900 dark:text-gray-100 font-semibold border border-gray-200 dark:border-gray-700' : 'text-gray-500 dark:text-gray-400 hover:bg-white/60 dark:hover:bg-gray-800/60'}`}>
                     <Icon className="text-sm" />
                     {tab.label}
                   </button>

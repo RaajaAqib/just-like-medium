@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import api from '../utils/axios';
 import {
   FiHome, FiBookmark, FiUser, FiFileText, FiBarChart2,
   FiUserPlus, FiEdit, FiBell, FiSearch, FiMenu, FiX,
-  FiHeart, FiMessageCircle, FiPlus, FiZap, FiShield
+  FiHeart, FiMessageCircle, FiPlus, FiZap, FiShield,
+  FiSun, FiMoon
 } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -15,21 +17,21 @@ const NavItem = ({ to, icon: Icon, label, active, onClick }) => (
     onClick={onClick}
     className={`flex items-center gap-3 px-3 py-2.5 rounded-sm text-sm transition-colors w-full ${
       active
-        ? 'text-medium-black font-semibold'
-        : 'text-medium-gray hover:text-medium-black'
+        ? 'text-medium-black dark:text-gray-100 font-semibold'
+        : 'text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-100'
     }`}
   >
-    <Icon className={`text-xl flex-shrink-0 ${active ? 'text-medium-black' : 'text-medium-gray'}`} />
+    <Icon className={`text-xl flex-shrink-0 ${active ? 'text-medium-black dark:text-gray-100' : 'text-medium-gray dark:text-gray-400'}`} />
     <span>{label}</span>
   </Link>
 );
 
 export default function SidebarLayout({ children }) {
   const { user, logout } = useAuth();
+  const { dark, toggle: toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Desktop: sidebar open by default; mobile: closed by default
   const [desktopOpen, setDesktopOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -43,13 +45,11 @@ export default function SidebarLayout({ children }) {
 
   const path = location.pathname;
 
-  // Lock body scroll on mobile overlay
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
@@ -81,7 +81,6 @@ export default function SidebarLayout({ children }) {
     }
   };
 
-  // Poll every 30 seconds for real-time notifications
   useEffect(() => {
     if (!user) return;
     fetchNotifications(true);
@@ -105,9 +104,7 @@ export default function SidebarLayout({ children }) {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Hamburger handler: mobile opens overlay, desktop toggles persistent sidebar
   const handleHamburger = () => {
-    // Check screen width to determine behavior
     if (window.innerWidth < 768) {
       setMobileOpen(true);
     } else {
@@ -117,7 +114,6 @@ export default function SidebarLayout({ children }) {
 
   const SidebarContent = ({ onClose }) => (
     <div className="flex flex-col h-full">
-      {/* Nav */}
       <nav className="flex flex-col gap-0.5 px-2 pt-4 flex-1">
         <NavItem to="/" icon={FiHome} label="Home" active={path === '/'} onClick={onClose} />
         <NavItem to="/library" icon={FiBookmark} label="Library" active={path === '/library'} onClick={onClose} />
@@ -125,30 +121,29 @@ export default function SidebarLayout({ children }) {
         <NavItem to="/my-stories" icon={FiFileText} label="Stories" active={path === '/my-stories'} onClick={onClose} />
         <NavItem to="/stats" icon={FiBarChart2} label="Stats" active={path === '/stats'} onClick={onClose} />
 
-        <div className="my-2 border-t border-medium-border mx-2" />
+        <div className="my-2 border-t border-medium-border dark:border-gray-700 mx-2" />
 
         <NavItem to="/following" icon={FiUserPlus} label="Following" active={path === '/following'} onClick={onClose} />
 
         <div className="mt-1 px-3">
-          <p className="text-xs text-medium-gray leading-relaxed">
+          <p className="text-xs text-medium-gray dark:text-gray-500 leading-relaxed">
             Find writers and publications to follow.
           </p>
           <Link to="/following" onClick={onClose}
-            className="text-xs text-medium-gray hover:text-medium-black underline mt-1 block">
+            className="text-xs text-medium-gray dark:text-gray-500 hover:text-medium-black dark:hover:text-gray-200 underline mt-1 block">
             See suggestions
           </Link>
         </div>
 
-        <button className="flex items-center gap-3 px-3 py-2.5 text-sm text-medium-gray hover:text-medium-black transition mt-1">
+        <button className="flex items-center gap-3 px-3 py-2.5 text-sm text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-100 transition mt-1">
           <FiPlus className="text-xl flex-shrink-0" />
           <span>New list</span>
         </button>
       </nav>
 
-      {/* Write */}
-      <div className="px-3 py-4 border-t border-medium-border">
+      <div className="px-3 py-4 border-t border-medium-border dark:border-gray-700">
         <Link to="/write" onClick={onClose}
-          className="flex items-center gap-3 text-sm text-medium-gray hover:text-medium-black transition px-3 py-2">
+          className="flex items-center gap-3 text-sm text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-100 transition px-3 py-2">
           <FiEdit className="text-xl flex-shrink-0" />
           <span>Write a story</span>
         </Link>
@@ -157,21 +152,21 @@ export default function SidebarLayout({ children }) {
   );
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
 
       {/* ── Top Navbar ── */}
-      <header className="sticky top-0 z-30 bg-white border-b border-medium-border h-14 flex items-center px-4 gap-3">
+      <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-medium-border dark:border-gray-700 h-14 flex items-center px-4 gap-3">
 
         {/* Left: hamburger + logo */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={handleHamburger}
-            className="p-1.5 text-medium-gray hover:text-medium-black transition rounded-sm"
+            className="p-1.5 text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-100 transition rounded-sm"
             aria-label="Toggle sidebar"
           >
             <FiMenu className="text-[22px]" />
           </button>
-          <Link to="/" className="font-bold font-serif text-medium-black text-lg leading-none whitespace-nowrap">
+          <Link to="/" className="font-bold font-serif text-medium-black dark:text-gray-100 text-lg leading-none whitespace-nowrap">
             Just Like Medium
           </Link>
         </div>
@@ -179,36 +174,46 @@ export default function SidebarLayout({ children }) {
         {/* Center: search */}
         <form onSubmit={handleSearch} className="flex-1 max-w-xs mx-auto hidden sm:block">
           <div className="relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray text-sm pointer-events-none" />
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-medium-gray dark:text-gray-500 text-sm pointer-events-none" />
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search"
-              className="w-full bg-gray-100 rounded-full pl-9 pr-4 py-1.5 text-sm focus:outline-none focus:bg-gray-200 transition"
+              className="w-full bg-gray-100 dark:bg-gray-800 text-medium-black dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 rounded-full pl-9 pr-4 py-1.5 text-sm focus:outline-none focus:bg-gray-200 dark:focus:bg-gray-700 transition"
             />
           </div>
         </form>
 
-        {/* Right: Write, Bell, Avatar */}
+        {/* Right: Write, Theme toggle, Bell, Avatar */}
         <div className="flex items-center gap-1 sm:gap-2 ml-auto flex-shrink-0">
 
           {/* Mobile search toggle */}
-          <button className="sm:hidden p-1.5 text-medium-gray hover:text-medium-black transition"
+          <button className="sm:hidden p-1.5 text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-100 transition"
             onClick={() => navigate('/?search=')}>
             <FiSearch className="text-xl" />
           </button>
 
           <Link to="/write"
-            className="hidden sm:flex items-center gap-1.5 text-sm text-medium-gray hover:text-medium-black transition px-2 py-1.5 whitespace-nowrap">
+            className="hidden sm:flex items-center gap-1.5 text-sm text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-100 transition px-2 py-1.5 whitespace-nowrap">
             <FiEdit className="text-base" />
             <span>Write</span>
           </Link>
 
+          {/* Dark mode toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-100 transition rounded-sm"
+            aria-label="Toggle dark mode"
+            title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {dark ? <FiSun className="text-xl" /> : <FiMoon className="text-xl" />}
+          </button>
+
           {/* Notifications */}
           <div className="relative" ref={notifRef}>
             <button onClick={handleBellClick}
-              className="relative p-1.5 text-medium-gray hover:text-medium-black transition"
+              className="relative p-1.5 text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-100 transition"
               aria-label="Notifications">
               <FiBell className="text-xl" />
               {unreadCount > 0 && (
@@ -219,9 +224,9 @@ export default function SidebarLayout({ children }) {
             </button>
 
             {notifOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white border border-medium-border rounded-lg shadow-xl z-50 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-medium-border">
-                  <h3 className="font-semibold text-medium-black text-sm">Notifications</h3>
+              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 border border-medium-border dark:border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-medium-border dark:border-gray-700">
+                  <h3 className="font-semibold text-medium-black dark:text-gray-100 text-sm">Notifications</h3>
                   {unreadCount > 0 && (
                     <button onClick={markAllRead} className="text-xs text-medium-green hover:underline">
                       Mark all read
@@ -230,9 +235,9 @@ export default function SidebarLayout({ children }) {
                 </div>
                 <div className="max-h-80 overflow-y-auto">
                   {notifLoading ? (
-                    <div className="px-4 py-8 text-center text-medium-gray text-sm">Loading...</div>
+                    <div className="px-4 py-8 text-center text-medium-gray dark:text-gray-400 text-sm">Loading...</div>
                   ) : notifications.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-medium-gray text-sm">No notifications yet.</div>
+                    <div className="px-4 py-8 text-center text-medium-gray dark:text-gray-400 text-sm">No notifications yet.</div>
                   ) : (
                     notifications.map(n => (
                       <Link key={n._id}
@@ -246,7 +251,7 @@ export default function SidebarLayout({ children }) {
                                 : '#'
                         }
                         onClick={() => setNotifOpen(false)}
-                        className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition border-b border-medium-border last:border-0 ${!n.read ? 'bg-blue-50/40' : ''}`}>
+                        className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition border-b border-medium-border dark:border-gray-700 last:border-0 ${!n.read ? 'bg-blue-50/40 dark:bg-blue-900/10' : ''}`}>
                         <div className="mt-0.5 flex-shrink-0">
                           {n.type === 'like'       && <FiHeart className="text-red-500 text-base" />}
                           {n.type === 'comment'    && <FiMessageCircle className="text-medium-green text-base" />}
@@ -255,7 +260,7 @@ export default function SidebarLayout({ children }) {
                           {n.type === 'moderation' && <FiShield className="text-orange-500 text-base" />}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-medium-black leading-snug">
+                          <p className="text-sm text-medium-black dark:text-gray-200 leading-snug">
                             {n.type !== 'moderation' && (
                               <span className="font-medium">{n.fromUser?.name || 'Someone'}</span>
                             )}
@@ -265,19 +270,19 @@ export default function SidebarLayout({ children }) {
                             {n.type === 'follow'  && <> started following you</>}
                             {n.type === 'moderation' && (() => {
                               const a = n.moderationAction;
-                              if (a === 'warn')             return <span className="font-medium text-yellow-700">Your comment received a warning</span>;
-                              if (a === 'suspend')          return <span className="font-medium text-orange-700">Your account has been temporarily suspended</span>;
-                              if (a === 'ban')              return <span className="font-medium text-red-700">Your account has been banned</span>;
-                              if (a === 'delete')           return <span className="font-medium text-gray-700">Your comment was removed by a moderator</span>;
-                              if (a === 'appeal_approved')  return <span className="font-medium text-green-700">Your appeal was approved — restriction lifted</span>;
-                              if (a === 'appeal_rejected')  return <span className="font-medium text-red-700">Your appeal was reviewed and rejected</span>;
+                              if (a === 'warn')             return <span className="font-medium text-yellow-700 dark:text-yellow-400">Your comment received a warning</span>;
+                              if (a === 'suspend')          return <span className="font-medium text-orange-700 dark:text-orange-400">Your account has been temporarily suspended</span>;
+                              if (a === 'ban')              return <span className="font-medium text-red-700 dark:text-red-400">Your account has been banned</span>;
+                              if (a === 'delete')           return <span className="font-medium text-gray-700 dark:text-gray-300">Your comment was removed by a moderator</span>;
+                              if (a === 'appeal_approved')  return <span className="font-medium text-green-700 dark:text-green-400">Your appeal was approved — restriction lifted</span>;
+                              if (a === 'appeal_rejected')  return <span className="font-medium text-red-700 dark:text-red-400">Your appeal was reviewed and rejected</span>;
                               return <span>Moderation action taken on your account</span>;
                             })()}
                           </p>
                           {n.type === 'moderation' && (
                             <p className="text-xs text-medium-green mt-0.5 hover:underline">View appeals →</p>
                           )}
-                          <p className="text-xs text-medium-gray mt-0.5">
+                          <p className="text-xs text-medium-gray dark:text-gray-500 mt-0.5">
                             {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
                           </p>
                         </div>
@@ -300,31 +305,31 @@ export default function SidebarLayout({ children }) {
               />
             </button>
             {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white border border-medium-border rounded shadow-lg py-1 z-50">
-                <div className="px-4 py-2 border-b border-medium-border">
-                  <p className="text-sm font-medium text-medium-black truncate">{user?.name}</p>
-                  <p className="text-xs text-medium-gray truncate">{user?.email}</p>
+              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-medium-border dark:border-gray-700 rounded shadow-lg py-1 z-50">
+                <div className="px-4 py-2 border-b border-medium-border dark:border-gray-700">
+                  <p className="text-sm font-medium text-medium-black dark:text-gray-100 truncate">{user?.name}</p>
+                  <p className="text-xs text-medium-gray dark:text-gray-400 truncate">{user?.email}</p>
                 </div>
                 <Link to={`/profile/${user?._id}`} onClick={() => setDropdownOpen(false)}
-                  className="block px-4 py-2 text-sm text-medium-black hover:bg-gray-50">Profile</Link>
+                  className="block px-4 py-2 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Profile</Link>
                 <Link to="/library" onClick={() => setDropdownOpen(false)}
-                  className="block px-4 py-2 text-sm text-medium-black hover:bg-gray-50">Library</Link>
+                  className="block px-4 py-2 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Library</Link>
                 <Link to="/my-stories" onClick={() => setDropdownOpen(false)}
-                  className="block px-4 py-2 text-sm text-medium-black hover:bg-gray-50">Stories</Link>
+                  className="block px-4 py-2 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Stories</Link>
                 <Link to="/stats" onClick={() => setDropdownOpen(false)}
-                  className="block px-4 py-2 text-sm text-medium-black hover:bg-gray-50">Stats</Link>
+                  className="block px-4 py-2 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Stats</Link>
                 <Link to="/appeals" onClick={() => setDropdownOpen(false)}
-                  className="block px-4 py-2 text-sm text-medium-black hover:bg-gray-50">Appeals</Link>
+                  className="block px-4 py-2 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Appeals</Link>
                 <Link to="/write" onClick={() => setDropdownOpen(false)}
-                  className="block px-4 py-2 text-sm text-medium-black hover:bg-gray-50 sm:hidden">Write</Link>
+                  className="block px-4 py-2 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 sm:hidden">Write</Link>
                 {user?.isAdmin && (
                   <Link to="/admin" onClick={() => setDropdownOpen(false)}
-                    className="block px-4 py-2 text-sm text-medium-black hover:bg-gray-50">Admin Dashboard</Link>
+                    className="block px-4 py-2 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Admin Dashboard</Link>
                 )}
-                <div className="border-t border-medium-border mt-1 pt-1">
+                <div className="border-t border-medium-border dark:border-gray-700 mt-1 pt-1">
                   <button
                     onClick={() => { logout(); setDropdownOpen(false); navigate('/'); }}
-                    className="block w-full text-left px-4 py-2 text-sm text-medium-gray hover:bg-gray-50"
+                    className="block w-full text-left px-4 py-2 text-sm text-medium-gray dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
                   >Sign out</button>
                 </div>
               </div>
@@ -338,7 +343,7 @@ export default function SidebarLayout({ children }) {
 
         {/* Desktop persistent sidebar */}
         {desktopOpen && (
-          <aside className="hidden md:flex flex-col w-56 lg:w-64 border-r border-medium-border flex-shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
+          <aside className="hidden md:flex flex-col w-56 lg:w-64 border-r border-medium-border dark:border-gray-700 flex-shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto bg-white dark:bg-gray-900">
             <SidebarContent onClose={undefined} />
           </aside>
         )}
@@ -346,15 +351,14 @@ export default function SidebarLayout({ children }) {
         {/* Mobile overlay */}
         {mobileOpen && (
           <div className="fixed inset-0 z-50 flex md:hidden">
-            <div className="w-64 bg-white border-r border-medium-border h-full shadow-2xl flex flex-col overflow-y-auto">
-              {/* Mobile header */}
-              <div className="flex items-center justify-between px-4 h-14 border-b border-medium-border flex-shrink-0">
+            <div className="w-64 bg-white dark:bg-gray-900 border-r border-medium-border dark:border-gray-700 h-full shadow-2xl flex flex-col overflow-y-auto">
+              <div className="flex items-center justify-between px-4 h-14 border-b border-medium-border dark:border-gray-700 flex-shrink-0">
                 <Link to="/" onClick={() => setMobileOpen(false)}
-                  className="font-bold font-serif text-medium-black text-lg">
+                  className="font-bold font-serif text-medium-black dark:text-gray-100 text-lg">
                   Just Like Medium
                 </Link>
                 <button onClick={() => setMobileOpen(false)}
-                  className="p-1.5 text-medium-gray hover:text-medium-black transition">
+                  className="p-1.5 text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-100 transition">
                   <FiX className="text-xl" />
                 </button>
               </div>
@@ -366,7 +370,6 @@ export default function SidebarLayout({ children }) {
 
         {/* Main content */}
         <main className="flex-1 min-w-0 overflow-x-hidden">
-          {/* Ban / suspension banner */}
           {user?.banned && (
             <div className="bg-red-600 text-white px-4 py-2.5 text-sm flex items-center justify-between gap-3">
               <span>
