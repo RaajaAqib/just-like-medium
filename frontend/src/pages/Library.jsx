@@ -9,7 +9,9 @@ import { formatDistanceToNow } from 'date-fns';
 
 export default function Library() {
   const [savedPosts, setSavedPosts] = useState([]);
+  const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('saved');
 
   useEffect(() => {
@@ -18,6 +20,15 @@ export default function Library() {
       .catch(() => toast.error('Failed to load library'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'history' || history.length > 0) return;
+    setHistoryLoading(true);
+    api.get('/users/me/history')
+      .then(res => setHistory(res.data.history || []))
+      .catch(() => toast.error('Failed to load reading history'))
+      .finally(() => setHistoryLoading(false));
+  }, [activeTab]);
 
   const handleUnsave = async (postId) => {
     try {
@@ -98,9 +109,51 @@ export default function Library() {
               )
             )}
             {activeTab === 'history' && (
-              <div className="text-center py-20 text-medium-gray dark:text-gray-500">
-                <p className="text-sm">Reading history coming soon.</p>
-              </div>
+              historyLoading ? <LoadingSpinner /> :
+              history.length === 0 ? (
+                <div className="text-center py-20 border-t border-medium-border dark:border-gray-700">
+                  <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+                    <FiClock className="text-medium-gray dark:text-gray-500 text-2xl" />
+                  </div>
+                  <p className="text-medium-black dark:text-gray-200 font-medium mb-2">No reading history yet</p>
+                  <p className="text-medium-gray dark:text-gray-500 text-sm mb-6">
+                    Stories you open will appear here.
+                  </p>
+                  <Link to="/" className="btn-black px-6 py-2 text-sm">Browse stories</Link>
+                </div>
+              ) : (
+                <div className="space-y-0 divide-y divide-medium-border dark:divide-gray-700">
+                  {history.map(post => (
+                    <div key={post._id + post.readAt} className="flex gap-4 py-5">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <img
+                            src={post.author?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author?.name || 'U')}&background=random`}
+                            className="w-5 h-5 rounded-full object-cover" alt={post.author?.name} />
+                          <span className="text-xs text-medium-gray dark:text-gray-500">{post.author?.name}</span>
+                        </div>
+                        <Link to={`/article/${post.slug}`}
+                          className="font-bold text-medium-black dark:text-gray-100 hover:underline text-base line-clamp-2 leading-snug">
+                          {post.title}
+                        </Link>
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="text-xs text-medium-gray dark:text-gray-500 flex items-center gap-1">
+                            <FiClock className="text-xs" />{post.readTime || 1} min read
+                          </span>
+                          <span className="text-xs text-medium-gray dark:text-gray-500">
+                            Read {formatDistanceToNow(new Date(post.readAt), { addSuffix: true })}
+                          </span>
+                        </div>
+                      </div>
+                      {post.coverImage && (
+                        <Link to={`/article/${post.slug}`} className="flex-shrink-0">
+                          <img src={post.coverImage} alt={post.title} className="w-24 h-16 object-cover rounded" />
+                        </Link>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )
             )}
           </>
         )}

@@ -157,6 +157,51 @@ router.get('/me/saved', protect, async (req, res) => {
   }
 });
 
+// Record a post as read (upsert — moves to front, keeps latest 50)
+router.post('/history/:postId', protect, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const postId = req.params.postId;
+    const user = await User.findById(req.user._id).select('readingHistory');
+
+    // Remove any existing entry for this post, then prepend
+    user.readingHistory = user.readingHistory.filter(
+      e => e.post.toString() !== postId
+    );
+    user.readingHistory.unshift({ post: postId, readAt: new Date() });
+
+    // Keep only the 50 most recent entries
+    if (user.readingHistory.length > 50) {
+      user.readingHistory = user.readingHistory.slice(0, 50);
+    }
+
+    await user.save();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Get current user's reading history
+router.get('/me/history', protect, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const user = await User.findById(req.user._id)
+      .populate({
+        path: 'readingHistory.post',
+        select: 'title slug excerpt coverImage readTime createdAt author',
+        populate: { path: 'author', select: 'name avatar' },
+      });
+    // Filter out entries whose post was deleted
+    const history = (user.readingHistory || [])
+      .filter(e => e.post != null)
+      .map(e => ({ ...e.post.toObject(), readAt: e.readAt }));
+    res.json({ success: true, history });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Public
 router.get('/:id', getUserProfile);
 

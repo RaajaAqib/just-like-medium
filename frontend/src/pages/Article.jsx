@@ -87,7 +87,11 @@ export default function Article() {
       setPost(p);
       setLikesCount(p.likes?.length || 0);
       setClaps(p.claps || 0);
-      if (user) setLiked(p.likes?.includes(user._id));
+      if (user) {
+        setLiked(p.likes?.includes(user._id));
+        // Record in reading history (fire-and-forget)
+        api.post(`/users/history/${p._id}`).catch(() => {});
+      }
     } catch {
       toast.error('Post not found');
       navigate('/');
