@@ -88,7 +88,7 @@ export default function OurStory() {
               <img
                 src={rajaPhoto}
                 alt="Raja Aqib"
-                className="w-full rounded-2xl object-cover shadow-lg"
+                className="w-full object-contain"
               />
             </div>
           </div>
