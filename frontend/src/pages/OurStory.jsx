@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import rajaPhoto from '../../Images/me22-12-2025.png';
 
 export default function OurStory() {
   return (
@@ -41,9 +42,7 @@ export default function OurStory() {
             About the builder
           </h2>
           <div className="flex items-center gap-4 mb-5">
-            <div className="w-14 h-14 rounded-full bg-medium-black dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-              <span className="text-white dark:text-gray-200 text-xl font-bold">RA</span>
-            </div>
+            <img src={rajaPhoto} alt="Raja Aqib" className="w-14 h-14 rounded-full object-cover flex-shrink-0 shadow" />
             <div>
               <p className="font-semibold text-medium-black dark:text-gray-100 text-base">Raja Aqib</p>
               <p className="text-sm text-medium-gray dark:text-gray-400">Software Engineer &amp; ServiceNow Developer</p>
