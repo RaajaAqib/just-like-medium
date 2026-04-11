@@ -68,7 +68,7 @@ function OverviewTab() {
   return (
     <div className="space-y-8">
       {/* Stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
         <StatCard label="Total Users"     value={stats.totalUsers}     icon={FiUsers}       color="bg-blue-50 text-blue-600" />
         <StatCard label="Total Articles"  value={stats.totalPosts}     icon={FiFileText}    color="bg-green-50 text-green-600" />
         <StatCard label="Published Today" value={stats.publishedToday} icon={FiCheckCircle} color="bg-emerald-50 text-emerald-600" />
@@ -1519,17 +1519,17 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Admin Dashboard</h1>
+        <div className="mb-4 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Admin Dashboard</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your platform — articles, users, comments, and more.</p>
         </div>
 
-        <div className="flex gap-6">
-          {/* Sidebar nav */}
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+          {/* Sidebar nav — desktop only */}
           <aside className="hidden md:flex flex-col w-48 flex-shrink-0">
-            <nav className="space-y-1">
+            <nav className="space-y-1 sticky top-6">
               {TABS.map(tab => {
                 const Icon = tab.icon;
                 return (
@@ -1546,15 +1546,17 @@ export default function AdminDashboard() {
             </nav>
           </aside>
 
-          {/* Mobile tab bar */}
-          <div className="md:hidden w-full">
-            <div className="flex gap-1 overflow-x-auto pb-1 mb-4">
+          {/* Mobile tab bar — scrollable pill strip */}
+          <div className="md:hidden -mx-4 px-4">
+            <div className="flex gap-1.5 overflow-x-auto pb-2 mb-2 scrollbar-hide">
               {TABS.map(tab => {
                 const Icon = tab.icon;
                 return (
                   <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs whitespace-nowrap transition-colors flex-shrink-0 ${
-                      activeTab === tab.id ? 'bg-white dark:bg-gray-800 shadow-sm text-gray-900 dark:text-gray-100 font-semibold border border-gray-200 dark:border-gray-700' : 'text-gray-500 dark:text-gray-400 hover:bg-white/60 dark:hover:bg-gray-800/60'}`}>
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs whitespace-nowrap transition-colors flex-shrink-0 font-medium ${
+                      activeTab === tab.id
+                        ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
+                        : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700'}`}>
                     <Icon className="text-sm" />
                     {tab.label}
                   </button>
