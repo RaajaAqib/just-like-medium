@@ -152,8 +152,8 @@ router.get('/admin/reports',         protect, adminOnly, getPostReports);
 router.post('/admin/:id/dismiss',    protect, adminOnly, dismissPostReport);
 router.delete('/admin/:id/reported', protect, adminOnly, deleteReportedPost);
 
-// Public
-router.get('/', getPosts);
+// Public (optionalAuth so following feed works when logged in)
+router.get('/', optionalAuth, getPosts);
 router.get('/:slug', optionalAuth, getPost);
 
 // Protected — write actions blocked for banned/suspended users

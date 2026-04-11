@@ -118,13 +118,14 @@ function LoggedInFeed() {
       const params = new URLSearchParams({ page, limit: 10 });
       if (search) params.set('search', search);
       if (tag)    params.set('tag', tag);
+      if (activeTab === 'following' && !search && !tag) params.set('following', 'true');
       const res = await api.get(`/posts?${params}`);
       setPosts(res.data.posts);
       setTotalPages(res.data.totalPages);
     } catch { setPosts([]); } finally { setLoading(false); }
-  }, [page, search, tag]);
+  }, [page, search, tag, activeTab]);
 
-  useEffect(() => { setPage(1); }, [search, tag]);
+  useEffect(() => { setPage(1); }, [search, tag, activeTab]);
   useEffect(() => { fetchPosts(); }, [fetchPosts]);
 
   return (
@@ -164,8 +165,18 @@ function LoggedInFeed() {
 
           {loading ? <LoadingSpinner /> : posts.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-medium-gray dark:text-gray-400 text-lg mb-3">No stories found</p>
-              <Link to="/" className="text-medium-green hover:underline text-sm">Browse all stories</Link>
+              {activeTab === 'following' && !search && !tag ? (
+                <>
+                  <p className="text-medium-gray dark:text-gray-400 text-lg mb-2">Your following feed is empty</p>
+                  <p className="text-medium-gray dark:text-gray-500 text-sm mb-5">Follow writers to see their latest stories here.</p>
+                  <button onClick={() => setActiveTab('foryou')} className="text-medium-green hover:underline text-sm">Browse all stories</button>
+                </>
+              ) : (
+                <>
+                  <p className="text-medium-gray dark:text-gray-400 text-lg mb-3">No stories found</p>
+                  <Link to="/" className="text-medium-green hover:underline text-sm">Browse all stories</Link>
+                </>
+              )}
             </div>
           ) : (
             <>

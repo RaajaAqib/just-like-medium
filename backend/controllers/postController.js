@@ -16,7 +16,7 @@ const getPosts = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const { search, tag, author } = req.query;
+    const { search, tag, author, following } = req.query;
 
     const query = { published: true };
 
@@ -29,6 +29,17 @@ const getPosts = async (req, res) => {
 
     if (tag) query.tags = tag.toLowerCase();
     if (author) query.author = author;
+
+    // Following feed: restrict to authors the current user follows
+    if (following === 'true' && req.user) {
+      const me = await User.findById(req.user._id).select('following');
+      const followingIds = me?.following || [];
+      if (followingIds.length === 0) {
+        // User follows nobody — return empty list immediately
+        return res.json({ success: true, posts: [], currentPage: 1, totalPages: 0, total: 0 });
+      }
+      query.author = { $in: followingIds };
+    }
 
     const total = await Post.countDocuments(query);
     const posts = await Post.find(query)
