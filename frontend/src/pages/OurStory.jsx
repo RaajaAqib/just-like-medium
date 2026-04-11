@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import rajaPhoto from '../../Images/me22-12-2025.png';
+import rajaAvatar from '../../Images/profile photo photo (1) 1.png';
 
 export default function OurStory() {
   return (
@@ -46,7 +47,7 @@ export default function OurStory() {
             {/* Left — text */}
             <div className="flex-1 min-w-0 space-y-4">
               <div className="flex items-center gap-3 mb-2">
-                <img src={rajaPhoto} alt="Raja Aqib" className="w-12 h-12 rounded-full object-cover shadow" />
+                <img src={rajaAvatar} alt="Raja Aqib" className="w-12 h-12 rounded-full object-cover shadow" />
                 <div>
                   <p className="font-semibold text-medium-black dark:text-gray-100">Raja Aqib</p>
                   <p className="text-sm text-medium-gray dark:text-gray-400">Software Engineer &amp; ServiceNow Developer</p>
