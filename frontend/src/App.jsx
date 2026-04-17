@@ -14,6 +14,7 @@ import MyStories from './pages/MyStories';
 import StatsPage from './pages/StatsPage';
 import FollowingPage from './pages/FollowingPage';
 import AppealPage from './pages/AppealPage';
+import NotificationsPage from './pages/NotificationsPage';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -48,6 +49,7 @@ export default function App() {
       <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
       <Route path="/following" element={<ProtectedRoute><FollowingPage /></ProtectedRoute>} />
       <Route path="/appeals" element={<ProtectedRoute><AppealPage /></ProtectedRoute>} />
+      <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
       <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />

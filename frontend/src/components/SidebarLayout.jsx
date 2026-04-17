@@ -6,10 +6,8 @@ import api from '../utils/axios';
 import {
   FiHome, FiBookmark, FiUser, FiFileText, FiBarChart2,
   FiUserPlus, FiEdit, FiBell, FiSearch, FiMenu, FiX,
-  FiHeart, FiMessageCircle, FiPlus, FiZap, FiShield,
-  FiSun, FiMoon
+  FiPlus, FiSun, FiMoon,
 } from 'react-icons/fi';
-import { formatDistanceToNow } from 'date-fns';
 
 const NavItem = ({ to, icon: Icon, label, active, onClick }) => (
   <Link
@@ -37,10 +35,7 @@ export default function SidebarLayout({ children }) {
 
   const [search, setSearch] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [notifLoading, setNotifLoading] = useState(false);
-  const notifRef = useRef(null);
   const dropdownRef = useRef(null);
 
   const path = location.pathname;
@@ -52,7 +47,6 @@ export default function SidebarLayout({ children }) {
 
   useEffect(() => {
     const handler = (e) => {
-      if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setDropdownOpen(false);
     };
     document.addEventListener('mousedown', handler);
@@ -68,39 +62,14 @@ export default function SidebarLayout({ children }) {
     }
   };
 
-  const fetchNotifications = async (silent = false) => {
-    if (!user) return;
-    if (!silent) setNotifLoading(true);
-    try {
-      const res = await api.get('/notifications');
-      setNotifications(res.data.notifications || []);
-    } catch {
-      if (!silent) setNotifications([]);
-    } finally {
-      if (!silent) setNotifLoading(false);
-    }
-  };
-
+  // Poll unread count for the bell badge only
   useEffect(() => {
     if (!user) return;
-    fetchNotifications(true);
-    const interval = setInterval(() => fetchNotifications(true), 30000);
+    const fetch = () => api.get('/notifications').then(r => setNotifications(r.data.notifications || [])).catch(() => {});
+    fetch();
+    const interval = setInterval(fetch, 30000);
     return () => clearInterval(interval);
   }, [user]);
-
-  const handleBellClick = () => {
-    const next = !notifOpen;
-    setNotifOpen(next);
-    setDropdownOpen(false);
-    if (next) fetchNotifications(false);
-  };
-
-  const markAllRead = async () => {
-    try {
-      await api.put('/notifications/read-all');
-      setNotifications(notifications.map(n => ({ ...n, read: true })));
-    } catch {}
-  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -210,90 +179,17 @@ export default function SidebarLayout({ children }) {
             {dark ? <FiSun className="text-xl" /> : <FiMoon className="text-xl" />}
           </button>
 
-          {/* Notifications */}
-          <div className="relative" ref={notifRef}>
-            <button onClick={handleBellClick}
-              className="relative p-1.5 text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-100 transition"
-              aria-label="Notifications">
-              <FiBell className="text-xl" />
-              {unreadCount > 0 && (
-                <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
-            </button>
-
-            {notifOpen && (
-              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 border border-medium-border dark:border-gray-700 rounded-lg shadow-xl z-50 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-medium-border dark:border-gray-700">
-                  <h3 className="font-semibold text-medium-black dark:text-gray-100 text-sm">Notifications</h3>
-                  {unreadCount > 0 && (
-                    <button onClick={markAllRead} className="text-xs text-medium-green hover:underline">
-                      Mark all read
-                    </button>
-                  )}
-                </div>
-                <div className="max-h-80 overflow-y-auto">
-                  {notifLoading ? (
-                    <div className="px-4 py-8 text-center text-medium-gray dark:text-gray-400 text-sm">Loading...</div>
-                  ) : notifications.length === 0 ? (
-                    <div className="px-4 py-8 text-center text-medium-gray dark:text-gray-400 text-sm">No notifications yet.</div>
-                  ) : (
-                    notifications.map(n => (
-                      <Link key={n._id}
-                        to={
-                          n.type === 'moderation'
-                            ? (n.postSlug ? `/article/${n.postSlug}` : '/appeals')
-                            : n.postSlug
-                              ? `/article/${n.postSlug}`
-                              : n.type === 'follow'
-                                ? `/profile/${n.fromUser?._id}`
-                                : '#'
-                        }
-                        onClick={() => setNotifOpen(false)}
-                        className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition border-b border-medium-border dark:border-gray-700 last:border-0 ${!n.read ? 'bg-blue-50/40 dark:bg-blue-900/10' : ''}`}>
-                        <div className="mt-0.5 flex-shrink-0">
-                          {n.type === 'like'       && <FiHeart className="text-red-500 text-base" />}
-                          {n.type === 'comment'    && <FiMessageCircle className="text-medium-green text-base" />}
-                          {n.type === 'clap'       && <FiZap className="text-yellow-500 text-base" />}
-                          {n.type === 'follow'     && <FiUserPlus className="text-blue-500 text-base" />}
-                          {n.type === 'moderation' && <FiShield className="text-orange-500 text-base" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-medium-black dark:text-gray-200 leading-snug">
-                            {n.type !== 'moderation' && (
-                              <span className="font-medium">{n.fromUser?.name || 'Someone'}</span>
-                            )}
-                            {n.type === 'like'    && <> liked your story <span className="font-medium">"{n.postTitle}"</span></>}
-                            {n.type === 'comment' && <> commented on <span className="font-medium">"{n.postTitle}"</span></>}
-                            {n.type === 'clap'    && <> clapped for <span className="font-medium">"{n.postTitle}"</span></>}
-                            {n.type === 'follow'  && <> started following you</>}
-                            {n.type === 'moderation' && (() => {
-                              const a = n.moderationAction;
-                              if (a === 'warn')             return <span className="font-medium text-yellow-700 dark:text-yellow-400">Your comment received a warning</span>;
-                              if (a === 'suspend')          return <span className="font-medium text-orange-700 dark:text-orange-400">Your account has been temporarily suspended</span>;
-                              if (a === 'ban')              return <span className="font-medium text-red-700 dark:text-red-400">Your account has been banned</span>;
-                              if (a === 'delete')           return <span className="font-medium text-gray-700 dark:text-gray-300">Your comment was removed by a moderator</span>;
-                              if (a === 'appeal_approved')  return <span className="font-medium text-green-700 dark:text-green-400">Your appeal was approved — restriction lifted</span>;
-                              if (a === 'appeal_rejected')  return <span className="font-medium text-red-700 dark:text-red-400">Your appeal was reviewed and rejected</span>;
-                              return <span>Moderation action taken on your account</span>;
-                            })()}
-                          </p>
-                          {n.type === 'moderation' && (
-                            <p className="text-xs text-medium-green mt-0.5 hover:underline">View appeals →</p>
-                          )}
-                          <p className="text-xs text-medium-gray dark:text-gray-500 mt-0.5">
-                            {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
-                          </p>
-                        </div>
-                        {!n.read && <div className="w-2 h-2 rounded-full bg-medium-green mt-1.5 flex-shrink-0" />}
-                      </Link>
-                    ))
-                  )}
-                </div>
-              </div>
+          {/* Notifications — navigate to dedicated page */}
+          <Link to="/notifications"
+            className="relative p-1.5 text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-100 transition"
+            aria-label="Notifications">
+            <FiBell className="text-xl" />
+            {unreadCount > 0 && (
+              <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
             )}
-          </div>
+          </Link>
 
           {/* Avatar dropdown */}
           <div className="relative" ref={dropdownRef}>
