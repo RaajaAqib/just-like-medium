@@ -453,9 +453,11 @@ function ProfileContent({ id }) {
 
 export default function AuthorProfile() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
-  // Logged-in users get the full sidebar layout; guests get just the navbar
+  // Wait for auth to settle so we never flash between Navbar and SidebarLayout
+  if (authLoading) return null;
+
   if (user) {
     return (
       <SidebarLayout>

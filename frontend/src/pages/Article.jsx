@@ -12,6 +12,8 @@ import api from '../utils/axios';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 import CommentSection from '../components/CommentSection';
+import SidebarLayout from '../components/SidebarLayout';
+import Navbar from '../components/Navbar';
 
 const REPORT_REASONS = [
   'Spam or misleading content',
@@ -143,13 +145,15 @@ export default function Article() {
     finally { setShowReport(false); }
   };
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) return user
+    ? <SidebarLayout><div className="py-20"><LoadingSpinner /></div></SidebarLayout>
+    : <div className="min-h-screen bg-white dark:bg-gray-900"><Navbar /><div className="py-20"><LoadingSpinner /></div></div>;
   if (!post) return null;
 
   const isAuthor  = user?._id === post.author?._id;
   const canReport = user && !isAuthor;
 
-  return (
+  const articleContent = (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
       {/* Cover image */}
       {post.coverImage && (
@@ -277,6 +281,14 @@ export default function Article() {
       {showReport && (
         <ReportStoryDialog onConfirm={handleReport} onCancel={() => setShowReport(false)} />
       )}
+    </div>
+  );
+
+  if (user) return <SidebarLayout>{articleContent}</SidebarLayout>;
+  return (
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      <Navbar />
+      {articleContent}
     </div>
   );
 }
