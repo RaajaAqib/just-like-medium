@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import SidebarLayout from '../components/SidebarLayout';
 import { FiBookmark, FiClock, FiPlus, FiLock, FiGlobe, FiMessageCircle, FiTrash2, FiX } from 'react-icons/fi';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/axios';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -166,6 +166,7 @@ function CreateListModal({ onClose, onCreate }) {
 }
 
 export default function Library() {
+  const navigate = useNavigate();
   const [savedPosts, setSavedPosts]           = useState([]);
   const [lists, setLists]                     = useState([]);
   const [history, setHistory]                 = useState([]);
@@ -348,6 +349,13 @@ export default function Library() {
                         <CoverCollage images={covers} />
                       </div>
                       <div className="border-t border-medium-border dark:border-gray-700 px-5 py-3 flex items-center gap-3">
+                        <button
+                          onClick={() => navigate(`/list/${list._id}`)}
+                          className="text-sm text-medium-black dark:text-gray-200 font-medium hover:underline"
+                        >
+                          View list
+                        </button>
+                        <span className="text-medium-border dark:text-gray-600">·</span>
                         <span className="text-xs text-medium-gray dark:text-gray-500">
                           Updated {formatDistanceToNow(new Date(list.updatedAt), { addSuffix: true })}
                         </span>

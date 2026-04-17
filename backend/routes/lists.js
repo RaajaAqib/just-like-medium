@@ -1,7 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const List    = require('../models/List');
-const { protect } = require('../middleware/auth');
+const { protect, optionalAuth } = require('../middleware/auth');
 
 // ── Create a list ─────────────────────────────────────────────────────────────
 router.post('/', protect, async (req, res) => {
@@ -28,13 +28,19 @@ router.get('/me', protect, async (req, res) => {
 });
 
 // ── Get a single list (public or owned) ──────────────────────────────────────
-router.get('/:id', protect, async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const list = await List.findById(req.params.id)
       .populate('owner', 'name avatar')
-      .populate({ path: 'posts', populate: { path: 'author', select: 'name avatar' } });
+      .populate({
+        path: 'posts',
+        select: 'title slug excerpt coverImage readTime createdAt tags likes claps author',
+        populate: { path: 'author', select: 'name avatar' },
+      });
     if (!list) return res.status(404).json({ success: false, message: 'List not found' });
-    if (list.isPrivate && list.owner._id.toString() !== req.user._id.toString()) {
+    const ownerId = list.owner._id.toString();
+    const viewerId = req.user?._id?.toString();
+    if (list.isPrivate && ownerId !== viewerId) {
       return res.status(403).json({ success: false, message: 'This list is private' });
     }
     res.json({ success: true, list });
