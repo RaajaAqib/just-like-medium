@@ -54,6 +54,10 @@ const postSchema = new mongoose.Schema(
       type: Number, // in minutes
       default: 1,
     },
+    wordCount: {
+      type: Number,
+      default: 0,
+    },
     published: {
       type: Boolean,
       default: true,
@@ -91,10 +95,11 @@ postSchema.pre('save', function (next) {
     this.excerpt = plainText.substring(0, 200) + (plainText.length > 200 ? '...' : '');
   }
 
-  // Calculate read time (avg 200 words/min)
+  // Calculate read time and word count (avg 200 words/min)
   if (this.isModified('content')) {
-    const wordCount = this.content.replace(/<[^>]+>/g, '').split(/\s+/).length;
-    this.readTime = Math.max(1, Math.ceil(wordCount / 200));
+    const words = this.content.replace(/<[^>]+>/g, '').trim().split(/\s+/).filter(w => w.length > 0);
+    this.wordCount = words.length;
+    this.readTime = Math.max(1, Math.ceil(this.wordCount / 200));
   }
 
   next();

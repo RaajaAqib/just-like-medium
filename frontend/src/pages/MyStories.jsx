@@ -188,7 +188,7 @@ function StoryRow({ post, onDelete, onUpdate }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
 
-  const wordCount = post.wordCount || (post.readTime ? post.readTime * 200 : 0);
+  const wordCount = post.wordCount || 0;
 
   const handleSubmit = async () => {
     try {
