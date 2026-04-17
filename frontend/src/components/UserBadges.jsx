@@ -6,18 +6,47 @@
  *   <UserBadges user={author} size="sm" />
  */
 
-import { FiShield } from 'react-icons/fi';
-
-// Blue checkmark SVG (Twitter/X style)
-function CheckIcon({ className }) {
+// ── Verified badge: solid blue circle + white checkmark (Twitter/X style) ─────
+function VerifiedIcon({ sz }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
-      <path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeWidth={0} />
+    <svg width={sz} height={sz} viewBox="0 0 22 22" fill="none" aria-hidden="true">
+      {/* Blue filled circle */}
+      <circle cx="11" cy="11" r="11" fill="#1D9BF0" />
+      {/* White checkmark */}
       <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.491 4.491 0 01-3.497-1.307 4.491 4.491 0 01-1.307-3.497A4.49 4.49 0 012.25 12a4.49 4.49 0 011.549-3.397 4.491 4.491 0 011.307-3.497 4.491 4.491 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L8.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
+        d="M6.5 11.5L9.5 14.5L15.5 8"
+        stroke="white"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+// ── Admin badge: gold shield with white "A" ───────────────────────────────────
+function AdminIcon({ sz }) {
+  return (
+    <svg width={sz} height={sz} viewBox="0 0 22 22" fill="none" aria-hidden="true">
+      {/* Gold shield shape */}
+      <path
+        d="M11 2L3.5 5.5V10.5C3.5 14.9 6.8 19 11 20C15.2 19 18.5 14.9 18.5 10.5V5.5L11 2Z"
+        fill="#F59E0B"
+        stroke="#D97706"
+        strokeWidth="0.8"
+      />
+      {/* White "A" letter */}
+      <text
+        x="11"
+        y="15"
+        textAnchor="middle"
+        fill="white"
+        fontSize="9"
+        fontWeight="bold"
+        fontFamily="system-ui, sans-serif"
+      >
+        A
+      </text>
     </svg>
   );
 }
@@ -25,28 +54,18 @@ function CheckIcon({ className }) {
 export default function UserBadges({ user, size = 'md' }) {
   if (!user) return null;
 
-  const iconSize = size === 'sm'
-    ? 'w-3 h-3'
-    : size === 'lg'
-    ? 'w-4.5 h-4.5'
-    : 'w-3.5 h-3.5';
+  const px = size === 'sm' ? 14 : size === 'lg' ? 20 : 16;
 
   return (
     <>
       {user.isVerified && (
-        <span
-          title="Verified"
-          className="inline-flex items-center flex-shrink-0"
-        >
-          <CheckIcon className={`${iconSize} text-blue-500`} />
+        <span title="Verified" className="inline-flex items-center flex-shrink-0">
+          <VerifiedIcon sz={px} />
         </span>
       )}
       {user.isAdmin && (
-        <span
-          title="Admin"
-          className="inline-flex items-center flex-shrink-0"
-        >
-          <FiShield className={`${iconSize} text-medium-gray dark:text-gray-400`} />
+        <span title="Admin" className="inline-flex items-center flex-shrink-0">
+          <AdminIcon sz={px} />
         </span>
       )}
     </>
