@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import {
   FiMoreHorizontal, FiX, FiLink, FiEdit2, FiTrash2,
-  FiEye, FiEyeOff,
+  FiEye, FiEyeOff, FiMessageSquare,
 } from 'react-icons/fi';
 import SidebarLayout from '../components/SidebarLayout';
 import { useAuth } from '../context/AuthContext';
@@ -66,7 +66,6 @@ function StoryRow({ post, onDelete, onTogglePublish }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // word count from readTime (approximate: readTime * 200 words/min)
   const wordCount = post.wordCount || (post.readTime ? post.readTime * 200 : 0);
 
   return (
@@ -132,8 +131,40 @@ function StoryRow({ post, onDelete, onTogglePublish }) {
   );
 }
 
+// ── Response row ──────────────────────────────────────────────────────────────
+function ResponseRow({ response }) {
+  return (
+    <div className="flex items-start gap-4 py-5 border-b border-medium-border dark:border-gray-700 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition px-1">
+      <div className="w-8 h-8 flex-shrink-0 mt-0.5 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+        <FiMessageSquare className="text-sm text-medium-gray dark:text-gray-500" />
+      </div>
+      <div className="flex-1 min-w-0">
+        {/* Response text */}
+        <p className="text-sm text-medium-black dark:text-gray-200 line-clamp-2 leading-relaxed">
+          {response.content}
+        </p>
+        {/* Story it was left on */}
+        {response.post && (
+          <p className="text-xs text-medium-gray dark:text-gray-500 mt-1">
+            In response to{' '}
+            <Link
+              to={`/article/${response.post.slug}`}
+              className="hover:underline text-medium-black dark:text-gray-300"
+            >
+              {response.post.title}
+            </Link>
+          </p>
+        )}
+        <p className="text-xs text-medium-gray dark:text-gray-500 mt-0.5">
+          {formatDistanceToNow(new Date(response.createdAt), { addSuffix: true })}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ── Import modal ──────────────────────────────────────────────────────────────
-function ImportModal({ onClose, onImported }) {
+function ImportModal({ onClose }) {
   const navigate = useNavigate();
   const [title, setTitle]     = useState('');
   const [text, setText]       = useState('');
@@ -192,29 +223,47 @@ function ImportModal({ onClose, onImported }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function MyStories() {
   const { user } = useAuth();
-  const [posts, setPosts]       = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [activeTab, setActiveTab] = useState('drafts');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [posts, setPosts]           = useState([]);
+  const [responses, setResponses]   = useState([]);
+  const [loadingPosts, setLoadingPosts]         = useState(true);
+  const [loadingResponses, setLoadingResponses] = useState(false);
+  const [responsesLoaded, setResponsesLoaded]   = useState(false);
   const [showImport, setShowImport] = useState(false);
+
+  const activeTab = searchParams.get('tab') || 'drafts';
+
+  const setTab = (key) => setSearchParams({ tab: key }, { replace: true });
 
   useEffect(() => {
     if (!user) return;
     api.get('/users/me/posts')
       .then(res => setPosts(res.data.posts || []))
       .catch(() => toast.error('Failed to load stories'))
-      .finally(() => setLoading(false));
+      .finally(() => setLoadingPosts(false));
   }, [user]);
+
+  // Lazy-load responses only when that tab is first visited
+  useEffect(() => {
+    if (activeTab !== 'responses' || responsesLoaded || !user) return;
+    setLoadingResponses(true);
+    api.get('/users/me/responses')
+      .then(res => setResponses(res.data.responses || []))
+      .catch(() => toast.error('Failed to load responses'))
+      .finally(() => { setLoadingResponses(false); setResponsesLoaded(true); });
+  }, [activeTab, responsesLoaded, user]);
 
   const drafts    = posts.filter(p => !p.published);
   const published = posts.filter(p =>  p.published);
 
   const TABS = [
-    { key: 'drafts',    label: 'Drafts',    count: drafts.length,    list: drafts },
-    { key: 'published', label: 'Published',  count: null,             list: published },
-    { key: 'unlisted',  label: 'Unlisted',   count: null,             list: [] },
+    { key: 'drafts',      label: 'Drafts',      count: drafts.length },
+    { key: 'published',   label: 'Published',   count: null },
+    { key: 'responses',   label: 'Responses',   count: null },
+    { key: 'scheduled',   label: 'Scheduled',   count: null },
+    { key: 'submissions', label: 'Submissions', count: null },
   ];
-
-  const activeList = TABS.find(t => t.key === activeTab)?.list || [];
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this story? This cannot be undone.')) return;
@@ -235,6 +284,87 @@ export default function MyStories() {
     } catch { toast.error('Failed to update story'); }
   };
 
+  // ── Render tab content ──────────────────────────────────────────────────────
+  const renderContent = () => {
+    if (loadingPosts && (activeTab === 'drafts' || activeTab === 'published')) {
+      return <div className="py-16"><LoadingSpinner /></div>;
+    }
+
+    // Responses tab
+    if (activeTab === 'responses') {
+      if (loadingResponses) return <div className="py-16"><LoadingSpinner /></div>;
+      if (responses.length === 0) {
+        return (
+          <div className="text-center py-20 border-t border-medium-border dark:border-gray-700">
+            <p className="text-medium-gray dark:text-gray-500 text-sm">No responses yet.</p>
+            <p className="text-medium-gray dark:text-gray-500 text-xs mt-1">Responses you leave on stories will appear here.</p>
+          </div>
+        );
+      }
+      return (
+        <div>
+          {responses.map(r => <ResponseRow key={r._id} response={r} />)}
+        </div>
+      );
+    }
+
+    // Scheduled tab
+    if (activeTab === 'scheduled') {
+      return (
+        <div className="text-center py-20 border-t border-medium-border dark:border-gray-700">
+          <p className="text-medium-gray dark:text-gray-500 text-sm">No scheduled stories.</p>
+          <p className="text-medium-gray dark:text-gray-500 text-xs mt-1">Scheduling is not available yet.</p>
+        </div>
+      );
+    }
+
+    // Submissions tab
+    if (activeTab === 'submissions') {
+      return (
+        <div className="text-center py-20 border-t border-medium-border dark:border-gray-700">
+          <p className="text-medium-gray dark:text-gray-500 text-sm">No submissions.</p>
+          <p className="text-medium-gray dark:text-gray-500 text-xs mt-1">Publication submissions will appear here.</p>
+        </div>
+      );
+    }
+
+    // Drafts / Published
+    const list = activeTab === 'drafts' ? drafts : published;
+
+    if (list.length === 0) {
+      return (
+        <div className="text-center py-20 border-t border-medium-border dark:border-gray-700">
+          <p className="text-medium-gray dark:text-gray-500 mb-4 text-sm">
+            {activeTab === 'drafts' ? 'No drafts yet.' : 'No published stories yet.'}
+          </p>
+          <Link to="/write" className="btn-black px-6 py-2 text-sm">Write a story</Link>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {/* Column headers */}
+        <div className="grid grid-cols-[1fr_auto_auto_auto] sm:grid-cols-[1fr_7rem_6rem_2rem] items-center text-xs text-medium-gray dark:text-gray-500 font-medium border-b border-medium-border dark:border-gray-700 py-3 px-1 gap-4">
+          <span>Latest</span>
+          <span className="hidden md:block text-center">Publication</span>
+          <span className="hidden sm:block text-right">Status</span>
+          <span />
+        </div>
+        <div>
+          {list.map(post => (
+            <StoryRow
+              key={post._id}
+              post={post}
+              onDelete={() => handleDelete(post._id)}
+              onTogglePublish={() => handleTogglePublish(post)}
+            />
+          ))}
+        </div>
+      </>
+    );
+  };
+
   return (
     <SidebarLayout>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
@@ -253,7 +383,7 @@ export default function MyStories() {
         {/* Tabs */}
         <div className="flex gap-0 border-b border-medium-border dark:border-gray-700 mb-0 overflow-x-auto scrollbar-hide">
           {TABS.map(t => (
-            <button key={t.key} onClick={() => setActiveTab(t.key)}
+            <button key={t.key} onClick={() => setTab(t.key)}
               className={`pb-3 px-1 mr-6 text-sm font-medium border-b-2 -mb-px transition whitespace-nowrap flex-shrink-0 ${
                 activeTab === t.key
                   ? 'border-medium-black dark:border-gray-200 text-medium-black dark:text-gray-100'
@@ -265,42 +395,7 @@ export default function MyStories() {
           ))}
         </div>
 
-        {loading ? (
-          <div className="py-16"><LoadingSpinner /></div>
-        ) : activeTab === 'unlisted' ? (
-          <div className="text-center py-20 border-t border-medium-border dark:border-gray-700 mt-0">
-            <p className="text-medium-gray dark:text-gray-500 text-sm">No unlisted stories.</p>
-          </div>
-        ) : activeList.length === 0 ? (
-          <div className="text-center py-20 border-t border-medium-border dark:border-gray-700 mt-0">
-            <p className="text-medium-gray dark:text-gray-500 mb-4 text-sm">
-              {activeTab === 'drafts' ? 'No drafts yet.' : 'No published stories yet.'}
-            </p>
-            <Link to="/write" className="btn-black px-6 py-2 text-sm">Write a story</Link>
-          </div>
-        ) : (
-          <>
-            {/* Column headers */}
-            <div className="grid grid-cols-[1fr_auto_auto_auto] sm:grid-cols-[1fr_7rem_6rem_2rem] items-center text-xs text-medium-gray dark:text-gray-500 font-medium border-b border-medium-border dark:border-gray-700 py-3 px-1 mt-0 gap-4">
-              <span>Latest</span>
-              <span className="hidden md:block text-center">Publication</span>
-              <span className="hidden sm:block text-right">Status</span>
-              <span />
-            </div>
-
-            {/* Story rows */}
-            <div>
-              {activeList.map(post => (
-                <StoryRow
-                  key={post._id}
-                  post={post}
-                  onDelete={() => handleDelete(post._id)}
-                  onTogglePublish={() => handleTogglePublish(post)}
-                />
-              ))}
-            </div>
-          </>
-        )}
+        {renderContent()}
       </div>
 
       {showImport && <ImportModal onClose={() => setShowImport(false)} />}
