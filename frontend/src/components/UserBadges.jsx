@@ -28,20 +28,20 @@ function VerifiedIcon({ sz }) {
 function AdminIcon({ sz }) {
   return (
     <svg width={sz} height={sz} viewBox="0 0 22 22" fill="none" aria-hidden="true">
-      {/* Gold shield shape */}
+      {/* Gold shield — fills the full viewBox like the circle */}
       <path
-        d="M11 2L3.5 5.5V10.5C3.5 14.9 6.8 19 11 20C15.2 19 18.5 14.9 18.5 10.5V5.5L11 2Z"
+        d="M11 1L2 5V11C2 15.97 5.98 20.57 11 22C16.02 20.57 20 15.97 20 11V5L11 1Z"
         fill="#F59E0B"
         stroke="#D97706"
-        strokeWidth="0.8"
+        strokeWidth="0.5"
       />
       {/* White "A" letter */}
       <text
         x="11"
-        y="15"
+        y="15.5"
         textAnchor="middle"
         fill="white"
-        fontSize="9"
+        fontSize="10"
         fontWeight="bold"
         fontFamily="system-ui, sans-serif"
       >
