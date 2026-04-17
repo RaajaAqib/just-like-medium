@@ -139,7 +139,7 @@ router.post('/upload-image', protect, upload.single('coverImage'), (req, res) =>
 // Get post by ID (for editing drafts — author only)
 router.get('/id/:id', protect, async (req, res) => {
   try {
-    const post = await require('../models/Post').findById(req.params.id).populate('author', 'name avatar bio');
+    const post = await require('../models/Post').findById(req.params.id).populate('author', 'name avatar bio isAdmin isVerified');
     if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
     if (post.author._id.toString() !== req.user._id.toString() && !req.user.isAdmin)
       return res.status(403).json({ success: false, message: 'Not authorized' });
@@ -283,7 +283,7 @@ router.get('/admin/submissions', protect, adminOnly, async (req, res) => {
     const filter = { submissionStatus: { $ne: 'none' } };
     if (status) filter.submissionStatus = status;
     const posts = await Post.find(filter)
-      .populate('author', 'name avatar email')
+      .populate('author', 'name avatar email isAdmin isVerified')
       .sort({ updatedAt: -1 })
       .select('title slug submissionStatus submissionNote coverImage author updatedAt createdAt readTime');
     res.json({ success: true, posts });

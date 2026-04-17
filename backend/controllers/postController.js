@@ -43,7 +43,7 @@ const getPosts = async (req, res) => {
 
     const total = await Post.countDocuments(query);
     const posts = await Post.find(query)
-      .populate('author', 'name avatar bio')
+      .populate('author', 'name avatar bio isAdmin isVerified')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -65,7 +65,7 @@ const getPosts = async (req, res) => {
 const getPost = async (req, res) => {
   try {
     const post = await Post.findOne({ slug: req.params.slug, published: true })
-      .populate('author', 'name avatar bio followers');
+      .populate('author', 'name avatar bio followers isAdmin isVerified');
 
     if (!post) {
       return res.status(404).json({ success: false, message: 'Post not found' });
@@ -113,7 +113,7 @@ const createPost = async (req, res) => {
     }
 
     const post = await Post.create(postData);
-    await post.populate('author', 'name avatar');
+    await post.populate('author', 'name avatar isAdmin isVerified');
 
     res.status(201).json({ success: true, post });
   } catch (error) {
@@ -163,7 +163,7 @@ const updatePost = async (req, res) => {
     }
 
     await post.save();
-    await post.populate('author', 'name avatar');
+    await post.populate('author', 'name avatar isAdmin isVerified');
 
     res.json({ success: true, post });
   } catch (error) {
@@ -331,7 +331,7 @@ const getPostReports = async (req, res) => {
     const total = await Post.countDocuments(query);
 
     const posts = await Post.find(query)
-      .populate('author',      'name avatar email')
+      .populate('author', 'name avatar email isAdmin isVerified')
       .populate('reportedBy',  'name email')
       .populate('moderatedBy', 'name')
       .select('title slug excerpt coverImage author reportReason reportedBy moderationStatus moderationNote moderatedBy moderatedAt createdAt')

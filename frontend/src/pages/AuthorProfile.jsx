@@ -12,6 +12,7 @@ import { formatDistanceToNow, format } from 'date-fns';
 import {
   FiEdit2, FiX, FiMessageCircle, FiCalendar, FiUsers,
 } from 'react-icons/fi';
+import UserBadges from '../components/UserBadges';
 
 // ── Followers / Following modal ───────────────────────────────────────────────
 function UsersModal({ title, users, onClose }) {
@@ -216,9 +217,12 @@ function ProfileContent({ id }) {
       <div className="flex-1 min-w-0 max-w-2xl">
 
         {/* Name */}
-        <h1 className="text-3xl sm:text-4xl font-bold text-medium-black dark:text-gray-100 mb-5">
-          {profile.name}
-        </h1>
+        <div className="flex items-center gap-2 mb-5">
+          <h1 className="text-3xl sm:text-4xl font-bold text-medium-black dark:text-gray-100">
+            {profile.name}
+          </h1>
+          <UserBadges user={profile} size="lg" />
+        </div>
 
         {/* Tabs */}
         <div className="flex border-b border-medium-border dark:border-gray-700 mb-6">
@@ -382,7 +386,10 @@ function ProfileContent({ id }) {
               alt={profile.name}
               className="w-20 h-20 rounded-full object-cover" />
             <div>
-              <p className="font-semibold text-medium-black dark:text-gray-100 text-base">{profile.name}</p>
+              <div className="flex items-center justify-center gap-1.5">
+                <p className="font-semibold text-medium-black dark:text-gray-100 text-base">{profile.name}</p>
+                <UserBadges user={profile} size="sm" />
+              </div>
               {profile.bio && (
                 <p className="text-xs text-medium-gray dark:text-gray-400 mt-1 line-clamp-3 leading-relaxed">
                   {profile.bio}

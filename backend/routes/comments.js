@@ -26,7 +26,7 @@ router.get('/admin/all', protect, adminOnly, async (req, res) => {
     const skip  = (page - 1) * limit;
     const total = await Comment.countDocuments();
     const comments = await Comment.find()
-      .populate('author', 'name avatar email')
+      .populate('author', 'name avatar email isAdmin isVerified')
       .populate('post',   'title slug')
       .sort({ createdAt: -1 })
       .skip(skip)

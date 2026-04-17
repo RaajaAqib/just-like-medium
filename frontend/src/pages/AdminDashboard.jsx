@@ -348,6 +348,14 @@ function UsersTab() {
     } catch { toast.error('Failed to update role'); }
   };
 
+  const toggleVerify = async (id) => {
+    try {
+      const res = await api.put(`/users/admin/${id}/toggle-verify`);
+      setUsers(users.map(u => u._id === id ? { ...u, isVerified: res.data.isVerified } : u));
+      toast.success(res.data.isVerified ? 'User verified' : 'Verification removed');
+    } catch { toast.error('Failed to update verification'); }
+  };
+
   const toggleBan = async (id) => {
     try {
       const res = await api.put(`/users/admin/${id}/ban`);
@@ -470,6 +478,11 @@ function UsersTab() {
                           className="p-1.5 text-gray-400 hover:text-blue-500 transition rounded" title="View profile">
                           <FiEye className="text-sm" />
                         </Link>
+                        <button onClick={() => toggleVerify(u._id)}
+                          className={`p-1.5 rounded transition ${u.isVerified ? 'text-blue-500 hover:text-gray-400' : 'text-gray-300 dark:text-gray-600 hover:text-blue-500'}`}
+                          title={u.isVerified ? 'Remove verification' : 'Verify user'}>
+                          <FiCheckCircle className="text-sm" />
+                        </button>
                         <button onClick={() => toggleAdmin(u._id)}
                           className={`p-1.5 rounded transition ${u.isAdmin ? 'text-purple-400 hover:text-gray-400' : 'text-gray-300 dark:text-gray-600 hover:text-purple-500'}`}
                           title={u.isAdmin ? 'Remove admin' : 'Make admin'}>

@@ -18,6 +18,18 @@ const { upload } = require('../utils/cloudinary');
 router.get('/admin/all', protect, adminOnly, getAllUsersAdmin);
 router.delete('/admin/:id', protect, adminOnly, deleteUserAdmin);
 router.put('/admin/:id/toggle-admin', protect, adminOnly, toggleAdmin);
+router.put('/admin/:id/toggle-verify', protect, adminOnly, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    user.isVerified = !user.isVerified;
+    await user.save({ validateBeforeSave: false });
+    res.json({ success: true, isVerified: user.isVerified });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 // Admin ban/unban user
 router.put('/admin/:id/ban', protect, adminOnly, async (req, res) => {
@@ -150,7 +162,7 @@ router.get('/me/posts', protect, async (req, res) => {
 router.get('/me/saved', protect, async (req, res) => {
   try {
     const user = await require('../models/User').findById(req.user._id)
-      .populate({ path: 'savedPosts', populate: { path: 'author', select: 'name avatar' } });
+      .populate({ path: 'savedPosts', populate: { path: 'author', select: 'name avatar isAdmin isVerified' } });
     res.json({ success: true, savedPosts: user.savedPosts || [] });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -190,7 +202,7 @@ router.get('/me/history', protect, async (req, res) => {
       .populate({
         path: 'readingHistory.post',
         select: 'title slug excerpt coverImage readTime createdAt author',
-        populate: { path: 'author', select: 'name avatar' },
+        populate: { path: 'author', select: 'name avatar isAdmin isVerified' },
       });
     // Filter out entries whose post was deleted
     const history = (user.readingHistory || [])

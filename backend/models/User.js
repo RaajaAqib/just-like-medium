@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     savedPosts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }],

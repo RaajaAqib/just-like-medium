@@ -5,6 +5,7 @@ import { FiHeart, FiX, FiMessageSquare, FiChevronDown, FiChevronUp, FiMoreHorizo
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/axios';
 import toast from 'react-hot-toast';
+import UserBadges from './UserBadges';
 
 const avatarUrl = (u, size = 36) =>
   u?.avatar ||
@@ -144,6 +145,7 @@ function CommentItem({ comment, user, postAuthorId, isReply, parentId, expandedR
                 className="text-sm font-semibold text-gray-900 dark:text-gray-100 hover:underline leading-none truncate">
                 {comment.author?.name}
               </Link>
+              <UserBadges user={comment.author} size="sm" />
               <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
                 {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
               </span>

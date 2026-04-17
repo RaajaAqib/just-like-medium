@@ -7,7 +7,7 @@ const Notification = require('../models/Notification');
 router.get('/', protect, async (req, res) => {
   try {
     const notifications = await Notification.find({ recipient: req.user._id })
-      .populate('fromUser', 'name avatar')
+      .populate('fromUser', 'name avatar isAdmin isVerified')
       .sort({ createdAt: -1 })
       .limit(30);
     res.json({ success: true, notifications });

@@ -15,6 +15,7 @@ import CommentSection from '../components/CommentSection';
 import SidebarLayout from '../components/SidebarLayout';
 import Navbar from '../components/Navbar';
 import SaveToListDropdown from '../components/SaveToListDropdown';
+import UserBadges from '../components/UserBadges';
 
 const REPORT_REASONS = [
   'Spam or misleading content',
@@ -180,7 +181,10 @@ export default function Article() {
             src={post.author?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author?.name || 'A')}&background=random`}
             alt={post.author?.name} className="w-11 h-11 rounded-full object-cover" />
           <div>
-            <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">{post.author?.name}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">{post.author?.name}</p>
+              <UserBadges user={post.author} size="sm" />
+            </div>
             <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
               <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}</span>
               <span>·</span>
@@ -283,9 +287,12 @@ export default function Article() {
             alt={post.author?.name} className="w-14 h-14 rounded-full object-cover" />
         </Link>
         <div>
-          <Link to={`/profile/${post.author?._id}`} className="font-semibold text-gray-900 dark:text-gray-100 hover:underline">
-            {post.author?.name}
-          </Link>
+          <div className="flex items-center gap-1.5">
+            <Link to={`/profile/${post.author?._id}`} className="font-semibold text-gray-900 dark:text-gray-100 hover:underline">
+              {post.author?.name}
+            </Link>
+            <UserBadges user={post.author} />
+          </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
             {post.author?.bio || 'No bio available.'}
           </p>

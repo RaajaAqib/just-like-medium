@@ -31,11 +31,11 @@ router.get('/me', protect, async (req, res) => {
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const list = await List.findById(req.params.id)
-      .populate('owner', 'name avatar')
+      .populate('owner', 'name avatar isAdmin isVerified')
       .populate({
         path: 'posts',
         select: 'title slug excerpt coverImage readTime createdAt tags likes claps author',
-        populate: { path: 'author', select: 'name avatar' },
+        populate: { path: 'author', select: 'name avatar isAdmin isVerified' },
       });
     if (!list) return res.status(404).json({ success: false, message: 'List not found' });
     const ownerId = list.owner._id.toString();

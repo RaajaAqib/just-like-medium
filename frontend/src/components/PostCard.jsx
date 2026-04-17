@@ -6,6 +6,7 @@ import { MdOutlineWavingHand } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
 import { useSavedPosts } from '../context/SavedPostsContext';
 import SaveToListDropdown from './SaveToListDropdown';
+import UserBadges from './UserBadges';
 import toast from 'react-hot-toast';
 
 export default function PostCard({ post }) {
@@ -38,6 +39,7 @@ export default function PostCard({ post }) {
           className="w-6 h-6 rounded-full object-cover"
         />
         <span className="text-sm text-medium-black dark:text-gray-300 hover:underline">{post.author?.name}</span>
+        <UserBadges user={post.author} size="sm" />
       </Link>
 
       {/* Content row */}
