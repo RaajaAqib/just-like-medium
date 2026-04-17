@@ -62,6 +62,15 @@ const postSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // ── Submission workflow ──────────────────────────────────────────────────
+    submissionStatus: {
+      type: String,
+      enum: ['none', 'pending', 'in-review', 'edits-requested', 'approved', 'declined', 'withdrawn'],
+      default: 'none',
+    },
+    submissionNote: { type: String, default: '' },
+    // ── Scheduling ───────────────────────────────────────────────────────────
+    scheduledAt: { type: Date, default: null },
     // ── Moderation ──────────────────────────────────────────────────────────
     reported:         { type: Boolean, default: false },
     reportReason:     { type: String,  default: '' },

@@ -178,4 +178,110 @@ router.post('/:id/like',   protect, checkRestrictions, likePost);
 router.post('/:id/clap',   protect, checkRestrictions, clapPost);
 router.post('/:id/report', protect, reportPost); // reporting itself is always allowed
 
+// ── Submit story for admin review ─────────────────────────────────────────────
+router.patch('/:id/submit', protect, async (req, res) => {
+  try {
+    const Post = require('../models/Post');
+    const post = await Post.findOne({ _id: req.params.id, author: req.user._id });
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+    if (['pending', 'in-review'].includes(post.submissionStatus)) {
+      return res.status(400).json({ success: false, message: 'Already submitted for review' });
+    }
+    post.submissionStatus = 'pending';
+    post.published = false;
+    post.scheduledAt = null;
+    await post.save({ validateBeforeSave: false });
+    res.json({ success: true, submissionStatus: post.submissionStatus });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── Withdraw submission ───────────────────────────────────────────────────────
+router.patch('/:id/withdraw', protect, async (req, res) => {
+  try {
+    const Post = require('../models/Post');
+    const post = await Post.findOne({ _id: req.params.id, author: req.user._id });
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+    post.submissionStatus = 'withdrawn';
+    await post.save({ validateBeforeSave: false });
+    res.json({ success: true, submissionStatus: post.submissionStatus });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── Schedule story ────────────────────────────────────────────────────────────
+router.patch('/:id/schedule', protect, async (req, res) => {
+  try {
+    const Post = require('../models/Post');
+    const post = await Post.findOne({ _id: req.params.id, author: req.user._id });
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+    const { scheduledAt } = req.body;
+    if (!scheduledAt) return res.status(400).json({ success: false, message: 'scheduledAt is required' });
+    const date = new Date(scheduledAt);
+    if (date <= new Date()) return res.status(400).json({ success: false, message: 'Scheduled date must be in the future' });
+    post.scheduledAt = date;
+    post.published = false;
+    post.submissionStatus = 'none';
+    await post.save({ validateBeforeSave: false });
+    res.json({ success: true, scheduledAt: post.scheduledAt });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── Cancel schedule ───────────────────────────────────────────────────────────
+router.patch('/:id/unschedule', protect, async (req, res) => {
+  try {
+    const Post = require('../models/Post');
+    const post = await Post.findOne({ _id: req.params.id, author: req.user._id });
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+    post.scheduledAt = null;
+    await post.save({ validateBeforeSave: false });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── Admin: update submission status ──────────────────────────────────────────
+router.patch('/admin/:id/submission', protect, adminOnly, async (req, res) => {
+  try {
+    const Post = require('../models/Post');
+    const { status, note } = req.body;
+    const validStatuses = ['pending', 'in-review', 'edits-requested', 'approved', 'declined', 'withdrawn'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status' });
+    }
+    const post = await Post.findById(req.params.id).populate('author', 'name email');
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+    post.submissionStatus = status;
+    if (note !== undefined) post.submissionNote = note;
+    if (status === 'approved') post.published = true;
+    if (status === 'declined') post.published = false;
+    await post.save({ validateBeforeSave: false });
+    res.json({ success: true, submissionStatus: post.submissionStatus, published: post.published });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── Admin: get all submissions ────────────────────────────────────────────────
+router.get('/admin/submissions', protect, adminOnly, async (req, res) => {
+  try {
+    const Post = require('../models/Post');
+    const { status } = req.query;
+    const filter = { submissionStatus: { $ne: 'none' } };
+    if (status) filter.submissionStatus = status;
+    const posts = await Post.find(filter)
+      .populate('author', 'name avatar email')
+      .sort({ updatedAt: -1 })
+      .select('title slug submissionStatus submissionNote coverImage author updatedAt createdAt readTime');
+    res.json({ success: true, posts });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

@@ -63,6 +63,24 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Auto-publish scheduled posts every minute
+function startScheduledPublisher() {
+  const Post = require('./models/Post');
+  setInterval(async () => {
+    try {
+      const result = await Post.updateMany(
+        { scheduledAt: { $lte: new Date() }, published: false },
+        { $set: { published: true, scheduledAt: null, submissionStatus: 'none' } }
+      );
+      if (result.modifiedCount > 0) {
+        console.log(`Auto-published ${result.modifiedCount} scheduled post(s)`);
+      }
+    } catch (err) {
+      console.error('Scheduled publisher error:', err.message);
+    }
+  }, 60 * 1000); // every 60 seconds
+}
+
 // Connect to MongoDB and start server
 const PORT = process.env.PORT || 5501;
 
@@ -70,6 +88,7 @@ mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB');
+    startScheduledPublisher();
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch((err) => {

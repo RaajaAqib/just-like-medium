@@ -17,14 +17,15 @@ import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const TABS = [
-  { id: 'overview',  label: 'Overview',   icon: FiGrid },
-  { id: 'articles',  label: 'Articles',   icon: FiFileText },
-  { id: 'users',     label: 'Users',      icon: FiUsers },
-  { id: 'comments',  label: 'Comments',   icon: FiMessageCircle },
-  { id: 'reports',   label: 'Reports',    icon: FiFlag },
-  { id: 'appeals',   label: 'Appeals',    icon: FiAlertCircle },
-  { id: 'analytics', label: 'Analytics',  icon: FiBarChart2 },
-  { id: 'tags',      label: 'Tags',       icon: FiTag },
+  { id: 'overview',     label: 'Overview',     icon: FiGrid },
+  { id: 'submissions',  label: 'Submissions',  icon: FiCheckCircle },
+  { id: 'articles',     label: 'Articles',     icon: FiFileText },
+  { id: 'users',        label: 'Users',        icon: FiUsers },
+  { id: 'comments',     label: 'Comments',     icon: FiMessageCircle },
+  { id: 'reports',      label: 'Reports',      icon: FiFlag },
+  { id: 'appeals',      label: 'Appeals',      icon: FiAlertCircle },
+  { id: 'analytics',    label: 'Analytics',    icon: FiBarChart2 },
+  { id: 'tags',         label: 'Tags',         icon: FiTag },
 ];
 
 const PIE_COLORS = ['#1a8917', '#242424', '#6b6b6b', '#d1d5db', '#86efac'];
@@ -1502,19 +1503,196 @@ function UserModerationModal({ targetUser, onClose, onDone }) {
   );
 }
 
+// ─── Submissions Tab ──────────────────────────────────────────────────────────
+const SUBMISSION_STATUS_META = {
+  pending:            { label: 'Pending review',   cls: 'bg-gray-100 text-gray-600' },
+  'in-review':        { label: 'In review',         cls: 'bg-blue-100 text-blue-700' },
+  'edits-requested':  { label: 'Edits requested',   cls: 'bg-orange-100 text-orange-700' },
+  approved:           { label: 'Approved',           cls: 'bg-green-100 text-green-700' },
+  withdrawn:          { label: 'Withdrawn',          cls: 'bg-gray-100 text-gray-500' },
+  declined:           { label: 'Declined',           cls: 'bg-red-100 text-red-600' },
+};
+
+function SubmissionsTab() {
+  const [posts, setPosts]       = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [selected, setSelected] = useState(null);
+  const [newStatus, setNewStatus] = useState('');
+  const [note, setNote]         = useState('');
+  const [saving, setSaving]     = useState(false);
+
+  const fetchSubmissions = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = statusFilter ? `?status=${statusFilter}` : '';
+      const res = await api.get(`/posts/admin/submissions${params}`);
+      setPosts(res.data.posts || []);
+    } catch { toast.error('Failed to load submissions'); }
+    finally { setLoading(false); }
+  }, [statusFilter]);
+
+  useEffect(() => { fetchSubmissions(); }, [fetchSubmissions]);
+
+  const handleUpdateStatus = async () => {
+    if (!newStatus) return;
+    setSaving(true);
+    try {
+      await api.patch(`/posts/admin/${selected._id}/submission`, { status: newStatus, note });
+      toast.success('Submission updated');
+      setSelected(null);
+      fetchSubmissions();
+    } catch { toast.error('Failed to update submission'); }
+    finally { setSaving(false); }
+  };
+
+  const pendingCount = posts.filter(p => p.submissionStatus === 'pending').length;
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Story Submissions</h2>
+          {pendingCount > 0 && (
+            <p className="text-sm text-orange-600 dark:text-orange-400 mt-0.5">{pendingCount} pending review</p>
+          )}
+        </div>
+        <select
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value)}
+          className="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-400"
+        >
+          <option value="">All submissions</option>
+          {Object.entries(SUBMISSION_STATUS_META).map(([k, v]) => (
+            <option key={k} value={k}>{v.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {loading ? (
+        <div className="py-16"><LoadingSpinner /></div>
+      ) : posts.length === 0 ? (
+        <div className="text-center py-16 text-gray-500 dark:text-gray-400 text-sm">No submissions found.</div>
+      ) : (
+        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+          {posts.map(post => {
+            const meta = SUBMISSION_STATUS_META[post.submissionStatus];
+            return (
+              <div key={post._id} className="flex items-start gap-4 p-4 sm:p-5 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition">
+                {/* Thumbnail */}
+                <div className="w-14 h-10 flex-shrink-0 rounded overflow-hidden bg-gray-100 dark:bg-gray-700">
+                  {post.coverImage
+                    ? <img src={post.coverImage} alt="" className="w-full h-full object-cover" />
+                    : <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400">No img</div>
+                  }
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="min-w-0">
+                      <Link to={`/article/${post.slug}`} target="_blank"
+                        className="font-semibold text-gray-900 dark:text-gray-100 hover:underline text-sm line-clamp-1">
+                        {post.title || 'Untitled'}
+                      </Link>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        by {post.author?.name} · {post.readTime} min · {formatDistanceToNow(new Date(post.updatedAt), { addSuffix: true })}
+                      </p>
+                      {post.submissionNote && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 italic">Note: {post.submissionNote}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {meta && (
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${meta.cls}`}>
+                          {meta.label}
+                        </span>
+                      )}
+                      <button
+                        onClick={() => { setSelected(post); setNewStatus(post.submissionStatus); setNote(post.submissionNote || ''); }}
+                        className="text-xs px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                      >
+                        Review
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Review modal */}
+      {selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-gray-900 dark:text-gray-100">Review submission</h3>
+              <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                <FiX className="text-xl" />
+              </button>
+            </div>
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1 line-clamp-2">{selected.title}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">by {selected.author?.name}</p>
+
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Status</label>
+            <select
+              value={newStatus}
+              onChange={e => setNewStatus(e.target.value)}
+              className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-400 mb-3"
+            >
+              {Object.entries(SUBMISSION_STATUS_META).map(([k, v]) => (
+                <option key={k} value={k}>{v.label}</option>
+              ))}
+            </select>
+
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Note to author (optional)</label>
+            <textarea
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              rows={3}
+              placeholder="e.g. Please revise the introduction..."
+              className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-400 resize-none mb-4"
+            />
+
+            {newStatus === 'approved' && (
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 mb-4 text-xs text-green-700 dark:text-green-400">
+                Approving will automatically publish this story.
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setSelected(null)}
+                className="px-4 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-full text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                Cancel
+              </button>
+              <button onClick={handleUpdateStatus} disabled={saving}
+                className="px-4 py-2 text-sm bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-full hover:opacity-90 disabled:opacity-50 transition">
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main AdminDashboard ──────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
 
   const tabContent = {
-    overview:  <OverviewTab />,
-    articles:  <ArticlesTab />,
-    users:     <UsersTab />,
-    comments:  <CommentsTab />,
-    reports:   <ReportsTab />,
-    appeals:   <AppealsTab />,
-    analytics: <AnalyticsTab />,
-    tags:      <TagsTab />,
+    overview:    <OverviewTab />,
+    submissions: <SubmissionsTab />,
+    articles:    <ArticlesTab />,
+    users:       <UsersTab />,
+    comments:    <CommentsTab />,
+    reports:     <ReportsTab />,
+    appeals:     <AppealsTab />,
+    analytics:   <AnalyticsTab />,
+    tags:        <TagsTab />,
   };
 
   return (
