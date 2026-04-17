@@ -160,6 +160,20 @@ router.get('/:slug', optionalAuth, getPost);
 router.post('/',      protect, checkRestrictions, upload.single('coverImage'), createPost);
 router.put('/:id',   protect, checkRestrictions, upload.single('coverImage'), updatePost);
 router.delete('/:id', protect, deletePost);
+// Toggle publish/unpublish (owner only)
+router.patch('/:id/toggle-publish', protect, async (req, res) => {
+  try {
+    const Post = require('../models/Post');
+    const post = await Post.findOne({ _id: req.params.id, author: req.user._id });
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+    post.published = !post.published;
+    await post.save();
+    res.json({ success: true, published: post.published });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.post('/:id/like',   protect, checkRestrictions, likePost);
 router.post('/:id/clap',   protect, checkRestrictions, clapPost);
 router.post('/:id/report', protect, reportPost); // reporting itself is always allowed
