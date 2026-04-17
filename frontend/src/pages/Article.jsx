@@ -14,6 +14,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import CommentSection from '../components/CommentSection';
 import SidebarLayout from '../components/SidebarLayout';
 import Navbar from '../components/Navbar';
+import SaveToListDropdown from '../components/SaveToListDropdown';
 
 const REPORT_REASONS = [
   'Spam or misleading content',
@@ -62,7 +63,7 @@ export default function Article() {
   const navigate = useNavigate();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { isSaved, toggleSave } = useSavedPosts();
+  const { isSaved } = useSavedPosts();
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [claps, setClaps] = useState(0);
@@ -70,6 +71,8 @@ export default function Article() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [showSaveDropdown, setShowSaveDropdown] = useState(false);
+  const [showSaveDropdownBottom, setShowSaveDropdownBottom] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => { fetchPost(); }, [slug]);
@@ -120,12 +123,6 @@ export default function Article() {
       const res = await api.post(`/posts/${post._id}/clap`);
       setClaps(res.data.claps);
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to clap'); }
-  };
-
-  const handleSave = async () => {
-    if (!user) return toast.error('Please login to save');
-    const result = await toggleSave(post._id);
-    if (result !== null) toast.success(result ? 'Saved to library' : 'Removed from library');
   };
 
   const handleDelete = async () => {
@@ -195,13 +192,23 @@ export default function Article() {
         </Link>
 
         <div className="flex items-center gap-1">
-          {/* Save button — always visible for logged-in users */}
+          {/* Save button — opens list picker dropdown */}
           {user && (
-            <button onClick={handleSave}
-              className={`p-2 transition ${isSaved(post?._id) ? 'text-medium-black dark:text-gray-100' : 'text-gray-300 dark:text-gray-600 hover:text-medium-black dark:hover:text-gray-200'}`}
-              title={isSaved(post?._id) ? 'Remove from library' : 'Save to library'}>
-              <FiBookmark className={isSaved(post?._id) ? 'fill-current' : ''} />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowSaveDropdown(v => !v)}
+                className={`p-2 transition ${isSaved(post?._id) ? 'text-medium-black dark:text-gray-100' : 'text-gray-300 dark:text-gray-600 hover:text-medium-black dark:hover:text-gray-200'}`}
+                title="Save to list"
+              >
+                <FiBookmark className={isSaved(post?._id) ? 'fill-current' : ''} />
+              </button>
+              {showSaveDropdown && (
+                <SaveToListDropdown
+                  postId={post._id}
+                  onClose={() => setShowSaveDropdown(false)}
+                />
+              )}
+            </div>
           )}
 
           {isAuthor ? (
@@ -249,11 +256,23 @@ export default function Article() {
           <span>{claps}</span>
         </button>
 
-        <button onClick={handleSave}
-          className={`ml-auto flex items-center gap-2 text-sm transition ${isSaved(post?._id) ? 'text-medium-black dark:text-gray-100' : 'text-gray-400 dark:text-gray-500 hover:text-medium-black dark:hover:text-gray-200'}`}
-          title={isSaved(post?._id) ? 'Remove from library' : 'Save to library'}>
-          <FiBookmark className={`text-xl ${isSaved(post?._id) ? 'fill-current' : ''}`} />
-        </button>
+        {user && (
+          <div className="relative ml-auto">
+            <button
+              onClick={() => setShowSaveDropdownBottom(v => !v)}
+              className={`flex items-center gap-2 text-sm transition ${isSaved(post?._id) ? 'text-medium-black dark:text-gray-100' : 'text-gray-400 dark:text-gray-500 hover:text-medium-black dark:hover:text-gray-200'}`}
+              title="Save to list"
+            >
+              <FiBookmark className={`text-xl ${isSaved(post?._id) ? 'fill-current' : ''}`} />
+            </button>
+            {showSaveDropdownBottom && (
+              <SaveToListDropdown
+                postId={post._id}
+                onClose={() => setShowSaveDropdownBottom(false)}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Author bio card */}

@@ -1,20 +1,23 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { FiBookmark } from 'react-icons/fi';
 import { MdOutlineWavingHand } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
 import { useSavedPosts } from '../context/SavedPostsContext';
+import SaveToListDropdown from './SaveToListDropdown';
 import toast from 'react-hot-toast';
 
 export default function PostCard({ post }) {
   const { user } = useAuth();
-  const { isSaved, toggleSave } = useSavedPosts();
+  const { isSaved } = useSavedPosts();
   const navigate = useNavigate();
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const saved = isSaved(post._id);
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
 
-  const handleSave = async (e) => {
+  const handleSaveClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (!user) {
@@ -22,12 +25,7 @@ export default function PostCard({ post }) {
       navigate('/login');
       return;
     }
-    const result = await toggleSave(post._id);
-    if (result === null) {
-      toast.error('Failed to save');
-    } else {
-      toast.success(result ? 'Saved to library' : 'Removed from library');
-    }
+    setShowDropdown(v => !v);
   };
 
   return (
@@ -73,15 +71,27 @@ export default function PostCard({ post }) {
               )}
             </div>
 
-            <button
-              onClick={handleSave}
-              title={saved ? 'Remove from library' : 'Save to library'}
-              className={`p-1.5 rounded-full transition flex-shrink-0 ${
-                saved ? 'text-medium-black dark:text-gray-100' : 'text-medium-gray dark:text-gray-500 hover:text-medium-black dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              <FiBookmark className={`text-base ${saved ? 'fill-current' : ''}`} />
-            </button>
+            {/* Save button + dropdown */}
+            <div className="relative flex-shrink-0">
+              <button
+                onClick={handleSaveClick}
+                title={saved ? 'Saved to a list' : 'Save to list'}
+                className={`p-1.5 rounded-full transition ${
+                  saved
+                    ? 'text-medium-black dark:text-gray-100'
+                    : 'text-medium-gray dark:text-gray-500 hover:text-medium-black dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                <FiBookmark className={`text-base ${saved ? 'fill-current' : ''}`} />
+              </button>
+
+              {showDropdown && user && (
+                <SaveToListDropdown
+                  postId={post._id}
+                  onClose={() => setShowDropdown(false)}
+                />
+              )}
+            </div>
           </div>
         </div>
 

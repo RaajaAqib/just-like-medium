@@ -19,7 +19,7 @@ router.post('/', protect, async (req, res) => {
 router.get('/me', protect, async (req, res) => {
   try {
     const lists = await List.find({ owner: req.user._id })
-      .populate({ path: 'posts', select: 'title slug coverImage', options: { limit: 3 } })
+      .populate({ path: 'posts', select: '_id coverImage' })
       .sort({ updatedAt: -1 });
     res.json({ success: true, lists });
   } catch (err) {
