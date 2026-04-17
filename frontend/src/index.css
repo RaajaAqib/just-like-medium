@@ -59,6 +59,9 @@
   height: 0;
   font-family: charter, Georgia, Cambria, serif;
 }
+.dark .ProseMirror p.is-editor-empty:first-child::before {
+  color: #6b7280;
+}
 
 /* Paragraphs */
 .ProseMirror p { margin: 0.9rem 0; line-height: 1.85; }

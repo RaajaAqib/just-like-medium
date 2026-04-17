@@ -176,14 +176,14 @@ const Btn = ({ onClick, active, title, children }) => (
     title={title}
     className={`px-1.5 py-1 rounded text-sm transition-colors flex-shrink-0 ${
       active
-        ? 'bg-gray-900 text-white'
-        : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+        ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
+        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'
     }`}
   >
     {children}
   </button>
 );
-const Sep = () => <span className="w-px h-5 bg-gray-200 mx-1 self-center flex-shrink-0" />;
+const Sep = () => <span className="w-px h-5 bg-gray-200 dark:bg-gray-600 mx-1 self-center flex-shrink-0" />;
 
 // ── Is URL string ─────────────────────────────────────────────────────────────
 const URL_RE = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
@@ -361,10 +361,10 @@ export default function RichTextEditor({ content, onChange }) {
   };
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm">
+    <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden bg-white dark:bg-gray-900 shadow-sm">
       {/* Fetching preview indicator */}
       {fetchingPreview && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-xs text-blue-600 border-b border-blue-100">
+        <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-xs text-blue-600 dark:text-blue-400 border-b border-blue-100 dark:border-blue-800">
           <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
@@ -374,7 +374,7 @@ export default function RichTextEditor({ content, onChange }) {
       )}
 
       {/* ── Toolbar ── */}
-      <div className="flex flex-wrap items-center gap-0 px-2 py-1.5 border-b border-gray-200 bg-gray-50">
+      <div className="flex flex-wrap items-center gap-0 px-2 py-1.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
 
         <Btn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} title="Bold">
           <strong className="font-extrabold text-[13px]">B</strong>
