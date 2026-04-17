@@ -202,6 +202,20 @@ router.get('/me/history', protect, async (req, res) => {
   }
 });
 
+// Get current user's responses (comments they wrote)
+router.get('/me/responses', protect, async (req, res) => {
+  try {
+    const Comment = require('../models/Comment');
+    const comments = await Comment.find({ author: req.user._id, isHidden: false })
+      .populate('post', 'title slug coverImage')
+      .sort({ createdAt: -1 })
+      .limit(50);
+    res.json({ success: true, responses: comments });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Public
 router.get('/:id', getUserProfile);
 
