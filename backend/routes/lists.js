@@ -82,8 +82,29 @@ router.post('/:id/posts/:postId', protect, async (req, res) => {
     const list = await List.findOne({ _id: req.params.id, owner: req.user._id });
     if (!list) return res.status(404).json({ success: false, message: 'List not found' });
     const already = list.posts.some(p => p.toString() === req.params.postId);
-    if (!already) list.posts.push(req.params.postId);
-    await list.save();
+    if (!already) {
+      list.posts.push(req.params.postId);
+      await list.save();
+      // Notify post author (not self-save)
+      try {
+        const Post = require('../models/Post');
+        const Notification = require('../models/Notification');
+        const post = await Post.findById(req.params.postId).select('author title slug');
+        if (post && post.author.toString() !== req.user._id.toString()) {
+          await Notification.create({
+            recipient: post.author,
+            fromUser:  req.user._id,
+            type:      'save',
+            post:      post._id,
+            postTitle: post.title,
+            postSlug:  post.slug,
+            link:      `/article/${post.slug}`,
+          });
+        }
+      } catch (_) {} // non-critical
+    } else {
+      await list.save();
+    }
     res.json({ success: true, added: !already });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

@@ -21,10 +21,20 @@ router.put('/admin/:id/toggle-admin', protect, adminOnly, toggleAdmin);
 router.put('/admin/:id/toggle-verify', protect, adminOnly, async (req, res) => {
   try {
     const User = require('../models/User');
+    const Notification = require('../models/Notification');
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
     user.isVerified = !user.isVerified;
     await user.save({ validateBeforeSave: false });
+    // Notify user when they become verified
+    if (user.isVerified) {
+      await Notification.create({
+        recipient: user._id,
+        fromUser:  req.user._id,
+        type:      'verified',
+        link:      `/profile/${user._id}`,
+      });
+    }
     res.json({ success: true, isVerified: user.isVerified });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

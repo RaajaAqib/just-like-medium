@@ -67,18 +67,22 @@ const createComment = async (req, res) => {
     await comment.populate('author', 'name avatar');
 
     if (parentComment) {
+      // Reply to a comment — notify the parent comment's author
       const parentCommentDoc = await Comment.findById(parentComment).select('author');
       if (parentCommentDoc && parentCommentDoc.author.toString() !== req.user._id.toString()) {
         await Notification.create({
           recipient: parentCommentDoc.author,
           fromUser:  req.user._id,
-          type:      'comment',
+          type:      'reply',
           post:      post._id,
           postTitle: post.title,
           postSlug:  post.slug,
+          comment:   comment._id,
+          link:      `/article/${post.slug}?comment=${comment._id}`,
         });
       }
     } else {
+      // Top-level comment — notify the post author
       if (post.author.toString() !== req.user._id.toString()) {
         await Notification.create({
           recipient: post.author,
@@ -87,6 +91,8 @@ const createComment = async (req, res) => {
           post:      post._id,
           postTitle: post.title,
           postSlug:  post.slug,
+          comment:   comment._id,
+          link:      `/article/${post.slug}?comment=${comment._id}`,
         });
       }
     }

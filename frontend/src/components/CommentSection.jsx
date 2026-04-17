@@ -128,7 +128,7 @@ function CommentItem({ comment, user, postAuthorId, isReply, parentId, expandedR
   const replyParentId = isReply ? parentId : comment._id;
 
   return (
-    <div className={isReply ? 'ml-11 pl-4 border-l-2 border-gray-100 dark:border-gray-700 mt-3' : 'mt-1'}>
+    <div id={`comment-${comment._id}`} className={isReply ? 'ml-11 pl-4 border-l-2 border-gray-100 dark:border-gray-700 mt-3' : 'mt-1'}>
       <div
         className={`group flex gap-3 rounded-lg px-2 py-2 transition-colors
           ${!isReply ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/60' : 'hover:bg-gray-50/60 dark:hover:bg-gray-800/40'}`}
@@ -232,17 +232,44 @@ function ResponseInput({ user, onSubmit }) {
   );
 }
 
-export default function CommentSection({ postId, postAuthorId }) {
+export default function CommentSection({ postId, postAuthorId, highlightCommentId }) {
   const { user } = useAuth();
   const [comments, setComments]               = useState([]);
   const [loading, setLoading]                 = useState(false);
   const [expandedReplies, setExpandedReplies] = useState(new Set());
   const [panelOpen, setPanelOpen]             = useState(false);
   const [reportTarget, setReportTarget]       = useState(null);
+  const [highlightId, setHighlightId]         = useState(highlightCommentId || null);
 
   const totalCount = comments.reduce((s, c) => s + 1 + (c.replies?.length || 0), 0);
 
   useEffect(() => { fetchComments(); }, [postId]);
+
+  // Auto-open panel + scroll to highlighted comment after load
+  useEffect(() => {
+    if (!highlightCommentId || comments.length === 0) return;
+    setPanelOpen(true);
+    // expand replies if needed
+    const parent = comments.find(c =>
+      c._id === highlightCommentId ||
+      c.replies?.some(r => r._id === highlightCommentId)
+    );
+    if (parent && parent._id !== highlightCommentId) {
+      setExpandedReplies(prev => new Set([...prev, parent._id]));
+    }
+    setTimeout(() => {
+      const el = document.getElementById(`comment-${highlightCommentId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('comment-highlight');
+        setTimeout(() => el.classList.remove('comment-highlight'), 2500);
+      }
+    }, 400);
+    // Clear highlight param from URL without reload
+    const url = new URL(window.location.href);
+    url.searchParams.delete('comment');
+    window.history.replaceState({}, '', url);
+  }, [highlightCommentId, comments]);
 
   const fetchComments = async () => {
     setLoading(true);

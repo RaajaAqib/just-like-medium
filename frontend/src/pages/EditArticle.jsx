@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import RichTextEditor from '../components/RichTextEditor';
 import api from '../utils/axios';
 import toast from 'react-hot-toast';
-import { FiX, FiUpload } from 'react-icons/fi';
+import { FiX, FiUpload, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useAuth } from '../context/AuthContext';
 
@@ -22,6 +22,8 @@ export default function EditArticle() {
   const [newCoverImage, setNewCoverImage] = useState(null);
   const [published, setPublished] = useState(true);
   const [postSlug, setPostSlug] = useState('');
+  const [submissionStatus, setSubmissionStatus] = useState('');
+  const [submissionNote, setSubmissionNote] = useState('');
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -34,6 +36,8 @@ export default function EditArticle() {
         setCoverPreview(p.coverImage || '');
         setPublished(p.published);
         setPostSlug(p.slug);
+        setSubmissionStatus(p.submissionStatus || '');
+        setSubmissionNote(p.submissionNote || '');
       } catch {
         toast.error('Failed to load post');
         navigate('/my-stories');
@@ -113,6 +117,26 @@ export default function EditArticle() {
           </button>
         </div>
       </div>
+
+      {(submissionStatus === 'edits-requested' || submissionStatus === 'declined') && (
+        <div className={`mb-6 p-4 rounded-xl border flex items-start gap-3 ${
+          submissionStatus === 'declined'
+            ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
+            : 'bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800'
+        }`}>
+          <FiAlertCircle className={`text-lg flex-shrink-0 mt-0.5 ${submissionStatus === 'declined' ? 'text-red-500' : 'text-orange-500'}`} />
+          <div>
+            <p className={`text-sm font-semibold ${submissionStatus === 'declined' ? 'text-red-800 dark:text-red-300' : 'text-orange-800 dark:text-orange-300'}`}>
+              {submissionStatus === 'declined' ? 'Story not approved' : 'Changes requested by admin'}
+            </p>
+            {submissionNote && (
+              <p className={`text-sm mt-1 ${submissionStatus === 'declined' ? 'text-red-700 dark:text-red-400' : 'text-orange-700 dark:text-orange-400'}`}>
+                {submissionNote}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="mb-6">
         {coverPreview ? (

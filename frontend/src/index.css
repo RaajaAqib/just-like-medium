@@ -5,6 +5,25 @@
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* Comment highlight animation (triggered from notification deep-link) */
+@keyframes commentFlash {
+  0%   { background-color: #fef9c3; }
+  60%  { background-color: #fef9c3; }
+  100% { background-color: transparent; }
+}
+.comment-highlight {
+  border-radius: 0.5rem;
+  animation: commentFlash 2.5s ease-out forwards;
+}
+.dark .comment-highlight {
+  animation: commentFlashDark 2.5s ease-out forwards;
+}
+@keyframes commentFlashDark {
+  0%   { background-color: #422006; }
+  60%  { background-color: #422006; }
+  100% { background-color: transparent; }
+}
+
 @layer base {
   * { box-sizing: border-box; }
   body {

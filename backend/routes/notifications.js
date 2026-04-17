@@ -26,4 +26,14 @@ router.put('/read-all', protect, async (req, res) => {
   }
 });
 
+// PUT /api/notifications/:id/read
+router.put('/:id/read', protect, async (req, res) => {
+  try {
+    await Notification.updateOne({ _id: req.params.id, recipient: req.user._id }, { read: true });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

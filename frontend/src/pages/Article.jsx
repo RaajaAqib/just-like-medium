@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import {
   FiHeart, FiEdit2, FiTrash2, FiClock, FiEye, FiBookmark,
@@ -60,6 +60,8 @@ function ReportStoryDialog({ onConfirm, onCancel }) {
 
 export default function Article() {
   const { slug } = useParams();
+  const [searchParams] = useSearchParams();
+  const highlightCommentId = searchParams.get('comment');
   const { user } = useAuth();
   const navigate = useNavigate();
   const [post, setPost] = useState(null);
@@ -302,7 +304,7 @@ export default function Article() {
         </div>
       </div>
 
-      <CommentSection postId={post._id} postAuthorId={post.author?._id} />
+      <CommentSection postId={post._id} postAuthorId={post.author?._id} highlightCommentId={highlightCommentId} />
 
       {showReport && (
         <ReportStoryDialog onConfirm={handleReport} onCancel={() => setShowReport(false)} />

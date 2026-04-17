@@ -257,6 +257,7 @@ router.patch('/:id/unschedule', protect, async (req, res) => {
 router.patch('/admin/:id/submission', protect, adminOnly, async (req, res) => {
   try {
     const Post = require('../models/Post');
+    const Notification = require('../models/Notification');
     const { status, note } = req.body;
     const validStatuses = ['pending', 'in-review', 'edits-requested', 'approved', 'declined', 'withdrawn'];
     if (!validStatuses.includes(status)) {
@@ -269,6 +270,26 @@ router.patch('/admin/:id/submission', protect, adminOnly, async (req, res) => {
     if (status === 'approved') post.published = true;
     if (status === 'declined') post.published = false;
     await post.save({ validateBeforeSave: false });
+
+    // Notify the author — only for statuses that matter to them
+    const notifyStatuses = ['approved', 'declined', 'edits-requested', 'in-review'];
+    if (notifyStatuses.includes(status) && post.author) {
+      const link = status === 'approved'
+        ? `/article/${post.slug}`
+        : `/edit/${post._id}`;
+      await Notification.create({
+        recipient:        post.author._id,
+        fromUser:         req.user._id,
+        type:             'submission',
+        post:             post._id,
+        postTitle:        post.title,
+        postSlug:         post.slug,
+        submissionStatus: status,
+        submissionNote:   note || '',
+        link,
+      });
+    }
+
     res.json({ success: true, submissionStatus: post.submissionStatus, published: post.published });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
