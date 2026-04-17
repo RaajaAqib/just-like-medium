@@ -4,9 +4,11 @@ import RichTextEditor from '../components/RichTextEditor';
 import api from '../utils/axios';
 import toast from 'react-hot-toast';
 import { FiX, FiUpload } from 'react-icons/fi';
+import { useAuth } from '../context/AuthContext';
 
 export default function WriteArticle() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState([]);
@@ -54,12 +56,16 @@ export default function WriteArticle() {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      if (published) {
-        toast.success('Story published!');
-        navigate(`/article/${res.data.post.slug}`);
-      } else {
+      const post = res.data.post;
+      if (!published) {
         toast.success('Draft saved!');
         navigate('/my-stories');
+      } else if (post.submissionStatus === 'pending') {
+        toast.success('Story submitted for review! Check your Stories page.');
+        navigate('/my-stories?tab=submissions');
+      } else {
+        toast.success('Story published!');
+        navigate(`/article/${post.slug}`);
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to publish');
@@ -74,14 +80,14 @@ export default function WriteArticle() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Write a story</h1>
         <div className="flex items-center gap-3 flex-shrink-0">
           <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
-            <span>Publish</span>
+            <span>{user?.isAdmin ? 'Publish' : 'Submit for review'}</span>
             <div onClick={() => setPublished(!published)}
               className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${published ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
               <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${published ? 'translate-x-5' : 'translate-x-0'}`} />
             </div>
           </label>
           <button onClick={handleSubmit} disabled={loading} className="btn-green">
-            {loading ? 'Publishing...' : published ? 'Publish' : 'Save draft'}
+            {loading ? 'Saving...' : published ? (user?.isAdmin ? 'Publish' : 'Submit for review') : 'Save draft'}
           </button>
         </div>
       </div>

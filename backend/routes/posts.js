@@ -166,8 +166,16 @@ router.patch('/:id/toggle-publish', protect, async (req, res) => {
     const Post = require('../models/Post');
     const post = await Post.findOne({ _id: req.params.id, author: req.user._id });
     if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    if (!post.published && !req.user.isAdmin) {
+      // Non-admin trying to publish → submit for review instead
+      post.submissionStatus = 'pending';
+      await post.save({ validateBeforeSave: false });
+      return res.json({ success: true, published: false, submissionStatus: 'pending' });
+    }
+
     post.published = !post.published;
-    await post.save();
+    await post.save({ validateBeforeSave: false });
     res.json({ success: true, published: post.published });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

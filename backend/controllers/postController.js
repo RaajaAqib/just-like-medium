@@ -92,6 +92,10 @@ const createPost = async (req, res) => {
 
     const slug = await generateSlug(title);
 
+    // Non-admins cannot directly publish — route through submission workflow
+    const wantsPublish = published === true || published === 'true';
+    const isAdmin = req.user.isAdmin;
+
     const postData = {
       title,
       slug,
@@ -99,7 +103,8 @@ const createPost = async (req, res) => {
       excerpt,
       author: req.user._id,
       tags: tags ? tags.map((t) => t.toLowerCase().trim()) : [],
-      published: published !== undefined ? published : true,
+      published: isAdmin ? wantsPublish : false,
+      submissionStatus: (!isAdmin && wantsPublish) ? 'pending' : 'none',
     };
 
     if (req.file) {
@@ -139,7 +144,18 @@ const updatePost = async (req, res) => {
     if (content) post.content = content;
     if (excerpt !== undefined) post.excerpt = excerpt;
     if (tags) post.tags = tags.map((t) => t.toLowerCase().trim());
-    if (published !== undefined) post.published = published;
+
+    if (published !== undefined) {
+      const wantsPublish = published === true || published === 'true';
+      const isAdmin = req.user.isAdmin;
+      if (wantsPublish && !isAdmin) {
+        // Non-admin trying to publish → submit for review instead
+        post.published = false;
+        post.submissionStatus = 'pending';
+      } else {
+        post.published = wantsPublish;
+      }
+    }
 
     if (req.file) {
       post.coverImage = req.file.path;
