@@ -531,40 +531,41 @@ function ProfileContent({ id }) {
       </div>
 
       {/* ── Right sidebar ── */}
-      <aside className="hidden lg:block w-64 flex-shrink-0">
-        <div className="sticky top-24 space-y-5">
+      <aside className="hidden lg:block w-72 flex-shrink-0 border-l border-medium-border dark:border-gray-700 pl-8">
+        <div className="sticky top-24">
 
-          {/* Avatar */}
-          <div className="flex flex-col items-center text-center gap-3">
+          {/* Avatar + name + bio */}
+          <div className="flex flex-col items-center text-center gap-4 pb-6">
             <img
-              src={profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=random&size=120`}
+              src={profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name)}&background=random&size=160`}
               alt={profile.name}
-              className="w-20 h-20 rounded-full object-cover" />
-            <div>
-              <div className="flex items-center justify-center gap-1.5">
-                <p className="font-semibold text-medium-black dark:text-gray-100 text-base">{profile.name}</p>
-                <UserBadges user={profile} size="sm" />
+              className="w-[88px] h-[88px] rounded-full object-cover" />
+
+            <div className="space-y-1.5 w-full">
+              <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                <p className="text-xl font-bold text-medium-black dark:text-gray-100 leading-tight">{profile.name}</p>
+                <UserBadges user={profile} size="md" />
               </div>
               {profile.bio && (
-                <p className="text-xs text-medium-gray dark:text-gray-400 mt-1 line-clamp-3 leading-relaxed">
+                <p className="text-sm text-medium-gray dark:text-gray-400 leading-relaxed line-clamp-5">
                   {profile.bio}
                 </p>
               )}
             </div>
 
-            {/* Follow / Edit profile */}
+            {/* Follow / Edit / ··· */}
             {isOwn ? (
               <button onClick={() => setShowEdit(true)}
-                className="text-sm text-medium-green dark:text-green-400 hover:underline transition">
+                className="text-sm text-medium-green dark:text-green-400 hover:underline transition font-medium">
                 Edit profile
               </button>
             ) : user ? (
-              <div className="flex items-center gap-2 w-full">
+              <div className="flex items-center gap-2 w-full justify-center">
                 <button onClick={handleFollow}
-                  className={`flex-1 text-sm px-5 py-2 rounded-full font-medium transition border ${
+                  className={`px-6 py-2 rounded-full text-sm font-medium transition border ${
                     following
-                      ? 'border-medium-border dark:border-gray-600 text-medium-gray dark:text-gray-400 hover:border-red-300 hover:text-red-500'
-                      : 'bg-medium-black dark:bg-gray-100 text-white dark:text-gray-900 border-medium-black dark:border-gray-100 hover:opacity-90'
+                      ? 'border-medium-border dark:border-gray-600 text-medium-gray dark:text-gray-400 hover:border-red-300 dark:hover:border-red-400 hover:text-red-500'
+                      : 'bg-[#1a8917] text-white border-[#1a8917] hover:bg-[#156d12]'
                   }`}>
                   {following ? 'Following' : 'Follow'}
                 </button>
@@ -624,23 +625,52 @@ function ProfileContent({ id }) {
               </div>
             ) : (
               <Link to="/login"
-                className="w-full text-center block text-sm px-5 py-2 rounded-full font-medium bg-medium-black text-white hover:opacity-90 transition">
+                className="px-6 py-2 rounded-full text-sm font-medium bg-[#1a8917] text-white border border-[#1a8917] hover:bg-[#156d12] transition">
                 Follow
               </Link>
             )}
           </div>
 
-          {/* Stats */}
-          <div className="border-t border-medium-border dark:border-gray-700 pt-4 space-y-2 text-sm text-medium-gray dark:text-gray-400">
+          {/* Follower / Following counts */}
+          <div className="border-t border-medium-border dark:border-gray-700 py-5 flex gap-6">
             <button onClick={() => setModal('followers')}
-              className="w-full text-left hover:text-medium-black dark:hover:text-gray-200 transition py-1">
-              <strong className="text-medium-black dark:text-gray-200">{followersCount}</strong> {followersCount === 1 ? 'Follower' : 'Followers'}
+              className="text-left hover:opacity-70 transition">
+              <div className="text-lg font-bold text-medium-black dark:text-gray-100">{followersCount}</div>
+              <div className="text-xs text-medium-gray dark:text-gray-400">{followersCount === 1 ? 'Follower' : 'Followers'}</div>
             </button>
             <button onClick={() => setModal('following')}
-              className="w-full text-left hover:text-medium-black dark:hover:text-gray-200 transition py-1">
-              <strong className="text-medium-black dark:text-gray-200">{followingList.length}</strong> Following
+              className="text-left hover:opacity-70 transition">
+              <div className="text-lg font-bold text-medium-black dark:text-gray-100">{followingList.length}</div>
+              <div className="text-xs text-medium-gray dark:text-gray-400">Following</div>
             </button>
           </div>
+
+          {/* Following list with right-edge fade */}
+          {followingList.length > 0 && (
+            <div className="border-t border-medium-border dark:border-gray-700 pt-5">
+              <h3 className="text-sm font-semibold text-medium-black dark:text-gray-100 mb-3">Following</h3>
+              <div className="space-y-3">
+                {followingList.slice(0, 6).map(u => (
+                  <div key={u._id} className="flex items-center justify-between gap-2">
+                    <Link to={`/profile/${u._id}`} className="flex items-center gap-2.5 min-w-0 group">
+                      <img
+                        src={u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'U')}&background=random&size=32`}
+                        alt={u.name}
+                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                      />
+                      <span className="text-sm text-medium-black dark:text-gray-200 group-hover:underline truncate">{u.name}</span>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+              {followingList.length > 6 && (
+                <button onClick={() => setModal('following')}
+                  className="text-sm text-medium-green dark:text-green-400 hover:underline transition mt-3 block">
+                  See all ({followingList.length})
+                </button>
+              )}
+            </div>
+          )}
 
         </div>
       </aside>
