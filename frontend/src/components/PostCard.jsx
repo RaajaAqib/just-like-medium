@@ -1,22 +1,39 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
-import { FiBookmark } from 'react-icons/fi';
+import { FiBookmark, FiMoreHorizontal, FiVolumeX, FiVolume2 } from 'react-icons/fi';
 import { MdOutlineWavingHand } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
 import { useSavedPosts } from '../context/SavedPostsContext';
 import SaveToListDropdown from './SaveToListDropdown';
 import UserBadges from './UserBadges';
+import api from '../utils/axios';
 import toast from 'react-hot-toast';
 
-export default function PostCard({ post }) {
+export default function PostCard({ post, onMute }) {
   const { user } = useAuth();
   const { isSaved } = useSavedPosts();
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const moreRef = useRef(null);
 
   const saved = isSaved(post._id);
   const timeAgo = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
+  const isOwnPost = user?._id === post.author?._id;
+
+  // Close more menu on outside click
+  useEffect(() => {
+    if (!showMoreMenu) return;
+    function handler(e) {
+      if (moreRef.current && !moreRef.current.contains(e.target)) {
+        setShowMoreMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showMoreMenu]);
 
   const handleSaveClick = (e) => {
     e.preventDefault();
@@ -27,6 +44,25 @@ export default function PostCard({ post }) {
       return;
     }
     setShowDropdown(v => !v);
+  };
+
+  const handleMuteAuthor = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowMoreMenu(false);
+    if (!user) { toast.error('Please sign in'); return; }
+    try {
+      const res = await api.post(`/users/${post.author._id}/mute`);
+      setMuted(res.data.muted);
+      if (res.data.muted) {
+        toast.success(`${post.author.name} muted. Refresh to update your feed.`);
+        onMute?.(post.author._id);
+      } else {
+        toast.success(`${post.author.name} unmuted`);
+      }
+    } catch {
+      toast.error('Failed to mute author');
+    }
   };
 
   return (
@@ -73,25 +109,52 @@ export default function PostCard({ post }) {
               )}
             </div>
 
-            {/* Save button + dropdown */}
-            <div className="relative flex-shrink-0">
-              <button
-                onClick={handleSaveClick}
-                title={saved ? 'Saved to a list' : 'Save to list'}
-                className={`p-1.5 rounded-full transition ${
-                  saved
-                    ? 'text-medium-black dark:text-gray-100'
-                    : 'text-medium-gray dark:text-gray-500 hover:text-medium-black dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-              >
-                <FiBookmark className={`text-base ${saved ? 'fill-current' : ''}`} />
-              </button>
+            {/* Action buttons */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Save button */}
+              <div className="relative">
+                <button
+                  onClick={handleSaveClick}
+                  title={saved ? 'Saved to a list' : 'Save to list'}
+                  className={`p-1.5 rounded-full transition ${
+                    saved
+                      ? 'text-medium-black dark:text-gray-100'
+                      : 'text-medium-gray dark:text-gray-500 hover:text-medium-black dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <FiBookmark className={`text-base ${saved ? 'fill-current' : ''}`} />
+                </button>
+                {showDropdown && user && (
+                  <SaveToListDropdown
+                    postId={post._id}
+                    onClose={() => setShowDropdown(false)}
+                  />
+                )}
+              </div>
 
-              {showDropdown && user && (
-                <SaveToListDropdown
-                  postId={post._id}
-                  onClose={() => setShowDropdown(false)}
-                />
+              {/* More options (···) — only for logged-in users viewing others' posts */}
+              {user && !isOwnPost && (
+                <div className="relative" ref={moreRef}>
+                  <button
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowMoreMenu(v => !v); }}
+                    className="p-1.5 rounded-full text-medium-gray dark:text-gray-500 hover:text-medium-black dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition opacity-0 group-hover:opacity-100"
+                    title="More options"
+                  >
+                    <FiMoreHorizontal className="text-base" />
+                  </button>
+
+                  {showMoreMenu && (
+                    <div className="absolute right-0 bottom-8 w-52 bg-white dark:bg-gray-800 border border-medium-border dark:border-gray-600 rounded-lg shadow-lg py-1 z-20">
+                      <button
+                        onClick={handleMuteAuthor}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left"
+                      >
+                        {muted ? <FiVolume2 size={15} /> : <FiVolumeX size={15} />}
+                        {muted ? `Unmute ${post.author?.name}` : `Mute ${post.author?.name}`}
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>

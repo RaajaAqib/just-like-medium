@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -11,6 +11,7 @@ import Navbar from '../components/Navbar';
 import { formatDistanceToNow, format } from 'date-fns';
 import {
   FiEdit2, FiX, FiMessageCircle, FiCalendar, FiUsers,
+  FiMoreHorizontal, FiVolumeX, FiVolume2, FiUserMinus, FiUserPlus,
 } from 'react-icons/fi';
 import UserBadges from '../components/UserBadges';
 
@@ -160,8 +161,22 @@ function ProfileContent({ id }) {
   const [following, setFollowing]       = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [muted, setMuted]               = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [modal, setModal]               = useState(null); // 'followers' | 'following'
   const [showEdit, setShowEdit]         = useState(false);
+  const moreMenuRef                     = useRef(null);
+
+  // Close more menu on outside click
+  useEffect(() => {
+    if (!showMoreMenu) return;
+    function handler(e) {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) {
+        setShowMoreMenu(false);
+      }
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showMoreMenu]);
 
   const isOwn = user?._id === id;
 
@@ -414,20 +429,46 @@ function ProfileContent({ id }) {
                 Edit profile
               </button>
             ) : user ? (
-              <>
+              <div className="flex items-center gap-2 w-full">
                 <button onClick={handleFollow}
-                  className={`w-full text-sm px-5 py-2 rounded-full font-medium transition border ${
+                  className={`flex-1 text-sm px-5 py-2 rounded-full font-medium transition border ${
                     following
                       ? 'border-medium-border dark:border-gray-600 text-medium-gray dark:text-gray-400 hover:border-red-300 hover:text-red-500'
                       : 'bg-medium-black dark:bg-gray-100 text-white dark:text-gray-900 border-medium-black dark:border-gray-100 hover:opacity-90'
                   }`}>
                   {following ? 'Following' : 'Follow'}
                 </button>
-                <button onClick={handleMute}
-                  className="text-xs text-medium-gray dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition underline underline-offset-2">
-                  {muted ? 'Unmute this writer' : 'Mute this writer'}
-                </button>
-              </>
+
+                {/* ··· more menu */}
+                <div className="relative flex-shrink-0" ref={moreMenuRef}>
+                  <button
+                    onClick={() => setShowMoreMenu(v => !v)}
+                    className="p-2 rounded-full border border-medium-border dark:border-gray-600 text-medium-gray dark:text-gray-400 hover:border-medium-black dark:hover:border-gray-300 hover:text-medium-black dark:hover:text-gray-200 transition"
+                    title="More options"
+                  >
+                    <FiMoreHorizontal size={16} />
+                  </button>
+
+                  {showMoreMenu && (
+                    <div className="absolute right-0 top-10 w-52 bg-white dark:bg-gray-800 border border-medium-border dark:border-gray-600 rounded-lg shadow-xl py-1 z-30">
+                      <button
+                        onClick={() => { handleFollow(); setShowMoreMenu(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left"
+                      >
+                        {following ? <FiUserMinus size={15} /> : <FiUserPlus size={15} />}
+                        {following ? `Unfollow ${profile.name}` : `Follow ${profile.name}`}
+                      </button>
+                      <button
+                        onClick={() => { handleMute(); setShowMoreMenu(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left"
+                      >
+                        {muted ? <FiVolume2 size={15} /> : <FiVolumeX size={15} />}
+                        {muted ? `Unmute ${profile.name}` : `Mute ${profile.name}`}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             ) : (
               <Link to="/login"
                 className="w-full text-center block text-sm px-5 py-2 rounded-full font-medium bg-medium-black text-white hover:opacity-90 transition">
