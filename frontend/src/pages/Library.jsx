@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import SidebarLayout from '../components/SidebarLayout';
 import { FiBookmark, FiClock, FiPlus, FiLock, FiGlobe, FiMessageCircle, FiTrash2, FiX } from 'react-icons/fi';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../utils/axios';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -171,6 +171,12 @@ function CreateListModal({ onClose, onCreate }) {
 
 export default function Library() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const VALID_TABS = TABS.map(t => t.key);
+  const tabParam = searchParams.get('tab');
+  const activeTab = VALID_TABS.includes(tabParam) ? tabParam : 'lists';
+  const setActiveTab = (key) => setSearchParams({ tab: key }, { replace: true });
+
   const [savedPosts, setSavedPosts]           = useState([]);
   const [lists, setLists]                     = useState([]);
   const [history, setHistory]                 = useState([]);
@@ -179,7 +185,6 @@ export default function Library() {
   const [listsLoading, setListsLoading]       = useState(false);
   const [historyLoading, setHistoryLoading]   = useState(false);
   const [responsesLoading, setResponsesLoading] = useState(false);
-  const [activeTab, setActiveTab]             = useState('lists');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Load saved posts + lists on mount

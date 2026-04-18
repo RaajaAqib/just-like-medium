@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import SidebarLayout from '../components/SidebarLayout';
 import api from '../utils/axios';
@@ -10,6 +10,8 @@ import {
 } from 'react-icons/fi';
 
 const TABS = ['Following', 'Reading history', 'Muted', 'Suggestions'];
+const TAB_KEYS = { 'Following': 'following', 'Reading history': 'history', 'Muted': 'muted', 'Suggestions': 'suggestions' };
+const TAB_FROM_KEY = Object.fromEntries(Object.entries(TAB_KEYS).map(([k, v]) => [v, k]));
 
 /* ─── Small reusable components ─── */
 
@@ -277,7 +279,10 @@ function HistoryItem({ post }) {
 
 /* ─── Main page ─── */
 export default function FollowingPage() {
-  const [activeTab, setActiveTab] = useState('Following');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabKey = searchParams.get('tab');
+  const activeTab = TAB_FROM_KEY[tabKey] || 'Following';
+  const setActiveTab = (label) => setSearchParams({ tab: TAB_KEYS[label] }, { replace: true });
 
   const [following, setFollowing] = useState([]);
   const [followedTopics, setFollowedTopics] = useState([]);
