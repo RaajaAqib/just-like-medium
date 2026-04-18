@@ -2348,6 +2348,18 @@ export default function AdminDashboard() {
   const activeTab = ADMIN_TAB_IDS.includes(tabParam) ? tabParam : 'overview';
   const setActiveTab = (id) => setSearchParams({ tab: id }, { replace: true });
 
+  const [pendingCounts, setPendingCounts] = useState({ reports: 0, appeals: 0, submissions: 0 });
+
+  useEffect(() => {
+    const fetchCounts = () =>
+      api.get('/admin/pending-counts')
+        .then(r => setPendingCounts(r.data.counts))
+        .catch(() => {});
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 60000); // refresh every minute
+    return () => clearInterval(interval);
+  }, []);
+
   const tabContent = {
     overview:    <OverviewTab />,
     submissions: <SubmissionsTab />,
@@ -2375,7 +2387,8 @@ export default function AdminDashboard() {
           <aside className="hidden md:flex flex-col w-48 flex-shrink-0">
             <nav className="space-y-1 sticky top-6">
               {TABS.map(tab => {
-                const Icon = tab.icon;
+                const Icon  = tab.icon;
+                const count = pendingCounts[tab.id] || 0;
                 return (
                   <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
@@ -2383,7 +2396,12 @@ export default function AdminDashboard() {
                         ? 'bg-white dark:bg-gray-800 shadow-sm text-gray-900 dark:text-gray-100 font-semibold border border-gray-200 dark:border-gray-700'
                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-white/60 dark:hover:bg-gray-800/60'}`}>
                     <Icon className="text-base flex-shrink-0" />
-                    {tab.label}
+                    <span className="flex-1 text-left">{tab.label}</span>
+                    {count > 0 && (
+                      <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                        {count > 99 ? '99+' : count}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -2394,15 +2412,21 @@ export default function AdminDashboard() {
           <div className="md:hidden -mx-4 px-4">
             <div className="flex gap-1.5 overflow-x-auto pb-2 mb-2 scrollbar-hide">
               {TABS.map(tab => {
-                const Icon = tab.icon;
+                const Icon  = tab.icon;
+                const count = pendingCounts[tab.id] || 0;
                 return (
                   <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs whitespace-nowrap transition-colors flex-shrink-0 font-medium ${
+                    className={`relative flex items-center gap-1.5 px-3 py-2 rounded-full text-xs whitespace-nowrap transition-colors flex-shrink-0 font-medium ${
                       activeTab === tab.id
                         ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
                         : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700'}`}>
                     <Icon className="text-sm" />
                     {tab.label}
+                    {count > 0 && (
+                      <span className="ml-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                        {count > 99 ? '99+' : count}
+                      </span>
+                    )}
                   </button>
                 );
               })}

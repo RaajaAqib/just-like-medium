@@ -58,6 +58,32 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Medium Clone API is running' });
 });
 
+// Admin pending counts — single endpoint for sidebar badges
+app.get('/api/admin/pending-counts', async (req, res) => {
+  try {
+    const { protect }   = require('./middleware/auth');
+    const { adminOnly } = require('./middleware/adminAuth');
+    // Run auth middleware manually
+    await new Promise((resolve, reject) => protect(req, res, (err) => err ? reject(err) : resolve()));
+    await new Promise((resolve, reject) => adminOnly(req, res, (err) => err ? reject(err) : resolve()));
+
+    const Post    = require('./models/Post');
+    const Appeal  = require('./models/Appeal');
+    const Comment = require('./models/Comment');
+
+    const [reports, storyReports, appeals, submissions] = await Promise.all([
+      Comment.countDocuments({ reported: true, moderationStatus: 'pending' }),
+      Post.countDocuments({ reported: true, moderationStatus: 'pending' }),
+      Appeal.countDocuments({ status: 'pending' }),
+      Post.countDocuments({ submissionStatus: 'pending' }),
+    ]);
+
+    res.json({ success: true, counts: { reports: reports + storyReports, appeals, submissions } });
+  } catch (err) {
+    res.status(err.status || 500).json({ success: false, message: err.message });
+  }
+});
+
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
