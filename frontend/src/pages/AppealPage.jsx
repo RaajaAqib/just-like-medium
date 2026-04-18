@@ -6,10 +6,12 @@ import api from '../utils/axios';
 import toast from 'react-hot-toast';
 
 const ACTION_REASONS = [
-  { id: 'warn',    label: 'Warning' },
-  { id: 'suspend', label: 'Suspension' },
-  { id: 'ban',     label: 'Ban' },
-  { id: 'delete',  label: 'Comment deletion' },
+  { id: 'warn',         label: 'Warning',          group: 'Account' },
+  { id: 'suspend',      label: 'Account suspended', group: 'Account' },
+  { id: 'ban',          label: 'Account banned',    group: 'Account' },
+  { id: 'delete',       label: 'Comment deleted',   group: 'Comment' },
+  { id: 'hide-story',   label: 'Story hidden',      group: 'Story'   },
+  { id: 'delete-story', label: 'Story deleted',     group: 'Story'   },
 ];
 
 const STATUS_META = {
@@ -56,7 +58,7 @@ export default function AppealPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Moderation Appeals</h1>
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-          If you believe a moderation action taken against one of your comments was incorrect,
+          If you believe a moderation action taken against your account, a comment, or a story was incorrect,
           you can submit an appeal here. Our team reviews all appeals within 3–5 business days.
         </p>
       </div>
@@ -86,23 +88,38 @@ export default function AppealPage() {
 
           <div className="mb-4">
             <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Which action are you appealing?</label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {ACTION_REASONS.map(a => (
                 <label key={a.id}
                   className={`flex items-center gap-2 border rounded-xl px-3 py-2.5 cursor-pointer transition-colors ${
                     action === a.id ? 'border-gray-800 dark:border-gray-300 bg-gray-50 dark:bg-gray-700' : 'border-gray-100 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'}`}>
                   <input type="radio" name="action" value={a.id} checked={action === a.id}
                     onChange={() => setAction(a.id)} className="accent-gray-900 dark:accent-gray-100" />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{a.label}</span>
+                  <div className="min-w-0">
+                    <span className="text-sm text-gray-700 dark:text-gray-300 block">{a.label}</span>
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">{a.group}</span>
+                  </div>
                 </label>
               ))}
             </div>
           </div>
 
           <div className="mb-4">
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Paste the comment that was actioned</label>
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              {['hide-story', 'delete-story'].includes(action)
+                ? 'Story title or description'
+                : action === 'warn' || action === 'suspend' || action === 'ban'
+                  ? 'Briefly describe the context (optional note or content)'
+                  : 'Paste the comment that was actioned'}
+            </label>
             <textarea value={commentContent} onChange={e => setCC(e.target.value)} rows={3} maxLength={1000}
-              placeholder="Copy and paste the exact content of the comment that was removed or penalised…"
+              placeholder={
+                ['hide-story', 'delete-story'].includes(action)
+                  ? 'Enter the title or a brief description of the story that was actioned…'
+                  : action === 'warn' || action === 'suspend' || action === 'ban'
+                    ? 'Provide any relevant context — e.g. which post or comment triggered this action…'
+                    : 'Copy and paste the exact content of the comment that was removed or penalised…'
+              }
               className="w-full text-sm border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors" />
             <p className="text-xs text-gray-400 dark:text-gray-500 text-right mt-0.5">{commentContent.length} / 1000</p>
           </div>
@@ -161,7 +178,9 @@ export default function AppealPage() {
                   </div>
                 </div>
                 <div className="bg-white/70 dark:bg-gray-800/70 rounded-lg px-3 py-2 mb-2">
-                  <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-0.5">Your comment</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-0.5">
+                    {['hide-story','delete-story'].includes(a.action) ? 'Story reference' : ['warn','suspend','ban'].includes(a.action) ? 'Context provided' : 'Actioned comment'}
+                  </p>
                   <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">{a.commentContent}</p>
                 </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-1"><span className="font-medium">Your reason:</span> {a.reason}</p>

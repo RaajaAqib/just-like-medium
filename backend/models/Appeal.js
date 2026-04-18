@@ -15,7 +15,7 @@ const appealSchema = new mongoose.Schema(
     },
     action: {
       type: String,
-      enum: ['warn', 'suspend', 'ban', 'delete'],
+      enum: ['warn', 'suspend', 'ban', 'delete', 'hide-story', 'delete-story'],
       required: true,
     },
     reason: {

@@ -1571,10 +1571,12 @@ function AppealsTab() {
   };
 
   const ACTION_LABELS = {
-    warn:    { label: 'Warning',   color: 'bg-yellow-100 text-yellow-700' },
-    suspend: { label: 'Suspension',color: 'bg-orange-100 text-orange-700' },
-    ban:     { label: 'Ban',       color: 'bg-red-100 text-red-700' },
-    delete:  { label: 'Deleted comment', color: 'bg-gray-100 text-gray-600' },
+    warn:         { label: 'Warning',          color: 'bg-yellow-100 text-yellow-700' },
+    suspend:      { label: 'Account suspended', color: 'bg-orange-100 text-orange-700' },
+    ban:          { label: 'Account banned',    color: 'bg-red-100 text-red-700' },
+    delete:       { label: 'Comment deleted',   color: 'bg-gray-100 text-gray-600' },
+    'hide-story': { label: 'Story hidden',      color: 'bg-purple-100 text-purple-700' },
+    'delete-story':{ label: 'Story deleted',   color: 'bg-pink-100 text-pink-700' },
   };
 
   const STATUS_BADGE = {
@@ -1648,9 +1650,11 @@ function AppealsTab() {
                         )}
                       </div>
 
-                      {/* Original comment snapshot */}
+                      {/* Original content snapshot */}
                       <div className="mt-2 bg-gray-50 dark:bg-gray-700/50 border border-gray-100 dark:border-gray-700 rounded-lg px-3 py-2">
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mb-1 font-medium">Reported comment</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mb-1 font-medium">
+                          {['hide-story','delete-story'].includes(a.action) ? 'Story reference' : a.action === 'warn' || a.action === 'suspend' || a.action === 'ban' ? 'Context provided' : 'Actioned comment'}
+                        </p>
                         <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-3">{a.commentContent}</p>
                       </div>
 
