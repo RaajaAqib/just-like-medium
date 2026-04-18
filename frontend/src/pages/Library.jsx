@@ -179,6 +179,7 @@ export default function Library() {
 
   const [savedPosts, setSavedPosts]           = useState([]);
   const [lists, setLists]                     = useState([]);
+  const [savedLists, setSavedLists]           = useState([]);
   const [history, setHistory]                 = useState([]);
   const [responses, setResponses]             = useState([]);
   const [loading, setLoading]                 = useState(true);
@@ -187,14 +188,16 @@ export default function Library() {
   const [responsesLoading, setResponsesLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // Load saved posts + lists on mount
+  // Load saved posts + own lists + saved lists on mount
   useEffect(() => {
     Promise.all([
       api.get('/users/me/saved'),
       api.get('/lists/me'),
-    ]).then(([savedRes, listsRes]) => {
+      api.get('/lists/me/saved'),
+    ]).then(([savedRes, listsRes, savedListsRes]) => {
       setSavedPosts(savedRes.data.savedPosts || []);
       setLists(listsRes.data.lists || []);
+      setSavedLists(savedListsRes.data.lists || []);
     }).catch(() => toast.error('Failed to load library'))
       .finally(() => setLoading(false));
   }, []);
@@ -234,6 +237,14 @@ export default function Library() {
       setLists(prev => prev.filter(l => l._id !== listId));
       toast.success('List deleted');
     } catch { toast.error('Failed to delete list'); }
+  };
+
+  const handleUnsaveList = async (listId) => {
+    try {
+      await api.post(`/lists/${listId}/save`);
+      setSavedLists(prev => prev.filter(l => l._id !== listId));
+      toast.success('List removed from library');
+    } catch { toast.error('Failed to unsave list'); }
   };
 
   const savedCovers = savedPosts.map(p => p.coverImage).filter(Boolean);
@@ -379,6 +390,73 @@ export default function Library() {
                     </div>
                   );
                 })}
+
+                {/* Lists saved from other users */}
+                {savedLists.length > 0 && (
+                  <>
+                    <div className="pt-4 pb-2">
+                      <h2 className="text-lg font-semibold text-medium-black dark:text-gray-100">Lists you've saved</h2>
+                      <p className="text-sm text-medium-gray dark:text-gray-500 mt-0.5">Lists from other writers you've saved to your library.</p>
+                    </div>
+                    {savedLists.map(list => {
+                      const covers = (list.posts || []).map(p => p.coverImage).filter(Boolean);
+                      return (
+                        <div key={list._id} className="border border-medium-border dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-sm transition">
+                          <div className="flex gap-4 p-5">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                {list.owner && (
+                                  <>
+                                    <img
+                                      src={list.owner.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(list.owner.name || 'U')}&background=random`}
+                                      className="w-4 h-4 rounded-full object-cover"
+                                      alt={list.owner.name}
+                                    />
+                                    <span className="text-xs text-medium-gray dark:text-gray-500">{list.owner.name}</span>
+                                  </>
+                                )}
+                                <span className="text-xs text-medium-gray dark:text-gray-500">·</span>
+                                <FiGlobe className="text-medium-gray dark:text-gray-500 text-xs" />
+                                <span className="text-xs text-medium-gray dark:text-gray-500">Public</span>
+                              </div>
+                              <p className="font-bold text-xl text-medium-black dark:text-gray-100 leading-snug mb-1">
+                                {list.name}
+                              </p>
+                              {list.description && (
+                                <p className="text-sm text-medium-gray dark:text-gray-400 line-clamp-2 mb-1">
+                                  {list.description}
+                                </p>
+                              )}
+                              <p className="text-sm text-medium-gray dark:text-gray-400">
+                                {list.posts?.length || 0} {(list.posts?.length || 0) === 1 ? 'story' : 'stories'}
+                              </p>
+                            </div>
+                            <CoverCollage images={covers} />
+                          </div>
+                          <div className="border-t border-medium-border dark:border-gray-700 px-5 py-3 flex items-center gap-3">
+                            <button
+                              onClick={() => navigate(`/list/${list._id}`)}
+                              className="text-sm text-medium-black dark:text-gray-200 font-medium hover:underline"
+                            >
+                              View list
+                            </button>
+                            <span className="text-medium-border dark:text-gray-600">·</span>
+                            <span className="text-xs text-medium-gray dark:text-gray-500">
+                              Updated {formatDistanceToNow(new Date(list.updatedAt), { addSuffix: true })}
+                            </span>
+                            <button
+                              onClick={() => handleUnsaveList(list._id)}
+                              className="ml-auto flex items-center gap-1 text-xs text-medium-gray dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition"
+                            >
+                              <FiBookmark className="text-sm fill-current" />
+                              Unsave
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
               </div>
             )}
 

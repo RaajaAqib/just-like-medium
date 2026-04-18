@@ -8,6 +8,7 @@ import {
   FiBookOpen, FiClock, FiChevronDown,
   FiVolumeX, FiUserMinus,
 } from 'react-icons/fi';
+import UserBadges from '../components/UserBadges';
 
 const TABS = ['Following', 'Reading history', 'Muted', 'Suggestions'];
 const TAB_KEYS = { 'Following': 'following', 'Reading history': 'history', 'Muted': 'muted', 'Suggestions': 'suggestions' };
@@ -56,11 +57,7 @@ function WriterFollowingRow({ user, onUnfollow }) {
         <div className="min-w-0">
           <div className="flex items-center gap-1">
             <p className="font-medium text-medium-black dark:text-gray-100 text-sm truncate">{user.name}</p>
-            {user.isVerified && (
-              <svg className="w-3.5 h-3.5 text-medium-green flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            )}
+            <UserBadges user={user} size="sm" />
           </div>
           {user.bio && <p className="text-xs text-medium-gray dark:text-gray-500 truncate mt-0.5">{user.bio}</p>}
           <p className="text-xs text-medium-gray dark:text-gray-500 mt-0.5">{user.followers?.length || 0} Followers</p>
@@ -146,11 +143,7 @@ function SuggestionWriterRow({ user }) {
         <div className="min-w-0">
           <div className="flex items-center gap-1">
             <p className="font-medium text-medium-black dark:text-gray-100 text-sm truncate">{user.name}</p>
-            {user.isVerified && (
-              <svg className="w-3.5 h-3.5 text-medium-green flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            )}
+            <UserBadges user={user} size="sm" />
           </div>
           {user.bio && <p className="text-xs text-medium-gray dark:text-gray-500 truncate mt-0.5">{user.bio}</p>}
           <p className="text-xs text-medium-gray dark:text-gray-500 mt-0.5">{user.followers?.length || 0} Followers</p>

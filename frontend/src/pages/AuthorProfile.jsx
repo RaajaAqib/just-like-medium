@@ -581,47 +581,49 @@ function ProfileContent({ id }) {
   return (
     <div className="max-w-5xl mx-auto">
 
-      {/* ── Cover image ── */}
-      <div className={`relative w-full ${profile.coverImage ? 'h-48 sm:h-64' : isOwn ? 'h-20' : 'h-0'} overflow-hidden bg-gray-100 dark:bg-gray-800`}>
-        {profile.coverImage ? (
-          <>
-            <img src={profile.coverImage} alt="Cover" className="w-full h-full object-cover" />
-            {isOwn && (
-              <div className="absolute bottom-3 right-4 flex gap-2">
-                <button onClick={() => coverInputRef.current?.click()}
-                  disabled={coverUploading}
-                  className="px-3 py-1.5 text-xs font-medium bg-white/80 dark:bg-gray-900/80 backdrop-blur rounded-full hover:bg-white dark:hover:bg-gray-900 transition">
-                  {coverUploading ? 'Uploading…' : 'Change cover'}
-                </button>
-                <button onClick={handleCoverRemove}
-                  disabled={coverUploading}
-                  className="px-3 py-1.5 text-xs font-medium bg-white/80 dark:bg-gray-900/80 backdrop-blur rounded-full hover:bg-white dark:hover:bg-gray-900 transition text-red-500">
-                  Remove
-                </button>
-              </div>
-            )}
-          </>
-        ) : isOwn ? (
-          <button onClick={() => coverInputRef.current?.click()}
-            disabled={coverUploading}
-            className="absolute inset-0 w-full h-full flex items-center justify-center gap-2 text-sm text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-200 hover:bg-gray-200/40 dark:hover:bg-gray-700/40 transition">
-            <FiEdit2 size={14} />
-            {coverUploading ? 'Uploading…' : 'Add cover image'}
-          </button>
-        ) : null}
-        <input
-          ref={coverInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          className="hidden"
-          onChange={handleCoverUpload}
-        />
-      </div>
-
       <div className="px-4 sm:px-6 md:px-8 py-8 flex gap-12">
 
       {/* ── Center column ── */}
       <div className="flex-1 min-w-0 max-w-2xl">
+
+        {/* ── Cover image (inside center column, matching Medium layout) ── */}
+        {(profile.coverImage || isOwn) && (
+          <div className={`relative w-full rounded-lg overflow-hidden mb-6 ${profile.coverImage ? 'h-40 sm:h-52' : 'h-16'} bg-gray-100 dark:bg-gray-800`}>
+            {profile.coverImage ? (
+              <>
+                <img src={profile.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                {isOwn && (
+                  <div className="absolute bottom-3 right-3 flex gap-2">
+                    <button onClick={() => coverInputRef.current?.click()}
+                      disabled={coverUploading}
+                      className="px-3 py-1.5 text-xs font-medium bg-white/80 dark:bg-gray-900/80 backdrop-blur rounded-full hover:bg-white dark:hover:bg-gray-900 transition">
+                      {coverUploading ? 'Uploading…' : 'Change cover'}
+                    </button>
+                    <button onClick={handleCoverRemove}
+                      disabled={coverUploading}
+                      className="px-3 py-1.5 text-xs font-medium bg-white/80 dark:bg-gray-900/80 backdrop-blur rounded-full hover:bg-white dark:hover:bg-gray-900 transition text-red-500">
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <button onClick={() => coverInputRef.current?.click()}
+                disabled={coverUploading}
+                className="absolute inset-0 w-full h-full flex items-center justify-center gap-2 text-sm text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-200 hover:bg-gray-200/40 dark:hover:bg-gray-700/40 transition">
+                <FiEdit2 size={14} />
+                {coverUploading ? 'Uploading…' : 'Add cover image'}
+              </button>
+            )}
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleCoverUpload}
+            />
+          </div>
+        )}
 
         {/* Name */}
         <div className="flex items-center gap-2 mb-5">
