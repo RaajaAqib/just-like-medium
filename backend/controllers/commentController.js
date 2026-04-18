@@ -67,9 +67,13 @@ const createComment = async (req, res) => {
     await comment.populate('author', 'name avatar');
 
     if (parentComment) {
-      // Reply to a comment — notify the parent comment's author
+      const replierId = req.user._id.toString();
+
+      // 1. Notify the parent comment's author (the person being directly replied to)
       const parentCommentDoc = await Comment.findById(parentComment).select('author');
-      if (parentCommentDoc && parentCommentDoc.author.toString() !== req.user._id.toString()) {
+      const parentAuthorId = parentCommentDoc?.author?.toString();
+
+      if (parentCommentDoc && parentAuthorId !== replierId) {
         await Notification.create({
           recipient: parentCommentDoc.author,
           fromUser:  req.user._id,
@@ -81,6 +85,32 @@ const createComment = async (req, res) => {
           link:      `/article/${post.slug}?comment=${comment._id}`,
         });
       }
+
+      // 2. Notify all other participants in the same thread (others who replied to the same parent)
+      const threadParticipantIds = await Comment.distinct('author', {
+        parentComment: parentComment,
+        _id:           { $ne: comment._id },         // exclude current new comment
+        author:        { $ne: req.user._id },         // exclude the replier themselves
+      });
+
+      const alreadyNotified = new Set([replierId, parentAuthorId].filter(Boolean));
+
+      await Promise.all(
+        threadParticipantIds
+          .filter(id => !alreadyNotified.has(id.toString())) // skip parent author (already notified)
+          .map(participantId =>
+            Notification.create({
+              recipient: participantId,
+              fromUser:  req.user._id,
+              type:      'reply',
+              post:      post._id,
+              postTitle: post.title,
+              postSlug:  post.slug,
+              comment:   comment._id,
+              link:      `/article/${post.slug}?comment=${comment._id}`,
+            })
+          )
+      );
     } else {
       // Top-level comment — notify the post author
       if (post.author.toString() !== req.user._id.toString()) {
@@ -347,6 +377,7 @@ const deleteReportedComment = async (req, res) => {
         fromUser:         req.user._id,
         type:             'moderation',
         moderationAction: 'delete',
+        moderationNote:   reason,
         post:             comment.post?._id   || null,
         postTitle:        comment.post?.title || '',
         postSlug:         comment.post?.slug  || '',
