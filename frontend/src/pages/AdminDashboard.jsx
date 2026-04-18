@@ -1759,9 +1759,9 @@ function DeveloperProfileTab() {
   const [loading, setLoading]   = useState(true);
   const [saving, setSaving]     = useState(false);
   const [openSections, setOpenSections] = useState({
-    header: true, aboutMe: false, experience: false, education: false,
-    skills: false, projects: false, certifications: false,
-    qrCode: false, websiteInfo: false, support: false,
+    header: true, aboutMe: true, experience: true, education: true,
+    skills: true, projects: true, certifications: true,
+    qrCode: true, websiteInfo: true, support: true,
   });
   const [files, setFiles] = useState({});
 
@@ -1788,12 +1788,14 @@ function DeveloperProfileTab() {
           fullBio: p.fullBio || '', mission: p.mission || '',
           yearsOfExperience: p.yearsOfExperience || 0,
           currentRole: p.currentRole || '', currentCompany: p.currentCompany || '',
-          socialLinks: p.socialLinks?.length ? p.socialLinks : [{ platform: '', url: '' }],
-          workExperience: p.workExperience?.length ? p.workExperience : [],
-          education:      p.education?.length      ? p.education      : [],
-          skills:         p.skills?.length         ? p.skills         : [],
-          projects:       p.projects?.length       ? p.projects       : [],
-          certifications: p.certifications?.length ? p.certifications : [],
+          socialLinks: p.socialLinks?.length
+            ? p.socialLinks.map(({ platform, url }) => ({ platform, url }))
+            : [{ platform: '', url: '' }],
+          workExperience: (p.workExperience || []).map(({ company, role, startDate, endDate, description }) => ({ company, role, startDate, endDate, description })),
+          education:      (p.education      || []).map(({ degree, institution, year, grade }) => ({ degree, institution, year, grade })),
+          skills:         (p.skills         || []).map(({ name, category }) => ({ name, category })),
+          projects:       (p.projects       || []).map(({ name, description, technologies, link }) => ({ name, description, technologies, link })),
+          certifications: (p.certifications || []).map(({ name, organization, year }) => ({ name, organization, year })),
           qrLabel:   p.qrCode?.label   || '',
           qrPurpose: p.qrCode?.purpose || '',
           qrAltText: p.qrCode?.altText || '',

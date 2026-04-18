@@ -6,7 +6,7 @@ import api from '../utils/axios';
 import {
   FiHome, FiBookmark, FiUser, FiFileText, FiBarChart2,
   FiUserPlus, FiEdit, FiBell, FiSearch, FiMenu, FiX,
-  FiPlus, FiSun, FiMoon,
+  FiPlus, FiSun, FiMoon, FiCode,
 } from 'react-icons/fi';
 
 const NavItem = ({ to, icon: Icon, label, active, onClick }) => (
@@ -89,6 +89,7 @@ export default function SidebarLayout({ children }) {
         <NavItem to={`/profile/${user?._id}`} icon={FiUser} label="Profile" active={path.startsWith('/profile')} onClick={onClose} />
         <NavItem to="/my-stories" icon={FiFileText} label="Stories" active={path === '/my-stories'} onClick={onClose} />
         <NavItem to="/stats" icon={FiBarChart2} label="Stats" active={path === '/stats'} onClick={onClose} />
+        <NavItem to="/about-developer" icon={FiCode} label="About Developer" active={path === '/about-developer'} onClick={onClose} />
 
         <div className="my-2 border-t border-medium-border dark:border-gray-700 mx-2" />
 
@@ -193,7 +194,7 @@ export default function SidebarLayout({ children }) {
 
           {/* Avatar dropdown */}
           <div className="relative" ref={dropdownRef}>
-            <button onClick={() => { setDropdownOpen(!dropdownOpen); setNotifOpen(false); }}>
+            <button onClick={() => setDropdownOpen(v => !v)}>
               <img
                 src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=random`}
                 alt={user?.name}
@@ -214,6 +215,8 @@ export default function SidebarLayout({ children }) {
                   className="block px-4 py-2 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Stories</Link>
                 <Link to="/stats" onClick={() => setDropdownOpen(false)}
                   className="block px-4 py-2 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Stats</Link>
+                <Link to="/about-developer" onClick={() => setDropdownOpen(false)}
+                  className="block px-4 py-2 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">About Developer</Link>
                 <Link to="/appeals" onClick={() => setDropdownOpen(false)}
                   className="block px-4 py-2 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">Appeals</Link>
                 <Link to="/write" onClick={() => setDropdownOpen(false)}
