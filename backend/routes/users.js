@@ -17,6 +17,73 @@ const { upload } = require('../utils/cloudinary');
 
 // Admin routes
 router.get('/admin/all', protect, adminOnly, getAllUsersAdmin);
+
+// GET /api/users/admin/reported — all users who have been reported by others
+router.get('/admin/reported', protect, adminOnly, async (req, res) => {
+  try {
+    const page  = parseInt(req.query.page)  || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip  = (page - 1) * limit;
+
+    // Unwind all reporters' reportedUsers arrays and group by target user
+    const pipeline = [
+      { $match: { reportedUsers: { $exists: true, $ne: [] } } },
+      { $unwind: '$reportedUsers' },
+      {
+        $group: {
+          _id:       '$reportedUsers.user',
+          reports:   { $sum: 1 },
+          reasons:   { $push: '$reportedUsers.reason' },
+          reporters: { $push: { user: '$_id', name: '$name', createdAt: '$reportedUsers.createdAt' } },
+          lastReportedAt: { $max: '$reportedUsers.createdAt' },
+        },
+      },
+      { $sort: { reports: -1, lastReportedAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $lookup: {
+          from:         'users',
+          localField:   '_id',
+          foreignField: '_id',
+          as:           'targetUser',
+        },
+      },
+      { $unwind: '$targetUser' },
+      {
+        $project: {
+          reports:       1,
+          reasons:       1,
+          reporters:     1,
+          lastReportedAt: 1,
+          'targetUser._id':         1,
+          'targetUser.name':        1,
+          'targetUser.email':       1,
+          'targetUser.avatar':      1,
+          'targetUser.banned':      1,
+          'targetUser.isSuspended': 1,
+          'targetUser.suspendedUntil': 1,
+          'targetUser.warnings':    1,
+        },
+      },
+    ];
+
+    const [results, totalArr] = await Promise.all([
+      User.aggregate(pipeline),
+      User.aggregate([
+        { $match: { reportedUsers: { $exists: true, $ne: [] } } },
+        { $unwind: '$reportedUsers' },
+        { $group: { _id: '$reportedUsers.user' } },
+        { $count: 'total' },
+      ]),
+    ]);
+
+    const total = totalArr[0]?.total || 0;
+    res.json({ success: true, reportedUsers: results, total, totalPages: Math.ceil(total / limit), currentPage: page });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 router.delete('/admin/:id', protect, adminOnly, deleteUserAdmin);
 router.put('/admin/:id/toggle-admin', protect, adminOnly, toggleAdmin);
 router.put('/admin/:id/toggle-verify', protect, adminOnly, async (req, res) => {

@@ -71,14 +71,22 @@ app.get('/api/admin/pending-counts', async (req, res) => {
     const Appeal  = require('./models/Appeal');
     const Comment = require('./models/Comment');
 
-    const [reports, storyReports, appeals, submissions] = await Promise.all([
+    const User = require('./models/User');
+    const [commentReports, storyReports, appeals, submissions, userReportsArr] = await Promise.all([
       Comment.countDocuments({ reported: true, moderationStatus: 'pending' }),
       Post.countDocuments({ reported: true, moderationStatus: 'pending' }),
       Appeal.countDocuments({ status: 'pending' }),
       Post.countDocuments({ submissionStatus: 'pending' }),
+      User.aggregate([
+        { $match: { reportedUsers: { $exists: true, $ne: [] } } },
+        { $unwind: '$reportedUsers' },
+        { $group: { _id: '$reportedUsers.user' } },
+        { $count: 'total' },
+      ]),
     ]);
 
-    res.json({ success: true, counts: { reports: reports + storyReports, appeals, submissions } });
+    const userReports = userReportsArr[0]?.total || 0;
+    res.json({ success: true, counts: { reports: commentReports + storyReports + userReports, appeals, submissions } });
   } catch (err) {
     res.status(err.status || 500).json({ success: false, message: err.message });
   }

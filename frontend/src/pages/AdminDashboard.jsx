@@ -1228,8 +1228,10 @@ function ReportsTab() {
   const [page, setPage]               = useState(1);
   const [totalPages, setTotal]        = useState(1);
   const [totalCount, setCount]        = useState(0);
-  const [selected, setSelected]       = useState(null); // comment moderate modal
+  const [selected, setSelected]           = useState(null); // comment moderate modal
   const [selectedStory, setSelectedStory] = useState(null); // story moderate modal
+  const [selectedUser, setSelectedUser]   = useState(null); // user moderate modal
+  const [reportedUsers, setReportedUsers] = useState([]);
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -1239,9 +1241,14 @@ function ReportsTab() {
         setReports(res.data.comments);
         setTotal(res.data.totalPages);
         setCount(res.data.total);
-      } else {
+      } else if (reportType === 'stories') {
         const res = await api.get(`/posts/admin/reports?status=${statusFilter}&page=${page}&limit=15`);
         setReports(res.data.posts);
+        setTotal(res.data.totalPages);
+        setCount(res.data.total);
+      } else {
+        const res = await api.get(`/users/admin/reported?page=${page}&limit=15`);
+        setReportedUsers(res.data.reportedUsers || []);
         setTotal(res.data.totalPages);
         setCount(res.data.total);
       }
@@ -1250,7 +1257,7 @@ function ReportsTab() {
   }, [reportType, statusFilter, page]);
 
   useEffect(() => { fetchReports(); }, [fetchReports]);
-  useEffect(() => { setPage(1); setReports([]); }, [reportType, statusFilter]);
+  useEffect(() => { setPage(1); setReports([]); setReportedUsers([]); }, [reportType, statusFilter]);
 
   const STATUS_BADGE = {
     pending:   'bg-amber-100 text-amber-700',
@@ -1262,7 +1269,7 @@ function ReportsTab() {
     <div>
       {/* Type toggle */}
       <div className="flex items-center gap-2 mb-4">
-        {[{ id: 'comments', label: 'Comments' }, { id: 'stories', label: 'Stories' }].map(t => (
+        {[{ id: 'comments', label: 'Comments' }, { id: 'stories', label: 'Stories' }, { id: 'users', label: 'Users' }].map(t => (
           <button key={t.id} onClick={() => setReportType(t.id)}
             className={`px-4 py-1.5 text-sm rounded-full border transition-colors font-medium ${
               reportType === t.id
@@ -1281,25 +1288,106 @@ function ReportsTab() {
           </h2>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{totalCount} total</p>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {['pending','all','dismissed','actioned'].map(s => (
-            <button key={s} onClick={() => setFilter(s)}
-              className={`px-3 py-1.5 text-xs rounded-full border transition-colors font-medium ${
-                statusFilter === s
-                  ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100'
-                  : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500'}`}>
-              {s.charAt(0).toUpperCase() + s.slice(1)}
-            </button>
-          ))}
-        </div>
+        {reportType !== 'users' && (
+          <div className="flex gap-2 flex-wrap">
+            {['pending','all','dismissed','actioned'].map(s => (
+              <button key={s} onClick={() => setFilter(s)}
+                className={`px-3 py-1.5 text-xs rounded-full border transition-colors font-medium ${
+                  statusFilter === s
+                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 border-gray-900 dark:border-gray-100'
+                    : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500'}`}>
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {loading ? <LoadingSpinner /> : reports.length === 0 ? (
+      {/* ── Reported Users list ── */}
+      {reportType === 'users' && (
+        loading ? <LoadingSpinner /> : reportedUsers.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">
+            <FiUsers className="text-3xl mx-auto mb-3 opacity-40" />
+            <p className="text-sm">No reported users</p>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-3">
+              {reportedUsers.map(item => {
+                const u = item.targetUser;
+                return (
+                  <div key={u._id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <img
+                        src={u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'U')}&background=random&size=36`}
+                        alt={u.name}
+                        className="w-9 h-9 rounded-full object-cover flex-shrink-0 mt-0.5"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">{u.name}</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">{u.email}</span>
+                            {u.banned && (
+                              <span className="text-xs bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full font-medium">Banned</span>
+                            )}
+                            {u.isSuspended && !u.banned && (
+                              <span className="text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-full font-medium">Suspended</span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => setSelectedUser(u)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-full hover:bg-gray-700 dark:hover:bg-white transition flex-shrink-0">
+                            <FiShield className="text-xs" /> Moderate
+                          </button>
+                        </div>
+
+                        {/* Report count + last reported */}
+                        <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-400 dark:text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <FiAlertTriangle className="text-amber-500" />
+                            {item.reports} report{item.reports !== 1 ? 's' : ''}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <FiClock /> Last reported {formatDistanceToNow(new Date(item.lastReportedAt), { addSuffix: true })}
+                          </span>
+                        </div>
+
+                        {/* Unique reasons */}
+                        {item.reasons?.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {[...new Set(item.reasons)].map((r, i) => (
+                              <span key={i} className="text-xs bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full">
+                                {r}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-3 mt-5">
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                  className="px-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">← Prev</button>
+                <span className="text-sm text-gray-500 dark:text-gray-400">{page} / {totalPages}</span>
+                <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                  className="px-4 py-1.5 text-sm border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-lg disabled:opacity-40 hover:border-gray-400 transition">Next →</button>
+              </div>
+            )}
+          </>
+        )
+      )}
+
+      {loading ? <LoadingSpinner /> : reports.length === 0 && reportType !== 'users' ? (
         <div className="text-center py-16 text-gray-400">
           <FiFlag className="text-3xl mx-auto mb-3 opacity-40" />
           <p className="text-sm">No {statusFilter !== 'all' ? statusFilter : ''} reports</p>
         </div>
-      ) : (
+      ) : reportType !== 'users' && (
         <>
           <div className="space-y-3">
             {reports.map(item => {
@@ -1426,6 +1514,13 @@ function ReportsTab() {
           post={selectedStory}
           onClose={() => setSelectedStory(null)}
           onDone={() => { setSelectedStory(null); fetchReports(); }}
+        />
+      )}
+      {selectedUser && (
+        <UserModerationModal
+          targetUser={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onDone={() => { setSelectedUser(null); fetchReports(); }}
         />
       )}
     </div>
