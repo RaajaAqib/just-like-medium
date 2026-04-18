@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import SidebarLayout from '../components/SidebarLayout';
@@ -268,7 +268,11 @@ export default function AboutDeveloper() {
   const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('about');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const CV_TAB_KEYS = CV_TABS.map(t => t.key);
+  const tabParam = searchParams.get('tab');
+  const activeTab = CV_TAB_KEYS.includes(tabParam) ? tabParam : 'about';
+  const setActiveTab = (key) => setSearchParams({ tab: key }, { replace: true });
 
   useEffect(() => {
     api.get('/developer-profile')

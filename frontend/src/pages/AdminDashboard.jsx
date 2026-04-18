@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { formatDistanceToNow, format } from 'date-fns';
 import {
   FiTrash2, FiShield, FiEye, FiUsers, FiFileText, FiMessageCircle,
@@ -2237,7 +2237,11 @@ function DeveloperProfileTab() {
 
 // ─── Main AdminDashboard ──────────────────────────────────────────────────────
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const ADMIN_TAB_IDS = TABS.map(t => t.id);
+  const tabParam = searchParams.get('tab');
+  const activeTab = ADMIN_TAB_IDS.includes(tabParam) ? tabParam : 'overview';
+  const setActiveTab = (id) => setSearchParams({ tab: id }, { replace: true });
 
   const tabContent = {
     overview:    <OverviewTab />,

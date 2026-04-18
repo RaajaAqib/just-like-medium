@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import {
   FiHeart, FiMessageCircle, FiZap, FiUserPlus, FiShield,
@@ -189,7 +189,11 @@ function NotifRow({ n, onRead }) {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading]             = useState(true);
-  const [activeTab, setActiveTab]         = useState('all');
+  const [searchParams, setSearchParams]   = useSearchParams();
+  const NOTIF_KEYS = TABS.map(t => t.key);
+  const tabParam = searchParams.get('tab');
+  const activeTab = NOTIF_KEYS.includes(tabParam) ? tabParam : 'all';
+  const setActiveTab = (key) => setSearchParams({ tab: key }, { replace: true });
 
   useEffect(() => {
     api.get('/notifications')

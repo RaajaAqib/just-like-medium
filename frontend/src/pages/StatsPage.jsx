@@ -3,13 +3,18 @@ import { useAuth } from '../context/AuthContext';
 import SidebarLayout from '../components/SidebarLayout';
 import api from '../utils/axios';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+
+const STAT_TABS = ['Stories', 'Audience'];
 
 export default function StatsPage() {
   const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('Stories');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const activeTab = STAT_TABS.includes(tabParam) ? tabParam : 'Stories';
+  const setActiveTab = (t) => setSearchParams({ tab: t }, { replace: true });
 
   useEffect(() => {
     if (!user) return;

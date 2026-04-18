@@ -127,9 +127,11 @@ function LoggedInFeed() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [activeTab, setActiveTab] = useState('foryou');
   const [topics, setTopics] = useState(FALLBACK_TAGS);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const feedTabParam = searchParams.get('feed');
+  const activeTab = feedTabParam === 'following' ? 'following' : 'foryou';
+  const setActiveTab = (val) => setSearchParams(prev => { const p = new URLSearchParams(prev); p.set('feed', val); return p; }, { replace: true });
 
   const search = searchParams.get('search') || '';
   const tag    = searchParams.get('tag') || '';
