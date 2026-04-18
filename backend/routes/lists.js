@@ -27,6 +27,47 @@ router.get('/me', protect, async (req, res) => {
   }
 });
 
+// ── POST /api/lists/:id/save — toggle save/unsave a list ─────────────────────
+router.post('/:id/save', protect, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const list = await List.findById(req.params.id);
+    if (!list) return res.status(404).json({ success: false, message: 'List not found' });
+    if (list.isPrivate && list.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Cannot save a private list' });
+    }
+    const user = await User.findById(req.user._id).select('savedLists');
+    const alreadySaved = (user.savedLists || []).some(id => id.toString() === req.params.id);
+    if (alreadySaved) {
+      await User.findByIdAndUpdate(req.user._id, { $pull: { savedLists: req.params.id } });
+    } else {
+      await User.findByIdAndUpdate(req.user._id, { $addToSet: { savedLists: req.params.id } });
+    }
+    res.json({ success: true, saved: !alreadySaved });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ── GET /api/lists/me/saved — get all lists the current user saved ────────────
+router.get('/me/saved', protect, async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const user = await User.findById(req.user._id)
+      .select('savedLists')
+      .populate({
+        path: 'savedLists',
+        populate: [
+          { path: 'owner', select: 'name avatar isVerified' },
+          { path: 'posts', select: '_id coverImage' },
+        ],
+      });
+    res.json({ success: true, lists: user.savedLists || [] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ── Get public lists for any user (profile page) ─────────────────────────────
 router.get('/user/:userId', async (req, res) => {
   try {

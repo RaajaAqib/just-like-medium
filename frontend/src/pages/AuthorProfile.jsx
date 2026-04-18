@@ -142,9 +142,80 @@ function EditProfileModal({ profile, onClose, onSave }) {
   );
 }
 
-// ── Sidebar following row with ··· menu ───────────────────────────────────────
+// ── List card with Save button ────────────────────────────────────────────────
+function ListCard({ list, isOwn, currentUser }) {
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const covers = (list.posts || []).map(p => p.coverImage).filter(Boolean).slice(0, 3);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!currentUser) { toast.error('Please sign in to save lists'); return; }
+    setSaving(true);
+    try {
+      const res = await api.post(`/lists/${list._id}/save`);
+      setSaved(res.data.saved);
+      toast.success(res.data.saved ? 'List saved to your library' : 'List removed from library');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to save list');
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="border border-medium-border dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-md transition group">
+      <Link to={`/list/${list._id}`} className="block">
+        <div className="w-full h-32 bg-gray-100 dark:bg-gray-800 flex overflow-hidden">
+          {covers.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <FiBookmark className="text-3xl text-gray-300 dark:text-gray-600" />
+            </div>
+          ) : covers.length === 1 ? (
+            <img src={covers[0]} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <>
+              <img src={covers[0]} alt="" className="w-1/2 h-full object-cover border-r border-white dark:border-gray-900" />
+              <div className="w-1/2 flex flex-col">
+                {covers.slice(1).map((src, i) => (
+                  <img key={i} src={src} alt="" className={`flex-1 w-full object-cover ${i === 0 && covers.length > 2 ? 'border-b border-white dark:border-gray-900' : ''}`} />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </Link>
+      <div className="p-4">
+        <Link to={`/list/${list._id}`}>
+          <h3 className="font-bold text-medium-black dark:text-gray-100 text-base group-hover:underline decoration-1 underline-offset-2">{list.name}</h3>
+          {list.description && <p className="text-sm text-medium-gray dark:text-gray-400 mt-1 line-clamp-2">{list.description}</p>}
+        </Link>
+        <div className="flex items-center justify-between mt-3">
+          <p className="text-xs text-medium-gray dark:text-gray-500">{list.posts?.length || 0} {list.posts?.length === 1 ? 'story' : 'stories'}</p>
+          {!isOwn && currentUser && (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition ${
+                saved
+                  ? 'border-medium-black dark:border-gray-400 text-medium-black dark:text-gray-200 bg-gray-50 dark:bg-gray-700'
+                  : 'border-medium-border dark:border-gray-600 text-medium-gray dark:text-gray-400 hover:border-medium-black dark:hover:border-gray-300 hover:text-medium-black dark:hover:text-gray-200'
+              }`}
+            >
+              <FiBookmark className={`text-xs ${saved ? 'fill-current' : ''}`} />
+              {saved ? 'Saved' : 'Save list'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Sidebar following row with Medium-style user preview card ─────────────────
 function SidebarFollowingRow({ u, currentUser }) {
   const [open, setOpen]       = useState(false);
+  const [fullProfile, setFullProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
   const [following, setFollowing] = useState(
     currentUser ? (currentUser.following || []).some(f => (f._id || f) === u._id) : false
   );
@@ -157,10 +228,19 @@ function SidebarFollowingRow({ u, currentUser }) {
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  // Fetch full profile when card opens (to get follower count + bio)
+  useEffect(() => {
+    if (!open || fullProfile) return;
+    setProfileLoading(true);
+    api.get(`/users/${u._id}`)
+      .then(res => setFullProfile(res.data.user))
+      .catch(() => {})
+      .finally(() => setProfileLoading(false));
+  }, [open, u._id]);
+
   const handleFollow = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setOpen(false);
     if (!currentUser) { toast.error('Please log in'); return; }
     try {
       const res = await api.post(`/users/${u._id}/follow`);
@@ -168,6 +248,9 @@ function SidebarFollowingRow({ u, currentUser }) {
       toast.success(res.data.following ? `Following ${u.name}` : `Unfollowed ${u.name}`);
     } catch { toast.error('Failed'); }
   };
+
+  const profile = fullProfile || u;
+  const followersCount = fullProfile?.followers?.length ?? null;
 
   return (
     <div className="flex items-center justify-between gap-2 py-1.5 group">
@@ -188,15 +271,59 @@ function SidebarFollowingRow({ u, currentUser }) {
           >
             <FiMoreHorizontal size={15} />
           </button>
+
+          {/* Medium-style user preview card */}
           {open && (
-            <div className="absolute right-0 top-7 w-44 bg-white dark:bg-gray-800 border border-medium-border dark:border-gray-600 rounded-lg shadow-xl py-1 z-30">
-              <button
-                onClick={handleFollow}
-                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left"
-              >
-                {following ? <FiUserMinus size={14} /> : <FiUserPlus size={14} />}
-                {following ? `Unfollow` : `Follow`}
-              </button>
+            <div className="absolute right-0 top-8 w-64 bg-white dark:bg-gray-800 border border-medium-border dark:border-gray-600 rounded-xl shadow-2xl z-40 overflow-hidden">
+              {/* Cover / avatar header */}
+              <div className="relative h-16 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600">
+                {profile.coverImage && (
+                  <img src={profile.coverImage} alt="" className="w-full h-full object-cover" />
+                )}
+                <img
+                  src={profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'U')}&background=random&size=64`}
+                  alt={profile.name}
+                  className="absolute -bottom-5 left-4 w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-800"
+                />
+              </div>
+
+              <div className="pt-7 px-4 pb-4">
+                {/* Name + follow button */}
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <Link to={`/profile/${u._id}`} onClick={() => setOpen(false)}
+                    className="font-bold text-medium-black dark:text-gray-100 text-sm leading-tight hover:underline">
+                    {profile.name}
+                  </Link>
+                  <button
+                    onClick={handleFollow}
+                    className={`flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition ${
+                      following
+                        ? 'border-medium-border dark:border-gray-600 text-medium-gray dark:text-gray-400 hover:border-red-300 hover:text-red-500'
+                        : 'bg-[#1a8917] text-white border-[#1a8917] hover:bg-[#156d12]'
+                    }`}
+                  >
+                    {following ? 'Following' : 'Follow'}
+                  </button>
+                </div>
+
+                {/* Followers */}
+                {profileLoading ? (
+                  <p className="text-xs text-medium-gray dark:text-gray-500">Loading…</p>
+                ) : (
+                  <>
+                    {followersCount !== null && (
+                      <p className="text-xs text-medium-gray dark:text-gray-400 mb-2">
+                        {followersCount.toLocaleString()} {followersCount === 1 ? 'Follower' : 'Followers'}
+                      </p>
+                    )}
+                    {profile.bio && (
+                      <p className="text-xs text-medium-gray dark:text-gray-400 line-clamp-3 leading-relaxed">
+                        {profile.bio}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -627,39 +754,9 @@ function ProfileContent({ id }) {
             </div>
           ) : (
             <div className="space-y-6">
-              {publicLists.map(list => {
-                const covers = (list.posts || []).map(p => p.coverImage).filter(Boolean).slice(0, 3);
-                return (
-                  <Link key={list._id} to={`/lists/${list._id}`}
-                    className="block border border-medium-border dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-md transition group">
-                    {/* Cover collage */}
-                    <div className="w-full h-32 bg-gray-100 dark:bg-gray-800 flex overflow-hidden">
-                      {covers.length === 0 ? (
-                        <div className="flex-1 flex items-center justify-center">
-                          <FiBookmark className="text-3xl text-gray-300 dark:text-gray-600" />
-                        </div>
-                      ) : covers.length === 1 ? (
-                        <img src={covers[0]} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <>
-                          <img src={covers[0]} alt="" className="w-1/2 h-full object-cover border-r border-white dark:border-gray-900" />
-                          <div className="w-1/2 flex flex-col">
-                            {covers.slice(1).map((src, i) => (
-                              <img key={i} src={src} alt="" className={`flex-1 w-full object-cover ${i === 0 && covers.length > 2 ? 'border-b border-white dark:border-gray-900' : ''}`} />
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    {/* Info */}
-                    <div className="p-4">
-                      <h3 className="font-bold text-medium-black dark:text-gray-100 text-base group-hover:underline decoration-1 underline-offset-2">{list.name}</h3>
-                      {list.description && <p className="text-sm text-medium-gray dark:text-gray-400 mt-1 line-clamp-2">{list.description}</p>}
-                      <p className="text-xs text-medium-gray dark:text-gray-500 mt-2">{list.posts?.length || 0} {list.posts?.length === 1 ? 'story' : 'stories'}</p>
-                    </div>
-                  </Link>
-                );
-              })}
+              {publicLists.map(list => (
+                <ListCard key={list._id} list={list} isOwn={isOwn} currentUser={user} />
+              ))}
             </div>
           )
         )}
@@ -870,7 +967,7 @@ function ProfileContent({ id }) {
                 {publicLists.slice(0, 4).map(list => {
                   const covers = (list.posts || []).map(p => p.coverImage).filter(Boolean).slice(0, 2);
                   return (
-                    <Link key={list._id} to={`/lists/${list._id}`}
+                    <Link key={list._id} to={`/list/${list._id}`}
                       className="flex items-center gap-3 group">
                       <div className="w-12 h-9 rounded overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0 flex">
                         {covers.length === 0 ? (

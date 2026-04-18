@@ -61,6 +61,7 @@ const userSchema = new mongoose.Schema(
     followedTopics: [{ type: String }],
     mutedUsers:     [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     blockedUsers:   [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    savedLists:     [{ type: mongoose.Schema.Types.ObjectId, ref: 'List' }],
     reportedUsers:  [{
       user:      { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
       reason:    { type: String },
