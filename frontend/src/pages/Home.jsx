@@ -7,7 +7,7 @@ import PostCard from '../components/PostCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import api from '../utils/axios';
 
-const TAGS = ['Technology', 'Programming', 'Design', 'Science', 'Culture', 'AI', 'Startup', 'Health', 'Travel', 'Food'];
+const FALLBACK_TAGS = ['Technology', 'Programming', 'Design', 'Science', 'Culture', 'AI', 'Startup', 'Health', 'Travel', 'Food'];
 
 const HeroIllustration = () => (
   <svg viewBox="0 0 400 300" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -128,10 +128,17 @@ function LoggedInFeed() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [activeTab, setActiveTab] = useState('foryou');
+  const [topics, setTopics] = useState(FALLBACK_TAGS);
   const [searchParams] = useSearchParams();
 
   const search = searchParams.get('search') || '';
   const tag    = searchParams.get('tag') || '';
+
+  useEffect(() => {
+    api.get('/topics')
+      .then(r => { if (r.data.topics?.length) setTopics(r.data.topics); })
+      .catch(() => {});
+  }, []);
 
   const fetchPosts = useCallback(async () => {
     setLoading(true);
@@ -169,7 +176,7 @@ function LoggedInFeed() {
             <Link to="/" className={`flex-shrink-0 px-3 py-1.5 text-sm rounded-full transition whitespace-nowrap ${!tag && !search ? 'bg-medium-black dark:bg-gray-100 text-white dark:text-gray-900' : 'text-medium-gray dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-medium-black dark:hover:text-gray-200'}`}>
               All
             </Link>
-            {TAGS.map(t => (
+            {topics.map(t => (
               <Link key={t} to={`/?tag=${t.toLowerCase()}`}
                 className={`flex-shrink-0 px-3 py-1.5 text-sm rounded-full transition whitespace-nowrap ${tag === t.toLowerCase() ? 'bg-medium-black dark:bg-gray-100 text-white dark:text-gray-900' : 'text-medium-gray dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-medium-black dark:hover:text-gray-200'}`}>
                 {t}

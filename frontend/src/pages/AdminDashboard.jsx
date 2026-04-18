@@ -749,16 +749,74 @@ function AnalyticsTab() {
 
 // ─── Tags Tab ─────────────────────────────────────────────────────────────────
 function TagsTab() {
-  const [tags, setTags] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  // ── Featured Topics (home feed filter bar) ────────────────────────────────
+  const [topics, setTopics]       = useState([]);
+  const [topicInput, setTopicInput] = useState('');
+  const [topicLoading, setTopicLoading] = useState(true);
+  const [topicSaving, setTopicSaving]   = useState(false);
+  const [dragIdx, setDragIdx]     = useState(null);
+
+  useEffect(() => {
+    api.get('/topics')
+      .then(r => setTopics(r.data.topics || []))
+      .catch(() => toast.error('Failed to load topics'))
+      .finally(() => setTopicLoading(false));
+  }, []);
+
+  const addTopic = async () => {
+    const name = topicInput.trim();
+    if (!name) return;
+    if (topics.map(t => t.toLowerCase()).includes(name.toLowerCase())) {
+      return toast.error('Topic already exists');
+    }
+    setTopicSaving(true);
+    try {
+      const r = await api.post('/topics', { topic: name });
+      setTopics(r.data.topics);
+      setTopicInput('');
+      toast.success(`"${name}" added`);
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to add'); }
+    finally { setTopicSaving(false); }
+  };
+
+  const removeTopic = async (name) => {
+    try {
+      const r = await api.delete(`/topics/${encodeURIComponent(name)}`);
+      setTopics(r.data.topics);
+      toast.success(`"${name}" removed`);
+    } catch { toast.error('Failed to remove'); }
+  };
+
+  // Drag-to-reorder helpers
+  const onDragStart = (i) => setDragIdx(i);
+  const onDragOver  = (e, i) => {
+    e.preventDefault();
+    if (dragIdx === null || dragIdx === i) return;
+    const reordered = [...topics];
+    const [moved] = reordered.splice(dragIdx, 1);
+    reordered.splice(i, 0, moved);
+    setTopics(reordered);
+    setDragIdx(i);
+  };
+  const onDragEnd = async () => {
+    setDragIdx(null);
+    try {
+      await api.put('/topics/reorder', { topics });
+      toast.success('Order saved');
+    } catch { toast.error('Failed to save order'); }
+  };
+
+  // ── Article Tags (usage stats) ─────────────────────────────────────────────
+  const [tags, setTags]       = useState([]);
+  const [tagsLoading, setTagsLoading] = useState(true);
+  const [search, setSearch]   = useState('');
   const [deleting, setDeleting] = useState(null);
 
   useEffect(() => {
     api.get('/posts/admin/tags')
       .then(r => setTags(r.data.tags))
       .catch(() => toast.error('Failed to load tags'))
-      .finally(() => setLoading(false));
+      .finally(() => setTagsLoading(false));
   }, []);
 
   const deleteTag = async (tag) => {
@@ -776,63 +834,122 @@ function TagsTab() {
   const maxCount = tags[0]?.count || 1;
 
   return (
-    <div>
-      <div className="flex gap-3 mb-5">
-        <div className="relative flex-1 max-w-sm">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
-          <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Search tags…"
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 rounded-lg focus:outline-none focus:border-gray-400 dark:focus:border-gray-500" />
+    <div className="space-y-8">
+
+      {/* ── Featured Topics section ── */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">Featured Topics</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          These appear in the home feed filter bar. Drag to reorder.
+        </p>
+
+        {/* Add input */}
+        <div className="flex gap-2 mb-4">
+          <input
+            value={topicInput}
+            onChange={e => setTopicInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addTopic()}
+            placeholder="New topic name…"
+            className="flex-1 text-sm px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-green/40"
+          />
+          <button onClick={addTopic} disabled={topicSaving || !topicInput.trim()}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-lg hover:opacity-90 disabled:opacity-40 transition font-medium">
+            <FiPlus className="text-sm" /> Add
+          </button>
         </div>
+
+        {/* Topic pills (draggable) */}
+        {topicLoading ? <LoadingSpinner /> : (
+          <div className="flex flex-wrap gap-2">
+            {topics.map((topic, i) => (
+              <div
+                key={topic}
+                draggable
+                onDragStart={() => onDragStart(i)}
+                onDragOver={e => onDragOver(e, i)}
+                onDragEnd={onDragEnd}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border cursor-grab select-none transition ${
+                  dragIdx === i
+                    ? 'bg-medium-green/10 border-medium-green text-medium-green scale-105'
+                    : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500'
+                }`}
+              >
+                <span className="text-gray-300 dark:text-gray-600 text-xs">⠿</span>
+                {topic}
+                <button onClick={() => removeTopic(topic)}
+                  className="text-gray-300 dark:text-gray-600 hover:text-red-500 transition ml-0.5">
+                  <FiX className="text-xs" />
+                </button>
+              </div>
+            ))}
+            {topics.length === 0 && (
+              <p className="text-sm text-gray-400 dark:text-gray-500">No topics yet. Add one above.</p>
+            )}
+          </div>
+        )}
       </div>
 
-      {loading ? <LoadingSpinner /> : (
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-800/60">
-              <tr className="text-left border-b border-gray-200 dark:border-gray-700">
-                <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Tag</th>
-                <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Usage</th>
-                <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Popularity</th>
-                <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {filtered.map(t => (
-                <tr key={t._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition">
-                  <td className="px-4 py-3">
-                    <Link to={`/?tag=${t._id}`}
-                      className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-medium-green transition">
-                      <span className="text-gray-400 dark:text-gray-500">#</span>{t._id}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full font-medium">
-                      {t.count} {t.count === 1 ? 'post' : 'posts'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 w-48">
-                    <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
-                      <div className="bg-medium-green h-2 rounded-full transition-all"
-                        style={{ width: `${(t.count / maxCount) * 100}%` }} />
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button onClick={() => deleteTag(t._id)}
-                      disabled={deleting === t._id}
-                      className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 transition rounded disabled:opacity-40" title="Remove tag">
-                      {deleting === t._id ? <span className="text-xs text-gray-400 dark:text-gray-500">…</span> : <FiTrash2 className="text-sm" />}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr><td colSpan={4} className="px-4 py-10 text-center text-gray-400 dark:text-gray-500">No tags found</td></tr>
-              )}
-            </tbody>
-          </table>
+      {/* ── Article Tags section ── */}
+      <div>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">Article Tags</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Tags used across articles. Delete removes the tag from all posts.</p>
+
+        <div className="flex gap-3 mb-4">
+          <div className="relative flex-1 max-w-sm">
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search tags…"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 rounded-lg focus:outline-none focus:border-gray-400 dark:focus:border-gray-500" />
+          </div>
         </div>
-      )}
+
+        {tagsLoading ? <LoadingSpinner /> : (
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 dark:bg-gray-800/60">
+                <tr className="text-left border-b border-gray-200 dark:border-gray-700">
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Tag</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Usage</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Popularity</th>
+                  <th className="px-4 py-3 font-medium text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                {filtered.map(t => (
+                  <tr key={t._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition">
+                    <td className="px-4 py-3">
+                      <Link to={`/?tag=${t._id}`}
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-800 dark:text-gray-200 hover:text-medium-green transition">
+                        <span className="text-gray-400 dark:text-gray-500">#</span>{t._id}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2.5 py-1 rounded-full font-medium">
+                        {t.count} {t.count === 1 ? 'post' : 'posts'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 w-48">
+                      <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
+                        <div className="bg-medium-green h-2 rounded-full transition-all"
+                          style={{ width: `${(t.count / maxCount) * 100}%` }} />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <button onClick={() => deleteTag(t._id)} disabled={deleting === t._id}
+                        className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 transition rounded disabled:opacity-40" title="Remove tag">
+                        {deleting === t._id ? <span className="text-xs text-gray-400 dark:text-gray-500">…</span> : <FiTrash2 className="text-sm" />}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {filtered.length === 0 && (
+                  <tr><td colSpan={4} className="px-4 py-10 text-center text-gray-400 dark:text-gray-500">No tags found</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

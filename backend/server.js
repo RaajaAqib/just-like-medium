@@ -15,6 +15,7 @@ const linkPreviewRoutes  = require('./routes/linkPreview');
 const appealRoutes       = require('./routes/appeals');
 const listRoutes         = require('./routes/lists');
 const developerProfileRoutes = require('./routes/developerProfile');
+const topicRoutes            = require('./routes/topics');
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use('/api/link-preview', linkPreviewRoutes);
 app.use('/api/appeals',     appealRoutes);
 app.use('/api/lists',       listRoutes);
 app.use('/api/developer-profile', developerProfileRoutes);
+app.use('/api/topics',           topicRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
