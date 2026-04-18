@@ -16,6 +16,7 @@ import FollowingPage from './pages/FollowingPage';
 import AppealPage from './pages/AppealPage';
 import NotificationsPage from './pages/NotificationsPage';
 import ListDetailPage from './pages/ListDetailPage';
+import AboutDeveloper from './pages/AboutDeveloper';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -39,6 +40,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/our-story" element={<OurStory />} />
+      <Route path="/about-developer" element={<AboutDeveloper />} />
       <Route path="/article/:slug" element={<Article />} />
       <Route path="/profile/:id" element={<AuthorProfile />} />
 

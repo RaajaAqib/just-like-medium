@@ -89,11 +89,32 @@ function LandingPage() {
         </div>
       </div>
       <TrendingFeed />
+
+      {/* About Developer teaser */}
+      <div className="border-t border-medium-border dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-6 py-14 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="max-w-xl">
+            <p className="text-xs font-semibold text-medium-green uppercase tracking-widest mb-3">Meet the builder</p>
+            <h2 className="text-3xl font-bold font-serif text-medium-black dark:text-gray-100 leading-tight mb-3">
+              Built with passion,<br />one commit at a time.
+            </h2>
+            <p className="text-medium-gray dark:text-gray-400 text-base leading-relaxed">
+              Learn about the developer behind Just Like Medium — their experience, projects, and the story of how this platform came to life.
+            </p>
+          </div>
+          <Link to="/about-developer"
+            className="flex-shrink-0 inline-flex items-center gap-2 bg-medium-black dark:bg-gray-100 text-white dark:text-gray-900 px-7 py-3 rounded-full hover:bg-gray-700 dark:hover:bg-white transition font-medium text-sm">
+            About the Developer →
+          </Link>
+        </div>
+      </div>
+
       <footer className="border-t border-medium-border dark:border-gray-700 py-6 bg-cream dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-6 flex flex-wrap gap-4 text-xs text-medium-gray dark:text-gray-500">
           {['Help','Status','About','Careers','Blog','Privacy','Terms'].map(l => (
             <Link key={l} to="/our-story" className="hover:text-medium-black dark:hover:text-gray-300 transition">{l}</Link>
           ))}
+          <Link to="/about-developer" className="hover:text-medium-black dark:hover:text-gray-300 transition">Developer</Link>
           <span>Text to speech</span>
         </div>
       </footer>

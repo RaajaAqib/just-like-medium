@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow, format } from 'date-fns';
 import {
@@ -6,7 +6,8 @@ import {
   FiBarChart2, FiTag, FiStar, FiSlash, FiCheckCircle,
   FiAlertCircle, FiSearch, FiHeart, FiZap,
   FiGrid, FiToggleLeft, FiToggleRight, FiX, FiFlag, FiAlertTriangle,
-  FiClock, FiBell, FiUserX, FiUserCheck
+  FiClock, FiBell, FiUserX, FiUserCheck, FiUser, FiPlus, FiSave,
+  FiUpload, FiChevronDown, FiChevronUp, FiExternalLink,
 } from 'react-icons/fi';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -26,6 +27,7 @@ const TABS = [
   { id: 'appeals',      label: 'Appeals',      icon: FiAlertCircle },
   { id: 'analytics',    label: 'Analytics',    icon: FiBarChart2 },
   { id: 'tags',         label: 'Tags',         icon: FiTag },
+  { id: 'developer',    label: 'Developer',    icon: FiUser },
 ];
 
 const PIE_COLORS = ['#1a8917', '#242424', '#6b6b6b', '#d1d5db', '#86efac'];
@@ -1692,6 +1694,425 @@ function SubmissionsTab() {
   );
 }
 
+// ─── Developer Profile Tab ───────────────────────────────────────────────────
+const SKILL_CATS = ['technical', 'tools', 'soft', 'languages'];
+
+function Section({ title, open, onToggle, children }) {
+  return (
+    <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+      <button onClick={onToggle}
+        className="w-full flex items-center justify-between px-5 py-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 transition text-left">
+        <span className="font-semibold text-sm text-gray-800 dark:text-gray-200">{title}</span>
+        {open ? <FiChevronUp className="text-gray-400" /> : <FiChevronDown className="text-gray-400" />}
+      </button>
+      {open && <div className="p-5 space-y-4 bg-white dark:bg-gray-900">{children}</div>}
+    </div>
+  );
+}
+
+function FieldRow({ label, children }) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+const INPUT = 'w-full text-sm px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-green/40';
+const TEXTAREA = INPUT + ' resize-none';
+
+function ImageUploadField({ label, current, fieldName, onChange }) {
+  const inputRef = useRef();
+  const [preview, setPreview] = useState(current || '');
+  useEffect(() => setPreview(current || ''), [current]);
+  return (
+    <FieldRow label={label}>
+      <div className="flex items-start gap-4">
+        {preview && (
+          <img src={preview} alt="preview" className="w-20 h-20 rounded-lg object-cover border border-gray-200 dark:border-gray-700 flex-shrink-0" />
+        )}
+        <div className="flex-1">
+          <input type="file" accept="image/*" ref={inputRef} className="hidden"
+            onChange={e => {
+              const f = e.target.files[0];
+              if (!f) return;
+              setPreview(URL.createObjectURL(f));
+              onChange(fieldName, f);
+            }} />
+          <button type="button" onClick={() => inputRef.current.click()}
+            className="flex items-center gap-2 text-sm px-4 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-500 dark:text-gray-400 hover:border-medium-green hover:text-medium-green transition">
+            <FiUpload /> {preview ? 'Change image' : 'Upload image'}
+          </button>
+          {preview && (
+            <button type="button" onClick={() => { setPreview(''); onChange(fieldName, null); }}
+              className="mt-1 text-xs text-red-500 hover:underline">Remove</button>
+          )}
+        </div>
+      </div>
+    </FieldRow>
+  );
+}
+
+function DeveloperProfileTab() {
+  const [profile, setProfile]   = useState(null);
+  const [loading, setLoading]   = useState(true);
+  const [saving, setSaving]     = useState(false);
+  const [openSections, setOpenSections] = useState({
+    header: true, aboutMe: false, experience: false, education: false,
+    skills: false, projects: false, certifications: false,
+    qrCode: false, websiteInfo: false, support: false,
+  });
+  const [files, setFiles] = useState({});
+
+  // Local editable state
+  const [f, setF] = useState({
+    name: '', title: '', location: '', shortBio: '',
+    fullBio: '', mission: '', yearsOfExperience: 0, currentRole: '', currentCompany: '',
+    socialLinks: [],
+    workExperience: [], education: [], skills: [], projects: [], certifications: [],
+    qrLabel: '', qrPurpose: '', qrAltText: '',
+    websiteInfo: { name: '', foundedYear: '', mission: '', techStack: '', version: '', contributors: '' },
+    supportHeading: '', supportDescription: '', supportUpiId: '', supportPaypalEmail: '',
+    supportBitcoin: '', supportBankDetails: '', supportThankYou: '',
+    isVisible: true,
+  });
+
+  useEffect(() => {
+    api.get('/developer-profile')
+      .then(r => {
+        const p = r.data.profile;
+        setProfile(p);
+        setF({
+          name: p.name || '', title: p.title || '', location: p.location || '', shortBio: p.shortBio || '',
+          fullBio: p.fullBio || '', mission: p.mission || '',
+          yearsOfExperience: p.yearsOfExperience || 0,
+          currentRole: p.currentRole || '', currentCompany: p.currentCompany || '',
+          socialLinks: p.socialLinks?.length ? p.socialLinks : [{ platform: '', url: '' }],
+          workExperience: p.workExperience?.length ? p.workExperience : [],
+          education:      p.education?.length      ? p.education      : [],
+          skills:         p.skills?.length         ? p.skills         : [],
+          projects:       p.projects?.length       ? p.projects       : [],
+          certifications: p.certifications?.length ? p.certifications : [],
+          qrLabel:   p.qrCode?.label   || '',
+          qrPurpose: p.qrCode?.purpose || '',
+          qrAltText: p.qrCode?.altText || '',
+          websiteInfo: {
+            name:         p.websiteInfo?.name         || '',
+            foundedYear:  p.websiteInfo?.foundedYear  || '',
+            mission:      p.websiteInfo?.mission      || '',
+            techStack:    p.websiteInfo?.techStack     || '',
+            version:      p.websiteInfo?.version      || '',
+            contributors: p.websiteInfo?.contributors || '',
+          },
+          supportHeading:     p.support?.heading         || '',
+          supportDescription: p.support?.description     || '',
+          supportUpiId:       p.support?.upiId           || '',
+          supportPaypalEmail: p.support?.paypalEmail     || '',
+          supportBitcoin:     p.support?.bitcoinAddress  || '',
+          supportBankDetails: p.support?.bankDetails     || '',
+          supportThankYou:    p.support?.thankYouMessage || '',
+          isVisible: p.isVisible !== false,
+        });
+      })
+      .catch(() => toast.error('Failed to load developer profile'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const toggle = (key) => setOpenSections(s => ({ ...s, [key]: !s[key] }));
+  const set = (key, val) => setF(prev => ({ ...prev, [key]: val }));
+  const setFile = (fieldName, file) => setFiles(prev => ({ ...prev, [fieldName]: file }));
+
+  // ── Array helpers ────────────────────────────────────────────────────────────
+  const addRow = (key, template) => setF(prev => ({ ...prev, [key]: [...prev[key], { ...template }] }));
+  const removeRow = (key, idx) => setF(prev => ({ ...prev, [key]: prev[key].filter((_, i) => i !== idx) }));
+  const updateRow = (key, idx, field, val) =>
+    setF(prev => ({ ...prev, [key]: prev[key].map((r, i) => i === idx ? { ...r, [field]: val } : r) }));
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const data = new FormData();
+      // Scalars
+      ['name','title','location','shortBio','fullBio','mission','currentRole','currentCompany',
+       'qrLabel','qrPurpose','qrAltText',
+       'supportHeading','supportDescription','supportUpiId','supportPaypalEmail',
+       'supportBitcoin','supportBankDetails','supportThankYou'].forEach(k => data.append(k, f[k]));
+      data.append('yearsOfExperience', f.yearsOfExperience);
+      data.append('isVisible', f.isVisible);
+      // Arrays
+      data.append('socialLinks',    JSON.stringify(f.socialLinks.filter(s => s.url)));
+      data.append('workExperience', JSON.stringify(f.workExperience));
+      data.append('education',      JSON.stringify(f.education));
+      data.append('skills',         JSON.stringify(f.skills));
+      data.append('projects',       JSON.stringify(f.projects));
+      data.append('certifications', JSON.stringify(f.certifications));
+      data.append('websiteInfo',    JSON.stringify(f.websiteInfo));
+      // Files
+      if (files.photo)          data.append('photo',          files.photo);
+      if (files.qrCode)         data.append('qrCode',         files.qrCode);
+      if (files.paymentQrCode)  data.append('paymentQrCode',  files.paymentQrCode);
+
+      const res = await api.put('/developer-profile', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setProfile(res.data.profile);
+      setFiles({});
+      toast.success('Developer profile saved!');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="space-y-4 max-w-3xl">
+
+      {/* Header */}
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Developer Profile</h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            Controls the <Link to="/about-developer" target="_blank" className="text-medium-green hover:underline inline-flex items-center gap-1">/about-developer <FiExternalLink className="text-xs" /></Link> page.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
+            <span className="text-xs">{f.isVisible ? 'Visible' : 'Hidden'}</span>
+            <div onClick={() => set('isVisible', !f.isVisible)}
+              className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${f.isVisible ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${f.isVisible ? 'translate-x-4' : ''}`} />
+            </div>
+          </label>
+          <button onClick={handleSave} disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-full hover:opacity-90 disabled:opacity-50 transition">
+            <FiSave className="text-sm" /> {saving ? 'Saving…' : 'Save all'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Section: Profile Header ── */}
+      <Section title="Profile Header" open={openSections.header} onToggle={() => toggle('header')}>
+        <ImageUploadField label="Profile Photo" current={profile?.photo} fieldName="photo" onChange={setFile} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FieldRow label="Full Name"><input className={INPUT} value={f.name} onChange={e => set('name', e.target.value)} placeholder="Raja Aqib" /></FieldRow>
+          <FieldRow label="Title / Role"><input className={INPUT} value={f.title} onChange={e => set('title', e.target.value)} placeholder="Full-Stack Developer & Founder" /></FieldRow>
+          <FieldRow label="Location"><input className={INPUT} value={f.location} onChange={e => set('location', e.target.value)} placeholder="Lahore, Pakistan" /></FieldRow>
+        </div>
+        <FieldRow label="Short Bio (tagline)">
+          <textarea className={TEXTAREA} rows={2} value={f.shortBio} onChange={e => set('shortBio', e.target.value)} placeholder="1-2 sentences summarizing you…" />
+        </FieldRow>
+        <FieldRow label="Social Links">
+          <div className="space-y-2">
+            {f.socialLinks.map((s, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <input className={INPUT + ' w-32 flex-shrink-0'} value={s.platform} placeholder="github"
+                  onChange={e => updateRow('socialLinks', i, 'platform', e.target.value)} />
+                <input className={INPUT + ' flex-1'} value={s.url} placeholder="https://github.com/…"
+                  onChange={e => updateRow('socialLinks', i, 'url', e.target.value)} />
+                <button type="button" onClick={() => removeRow('socialLinks', i)}
+                  className="text-gray-400 hover:text-red-500 transition flex-shrink-0"><FiX /></button>
+              </div>
+            ))}
+            <button type="button" onClick={() => addRow('socialLinks', { platform: '', url: '' })}
+              className="flex items-center gap-1.5 text-xs text-medium-green hover:underline">
+              <FiPlus /> Add social link
+            </button>
+          </div>
+        </FieldRow>
+      </Section>
+
+      {/* ── Section: About Me ── */}
+      <Section title="About Me Tab" open={openSections.aboutMe} onToggle={() => toggle('aboutMe')}>
+        <FieldRow label="Full Bio">
+          <textarea className={TEXTAREA} rows={5} value={f.fullBio} onChange={e => set('fullBio', e.target.value)} placeholder="Your detailed bio / personal story…" />
+        </FieldRow>
+        <FieldRow label="Mission Statement">
+          <textarea className={TEXTAREA} rows={2} value={f.mission} onChange={e => set('mission', e.target.value)} placeholder="Shown as a blockquote…" />
+        </FieldRow>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <FieldRow label="Years of Experience"><input type="number" min={0} className={INPUT} value={f.yearsOfExperience} onChange={e => set('yearsOfExperience', e.target.value)} /></FieldRow>
+          <FieldRow label="Current Role"><input className={INPUT} value={f.currentRole} onChange={e => set('currentRole', e.target.value)} placeholder="Software Engineer" /></FieldRow>
+          <FieldRow label="Current Company"><input className={INPUT} value={f.currentCompany} onChange={e => set('currentCompany', e.target.value)} placeholder="Company Name" /></FieldRow>
+        </div>
+      </Section>
+
+      {/* ── Section: Work Experience ── */}
+      <Section title="Work Experience Tab" open={openSections.experience} onToggle={() => toggle('experience')}>
+        {f.workExperience.map((job, i) => (
+          <div key={i} className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl space-y-3 relative">
+            <button type="button" onClick={() => removeRow('workExperience', i)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition"><FiX /></button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <FieldRow label="Company"><input className={INPUT} value={job.company} onChange={e => updateRow('workExperience', i, 'company', e.target.value)} placeholder="Company Name" /></FieldRow>
+              <FieldRow label="Role / Position"><input className={INPUT} value={job.role} onChange={e => updateRow('workExperience', i, 'role', e.target.value)} placeholder="Full-Stack Developer" /></FieldRow>
+              <FieldRow label="Start Date"><input className={INPUT} value={job.startDate} onChange={e => updateRow('workExperience', i, 'startDate', e.target.value)} placeholder="Jan 2022" /></FieldRow>
+              <FieldRow label="End Date"><input className={INPUT} value={job.endDate} onChange={e => updateRow('workExperience', i, 'endDate', e.target.value)} placeholder="Present" /></FieldRow>
+            </div>
+            <FieldRow label="Description">
+              <textarea className={TEXTAREA} rows={3} value={job.description} onChange={e => updateRow('workExperience', i, 'description', e.target.value)} placeholder="Key responsibilities and achievements…" />
+            </FieldRow>
+          </div>
+        ))}
+        <button type="button" onClick={() => addRow('workExperience', { company: '', role: '', startDate: '', endDate: 'Present', description: '' })}
+          className="flex items-center gap-1.5 text-sm text-medium-green hover:underline">
+          <FiPlus /> Add experience
+        </button>
+      </Section>
+
+      {/* ── Section: Education ── */}
+      <Section title="Education Tab" open={openSections.education} onToggle={() => toggle('education')}>
+        {f.education.map((edu, i) => (
+          <div key={i} className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl space-y-3 relative">
+            <button type="button" onClick={() => removeRow('education', i)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition"><FiX /></button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <FieldRow label="Degree"><input className={INPUT} value={edu.degree} onChange={e => updateRow('education', i, 'degree', e.target.value)} placeholder="B.Sc Computer Science" /></FieldRow>
+              <FieldRow label="Institution"><input className={INPUT} value={edu.institution} onChange={e => updateRow('education', i, 'institution', e.target.value)} placeholder="University Name" /></FieldRow>
+              <FieldRow label="Year"><input className={INPUT} value={edu.year} onChange={e => updateRow('education', i, 'year', e.target.value)} placeholder="2023" /></FieldRow>
+              <FieldRow label="Grade / CGPA"><input className={INPUT} value={edu.grade} onChange={e => updateRow('education', i, 'grade', e.target.value)} placeholder="3.8 / 4.0" /></FieldRow>
+            </div>
+          </div>
+        ))}
+        <button type="button" onClick={() => addRow('education', { degree: '', institution: '', year: '', grade: '' })}
+          className="flex items-center gap-1.5 text-sm text-medium-green hover:underline">
+          <FiPlus /> Add education
+        </button>
+      </Section>
+
+      {/* ── Section: Skills ── */}
+      <Section title="Skills Tab" open={openSections.skills} onToggle={() => toggle('skills')}>
+        <div className="space-y-2">
+          {f.skills.map((skill, i) => (
+            <div key={i} className="flex gap-2 items-center">
+              <input className={INPUT + ' flex-1'} value={skill.name} placeholder="e.g. React"
+                onChange={e => updateRow('skills', i, 'name', e.target.value)} />
+              <select className={INPUT + ' w-32 flex-shrink-0'} value={skill.category}
+                onChange={e => updateRow('skills', i, 'category', e.target.value)}>
+                {SKILL_CATS.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+              </select>
+              <button type="button" onClick={() => removeRow('skills', i)}
+                className="text-gray-400 hover:text-red-500 transition flex-shrink-0"><FiX /></button>
+            </div>
+          ))}
+        </div>
+        <button type="button" onClick={() => addRow('skills', { name: '', category: 'technical' })}
+          className="flex items-center gap-1.5 text-sm text-medium-green hover:underline">
+          <FiPlus /> Add skill
+        </button>
+      </Section>
+
+      {/* ── Section: Projects ── */}
+      <Section title="Projects Tab" open={openSections.projects} onToggle={() => toggle('projects')}>
+        {f.projects.map((proj, i) => (
+          <div key={i} className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl space-y-3 relative">
+            <button type="button" onClick={() => removeRow('projects', i)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition"><FiX /></button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <FieldRow label="Project Name"><input className={INPUT} value={proj.name} onChange={e => updateRow('projects', i, 'name', e.target.value)} placeholder="Just Like Medium" /></FieldRow>
+              <FieldRow label="Live / GitHub Link"><input className={INPUT} value={proj.link} onChange={e => updateRow('projects', i, 'link', e.target.value)} placeholder="https://github.com/…" /></FieldRow>
+            </div>
+            <FieldRow label="Technologies (comma-separated)">
+              <input className={INPUT} value={proj.technologies} onChange={e => updateRow('projects', i, 'technologies', e.target.value)} placeholder="React, Node.js, MongoDB" />
+            </FieldRow>
+            <FieldRow label="Description">
+              <textarea className={TEXTAREA} rows={2} value={proj.description} onChange={e => updateRow('projects', i, 'description', e.target.value)} placeholder="Brief description…" />
+            </FieldRow>
+          </div>
+        ))}
+        <button type="button" onClick={() => addRow('projects', { name: '', description: '', technologies: '', link: '' })}
+          className="flex items-center gap-1.5 text-sm text-medium-green hover:underline">
+          <FiPlus /> Add project
+        </button>
+      </Section>
+
+      {/* ── Section: Certifications ── */}
+      <Section title="Certifications & Awards Tab" open={openSections.certifications} onToggle={() => toggle('certifications')}>
+        {f.certifications.map((cert, i) => (
+          <div key={i} className="flex gap-2 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 flex-1">
+              <input className={INPUT} value={cert.name} onChange={e => updateRow('certifications', i, 'name', e.target.value)} placeholder="Cert Name" />
+              <input className={INPUT} value={cert.organization} onChange={e => updateRow('certifications', i, 'organization', e.target.value)} placeholder="Organization" />
+              <input className={INPUT} value={cert.year} onChange={e => updateRow('certifications', i, 'year', e.target.value)} placeholder="2024" />
+            </div>
+            <button type="button" onClick={() => removeRow('certifications', i)}
+              className="text-gray-400 hover:text-red-500 transition mt-2 flex-shrink-0"><FiX /></button>
+          </div>
+        ))}
+        <button type="button" onClick={() => addRow('certifications', { name: '', organization: '', year: '' })}
+          className="flex items-center gap-1.5 text-sm text-medium-green hover:underline">
+          <FiPlus /> Add certification
+        </button>
+      </Section>
+
+      {/* ── Section: QR Code ── */}
+      <Section title="QR Code Section" open={openSections.qrCode} onToggle={() => toggle('qrCode')}>
+        <ImageUploadField label="QR Code Image" current={profile?.qrCode?.image} fieldName="qrCode" onChange={setFile} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FieldRow label="Label (shown below QR)"><input className={INPUT} value={f.qrLabel} onChange={e => set('qrLabel', e.target.value)} placeholder="Scan to connect" /></FieldRow>
+          <FieldRow label="Purpose / Description"><input className={INPUT} value={f.qrPurpose} onChange={e => set('qrPurpose', e.target.value)} placeholder="Scan to view my LinkedIn profile" /></FieldRow>
+          <FieldRow label="Alt Text"><input className={INPUT} value={f.qrAltText} onChange={e => set('qrAltText', e.target.value)} placeholder="QR code for LinkedIn" /></FieldRow>
+        </div>
+      </Section>
+
+      {/* ── Section: About Website ── */}
+      <Section title="About the Website Section" open={openSections.websiteInfo} onToggle={() => toggle('websiteInfo')}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[
+            ['name',         'Platform Name',        'Just Like Medium'],
+            ['foundedYear',  'Founded Year',          '2025'],
+            ['version',      'Version',               '1.0.0'],
+            ['contributors', 'Contributors',          'Raja Aqib'],
+          ].map(([key, label, ph]) => (
+            <FieldRow key={key} label={label}>
+              <input className={INPUT} value={f.websiteInfo[key]} placeholder={ph}
+                onChange={e => setF(prev => ({ ...prev, websiteInfo: { ...prev.websiteInfo, [key]: e.target.value } }))} />
+            </FieldRow>
+          ))}
+        </div>
+        <FieldRow label="Mission Statement">
+          <textarea className={TEXTAREA} rows={2} value={f.websiteInfo.mission} placeholder="A platform for writers…"
+            onChange={e => setF(prev => ({ ...prev, websiteInfo: { ...prev.websiteInfo, mission: e.target.value } }))} />
+        </FieldRow>
+        <FieldRow label="Tech Stack (comma-separated)">
+          <input className={INPUT} value={f.websiteInfo.techStack} placeholder="React, Node.js, MongoDB, Cloudinary"
+            onChange={e => setF(prev => ({ ...prev, websiteInfo: { ...prev.websiteInfo, techStack: e.target.value } }))} />
+        </FieldRow>
+      </Section>
+
+      {/* ── Section: Support / Buy Me a Coffee ── */}
+      <Section title="Support / Buy Me a Coffee Section" open={openSections.support} onToggle={() => toggle('support')}>
+        <FieldRow label="Heading"><input className={INPUT} value={f.supportHeading} onChange={e => set('supportHeading', e.target.value)} placeholder="Buy Me a Coffee ☕" /></FieldRow>
+        <FieldRow label="Description">
+          <textarea className={TEXTAREA} rows={2} value={f.supportDescription} onChange={e => set('supportDescription', e.target.value)} placeholder="If you like this platform, consider supporting its development." />
+        </FieldRow>
+        <ImageUploadField label="Payment QR Code" current={profile?.support?.paymentQrCode} fieldName="paymentQrCode" onChange={setFile} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FieldRow label="UPI ID"><input className={INPUT} value={f.supportUpiId} onChange={e => set('supportUpiId', e.target.value)} placeholder="developer@upi" /></FieldRow>
+          <FieldRow label="PayPal Email"><input className={INPUT} value={f.supportPaypalEmail} onChange={e => set('supportPaypalEmail', e.target.value)} placeholder="dev@paypal.com" /></FieldRow>
+          <FieldRow label="Bitcoin Address"><input className={INPUT} value={f.supportBitcoin} onChange={e => set('supportBitcoin', e.target.value)} placeholder="1A1zP1…" /></FieldRow>
+        </div>
+        <FieldRow label="Bank Details">
+          <textarea className={TEXTAREA} rows={3} value={f.supportBankDetails} onChange={e => set('supportBankDetails', e.target.value)} placeholder="Bank: XXX&#10;Account: 123456789&#10;IFSC: ABC0001234" />
+        </FieldRow>
+        <FieldRow label="Thank You Message">
+          <input className={INPUT} value={f.supportThankYou} onChange={e => set('supportThankYou', e.target.value)} placeholder="Thank you for your support! ❤️" />
+        </FieldRow>
+      </Section>
+
+      {/* Floating save button at bottom */}
+      <div className="flex justify-end pt-2">
+        <button onClick={handleSave} disabled={saving}
+          className="flex items-center gap-2 px-6 py-2.5 text-sm bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-full hover:opacity-90 disabled:opacity-50 transition font-medium">
+          <FiSave /> {saving ? 'Saving…' : 'Save all changes'}
+        </button>
+      </div>
+
+    </div>
+  );
+}
+
 // ─── Main AdminDashboard ──────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -1706,6 +2127,7 @@ export default function AdminDashboard() {
     appeals:     <AppealsTab />,
     analytics:   <AnalyticsTab />,
     tags:        <TagsTab />,
+    developer:   <DeveloperProfileTab />,
   };
 
   return (
