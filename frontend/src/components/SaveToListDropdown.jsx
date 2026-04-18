@@ -5,7 +5,7 @@ import api from '../utils/axios';
 import toast from 'react-hot-toast';
 
 export default function SaveToListDropdown({ postId, onClose }) {
-  const { isSaved, toggleSave } = useSavedPosts();
+  const { isSaved, toggleSave, markAsSaved, markAsUnsaved } = useSavedPosts();
   const [lists, setLists]       = useState([]);
   const [loading, setLoading]   = useState(true);
   const [creating, setCreating] = useState(false);
@@ -51,16 +51,23 @@ export default function SaveToListDropdown({ postId, onClose }) {
     try {
       if (inList) {
         await api.delete(`/lists/${list._id}/posts/${postId}`);
-        setLists(prev => prev.map(l => l._id === list._id
+        const updatedLists = lists.map(l => l._id === list._id
           ? { ...l, posts: l.posts.filter(p => (p._id || p).toString() !== postId.toString()) }
           : l
-        ));
+        );
+        setLists(updatedLists);
+        // Un-fill bookmark only if post is no longer in any custom list AND not in reading list
+        const stillInAnyList = updatedLists.some(l =>
+          l.posts?.some(p => (p._id || p).toString() === postId.toString())
+        );
+        if (!stillInAnyList && !isSaved(postId)) markAsUnsaved(postId);
       } else {
         await api.post(`/lists/${list._id}/posts/${postId}`);
         setLists(prev => prev.map(l => l._id === list._id
           ? { ...l, posts: [...(l.posts || []), { _id: postId }] }
           : l
         ));
+        markAsSaved(postId); // Fill bookmark immediately
         toast.success(`Saved to "${list.name}"`);
       }
     } catch { toast.error('Failed to update list'); }
@@ -74,6 +81,7 @@ export default function SaveToListDropdown({ postId, onClose }) {
       const newList = { ...res.data.list, posts: [{ _id: postId }] };
       await api.post(`/lists/${newList._id}/posts/${postId}`);
       setLists(prev => [newList, ...prev]);
+      markAsSaved(postId); // Fill bookmark immediately
       setNewName('');
       setCreating(false);
       toast.success(`Saved to "${newList.name}"`);

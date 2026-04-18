@@ -42,8 +42,18 @@ export const SavedPostsProvider = ({ children }) => {
 
   const isSaved = (postId) => savedIds.has(postId);
 
+  // Called when a post is added to ANY custom list — marks bookmark as filled
+  const markAsSaved = (postId) => {
+    setSavedIds(prev => { const next = new Set(prev); next.add(postId); return next; });
+  };
+
+  // Called when a post is removed — only un-fills bookmark if not in reading list
+  const markAsUnsaved = (postId) => {
+    setSavedIds(prev => { const next = new Set(prev); next.delete(postId); return next; });
+  };
+
   return (
-    <SavedPostsContext.Provider value={{ savedIds, isSaved, toggleSave, loaded }}>
+    <SavedPostsContext.Provider value={{ savedIds, isSaved, toggleSave, markAsSaved, markAsUnsaved, loaded }}>
       {children}
     </SavedPostsContext.Provider>
   );
