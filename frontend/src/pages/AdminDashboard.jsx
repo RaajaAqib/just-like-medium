@@ -2351,13 +2351,19 @@ export default function AdminDashboard() {
   const [pendingCounts, setPendingCounts] = useState({ reports: 0, appeals: 0, submissions: 0 });
 
   useEffect(() => {
-    const fetchCounts = () =>
+    const fetchCounts = () => {
+      if (document.visibilityState === 'hidden') return; // skip when tab is backgrounded
       api.get('/admin/pending-counts')
         .then(r => setPendingCounts(r.data.counts))
         .catch(() => {});
+    };
     fetchCounts();
-    const interval = setInterval(fetchCounts, 60000); // refresh every minute
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchCounts, 15000); // refresh every 15 seconds
+    document.addEventListener('visibilitychange', fetchCounts); // fetch immediately on tab focus
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', fetchCounts);
+    };
   }, []);
 
   const tabContent = {
