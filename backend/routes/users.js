@@ -160,15 +160,25 @@ router.post('/topics/follow', protect, async (req, res) => {
   try {
     const { topic } = req.body;
     if (!topic?.trim()) return res.status(400).json({ success: false, message: 'Topic required' });
+    const name = topic.trim();
     const user = await User.findById(req.user._id).select('followedTopics');
-    const idx = user.followedTopics.map(t => t.toLowerCase()).indexOf(topic.toLowerCase().trim());
-    if (idx >= 0) {
-      user.followedTopics.splice(idx, 1);
+    const topics = user.followedTopics || [];
+    const isFollowing = topics.some(t => t.toLowerCase() === name.toLowerCase());
+    let updated;
+    if (isFollowing) {
+      updated = await User.findByIdAndUpdate(
+        req.user._id,
+        { $pull: { followedTopics: name } },
+        { new: true }
+      ).select('followedTopics');
     } else {
-      user.followedTopics.push(topic.trim());
+      updated = await User.findByIdAndUpdate(
+        req.user._id,
+        { $addToSet: { followedTopics: name } },
+        { new: true }
+      ).select('followedTopics');
     }
-    await user.save();
-    res.json({ success: true, followedTopics: user.followedTopics, following: idx < 0 });
+    res.json({ success: true, followedTopics: updated.followedTopics || [], following: !isFollowing });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -177,8 +187,10 @@ router.post('/topics/follow', protect, async (req, res) => {
 // GET /api/users/suggestions — users you might want to follow
 router.get('/suggestions', protect, async (req, res) => {
   try {
-    const currentUser = await User.findById(req.user._id).select('following');
-    const excludeIds = [...(currentUser.following || []).map(id => id.toString()), req.user._id.toString()];
+    const currentUser = await User.findById(req.user._id).select('following mutedUsers');
+    const followingIds = (currentUser.following || []).map(id => id.toString());
+    const mutedIds = (currentUser.mutedUsers || []).map(id => id.toString());
+    const excludeIds = [...followingIds, ...mutedIds, req.user._id.toString()];
     const suggestions = await User.find({ _id: { $nin: excludeIds }, banned: false })
       .select('name avatar bio isVerified followers')
       .sort({ createdAt: -1 })
@@ -206,13 +218,21 @@ router.post('/:id/mute', protect, async (req, res) => {
   try {
     const targetId = req.params.id;
     const user = await User.findById(req.user._id).select('mutedUsers');
-    const isMuted = user.mutedUsers.some(id => id.toString() === targetId);
+    const isMuted = (user.mutedUsers || []).some(id => id.toString() === targetId);
+    let updated;
     if (isMuted) {
-      user.mutedUsers = user.mutedUsers.filter(id => id.toString() !== targetId);
+      updated = await User.findByIdAndUpdate(
+        req.user._id,
+        { $pull: { mutedUsers: targetId } },
+        { new: true }
+      ).select('mutedUsers');
     } else {
-      user.mutedUsers.push(targetId);
+      updated = await User.findByIdAndUpdate(
+        req.user._id,
+        { $addToSet: { mutedUsers: targetId } },
+        { new: true }
+      ).select('mutedUsers');
     }
-    await user.save();
     res.json({ success: true, muted: !isMuted });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
