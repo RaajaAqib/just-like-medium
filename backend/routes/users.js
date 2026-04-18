@@ -179,8 +179,8 @@ router.get('/me/following-data', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
       .select('following followedTopics mutedUsers')
-      .populate('following', 'name avatar bio isVerified followers')
-      .populate('mutedUsers', 'name avatar bio isVerified');
+      .populate('following', 'name avatar bio isVerified isAdmin followers')
+      .populate('mutedUsers', 'name avatar bio isVerified isAdmin');
     res.json({
       success: true,
       following: user.following || [],
@@ -229,7 +229,7 @@ router.get('/suggestions', protect, async (req, res) => {
     const mutedIds = (currentUser.mutedUsers || []).map(id => id.toString());
     const excludeIds = [...followingIds, ...mutedIds, req.user._id.toString()];
     const suggestions = await User.find({ _id: { $nin: excludeIds }, banned: false })
-      .select('name avatar bio isVerified followers')
+      .select('name avatar bio isVerified isAdmin followers')
       .sort({ createdAt: -1 })
       .limit(10);
     res.json({ success: true, suggestions });
