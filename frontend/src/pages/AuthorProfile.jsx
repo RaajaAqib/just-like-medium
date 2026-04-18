@@ -827,7 +827,7 @@ function ProfileContent({ id }) {
       </div>
 
       {/* ── Right sidebar ── */}
-      <aside className="hidden lg:block w-72 flex-shrink-0 self-start sticky top-0 border-l border-medium-border dark:border-gray-700 pl-8">
+      <aside className="hidden lg:block w-72 flex-shrink-0 self-start sticky top-14 border-l border-medium-border dark:border-gray-700 pl-8">
         <div className="py-8">
 
           {/* Avatar + name + bio */}

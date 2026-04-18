@@ -268,7 +268,7 @@ export default function SidebarLayout({ children }) {
         )}
 
         {/* Main content */}
-        <main className="flex-1 min-w-0 overflow-x-hidden">
+        <main className="flex-1 min-w-0 overflow-x-clip">
           {user?.banned && (
             <div className="bg-red-600 text-white px-4 py-2.5 text-sm flex items-center justify-between gap-3">
               <span>
