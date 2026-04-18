@@ -730,8 +730,8 @@ function ProfileContent({ id }) {
       </div>
 
       {/* ── Right sidebar ── */}
-      <aside className="hidden lg:block w-72 flex-shrink-0 self-start border-l border-medium-border dark:border-gray-700 pl-8">
-        <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1 scrollbar-thin">
+      <aside className="hidden lg:block w-72 flex-shrink-0 self-start sticky top-0 border-l border-medium-border dark:border-gray-700 pl-8">
+        <div className="py-8">
 
           {/* Avatar + name + bio */}
           <div className="flex flex-col items-center text-center gap-4 pb-6">
