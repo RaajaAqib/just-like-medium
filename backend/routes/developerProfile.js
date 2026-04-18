@@ -89,16 +89,19 @@ router.put('/', protect, adminOnly, (req, res, next) => {
     if (body.shortBio !== undefined) profile.shortBio = body.shortBio;
 
     // Profile photo → square crop in developer folder
-    if (req.files?.photo?.[0]) {
+    if (body.removePhoto === 'true') {
       if (profile.photoPublicId) deleteFromCloudinary(profile.photoPublicId).catch(() => {});
-      const result = await cloudinary.uploader.upload_stream_promise?.(req.files.photo[0].buffer)
-        || await new Promise((resolve, reject) => {
-          const s = cloudinary.uploader.upload_stream(
-            { folder: 'medium-clone/developer', transformation: [{ width: 400, height: 400, crop: 'limit' }] },
-            (e, r) => e ? reject(e) : resolve(r),
-          );
-          s.end(req.files.photo[0].buffer);
-        });
+      profile.photo         = '';
+      profile.photoPublicId = '';
+    } else if (req.files?.photo?.[0]) {
+      if (profile.photoPublicId) deleteFromCloudinary(profile.photoPublicId).catch(() => {});
+      const result = await new Promise((resolve, reject) => {
+        const s = cloudinary.uploader.upload_stream(
+          { folder: 'medium-clone/developer', transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }] },
+          (e, r) => e ? reject(e) : resolve(r),
+        );
+        s.end(req.files.photo[0].buffer);
+      });
       profile.photo         = result.secure_url;
       profile.photoPublicId = result.public_id;
     }
@@ -127,7 +130,12 @@ router.put('/', protect, adminOnly, (req, res, next) => {
     if (body.qrPurpose !== undefined) { profile.qrCode.purpose = body.qrPurpose; profile.markModified('qrCode'); }
     if (body.qrAltText !== undefined) { profile.qrCode.altText = body.qrAltText; profile.markModified('qrCode'); }
 
-    if (req.files?.qrCode?.[0]) {
+    if (body.removeQrCode === 'true') {
+      if (profile.qrCode.imagePublicId) deleteFromCloudinary(profile.qrCode.imagePublicId).catch(() => {});
+      profile.qrCode.image         = '';
+      profile.qrCode.imagePublicId = '';
+      profile.markModified('qrCode');
+    } else if (req.files?.qrCode?.[0]) {
       if (profile.qrCode.imagePublicId) deleteFromCloudinary(profile.qrCode.imagePublicId).catch(() => {});
       const result = await new Promise((resolve, reject) => {
         const s = cloudinary.uploader.upload_stream(
@@ -161,7 +169,12 @@ router.put('/', protect, adminOnly, (req, res, next) => {
     if (body.supportBankDetails !== undefined) { profile.support.bankDetails     = body.supportBankDetails; profile.markModified('support'); }
     if (body.supportThankYou    !== undefined) { profile.support.thankYouMessage = body.supportThankYou;    profile.markModified('support'); }
 
-    if (req.files?.paymentQrCode?.[0]) {
+    if (body.removePaymentQrCode === 'true') {
+      if (profile.support.paymentQrPublicId) deleteFromCloudinary(profile.support.paymentQrPublicId).catch(() => {});
+      profile.support.paymentQrCode     = '';
+      profile.support.paymentQrPublicId = '';
+      profile.markModified('support');
+    } else if (req.files?.paymentQrCode?.[0]) {
       if (profile.support.paymentQrPublicId) deleteFromCloudinary(profile.support.paymentQrPublicId).catch(() => {});
       const result = await new Promise((resolve, reject) => {
         const s = cloudinary.uploader.upload_stream(

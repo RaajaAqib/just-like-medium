@@ -2054,7 +2054,7 @@ function ImageUploadField({ label, current, fieldName, onChange }) {
     <FieldRow label={label}>
       <div className="flex items-start gap-4">
         {preview && (
-          <img src={preview} alt="preview" className="w-20 h-20 rounded-lg object-cover border border-gray-200 dark:border-gray-700 flex-shrink-0" />
+          <img src={preview} alt="preview" className={`w-24 h-24 object-cover border border-gray-200 dark:border-gray-700 flex-shrink-0 ${fieldName === 'photo' ? 'rounded-full' : 'rounded-lg'}`} />
         )}
         <div className="flex-1">
           <input type="file" accept="image/*" ref={inputRef} className="hidden"
@@ -2088,6 +2088,7 @@ function DeveloperProfileTab() {
     qrCode: true, websiteInfo: true, support: true,
   });
   const [files, setFiles] = useState({});
+  const [removedFiles, setRemovedFiles] = useState(new Set());
 
   // Local editable state
   const [f, setF] = useState({
@@ -2147,7 +2148,17 @@ function DeveloperProfileTab() {
 
   const toggle = (key) => setOpenSections(s => ({ ...s, [key]: !s[key] }));
   const set = (key, val) => setF(prev => ({ ...prev, [key]: val }));
-  const setFile = (fieldName, file) => setFiles(prev => ({ ...prev, [fieldName]: file }));
+  const setFile = (fieldName, file) => {
+    if (file === null) {
+      // explicit remove — track as removed, clear any pending upload
+      setRemovedFiles(prev => new Set([...prev, fieldName]));
+      setFiles(prev => { const n = { ...prev }; delete n[fieldName]; return n; });
+    } else {
+      // new upload — clear from removed set
+      setRemovedFiles(prev => { const n = new Set(prev); n.delete(fieldName); return n; });
+      setFiles(prev => ({ ...prev, [fieldName]: file }));
+    }
+  };
 
   // ── Array helpers ────────────────────────────────────────────────────────────
   const addRow = (key, template) => setF(prev => ({ ...prev, [key]: [...prev[key], { ...template }] }));
@@ -2174,14 +2185,19 @@ function DeveloperProfileTab() {
       data.append('projects',       JSON.stringify(f.projects));
       data.append('certifications', JSON.stringify(f.certifications));
       data.append('websiteInfo',    JSON.stringify(f.websiteInfo));
-      // Files
+      // Files (new uploads)
       if (files.photo)          data.append('photo',          files.photo);
       if (files.qrCode)         data.append('qrCode',         files.qrCode);
       if (files.paymentQrCode)  data.append('paymentQrCode',  files.paymentQrCode);
+      // Explicit removes
+      if (removedFiles.has('photo'))          data.append('removePhoto', 'true');
+      if (removedFiles.has('qrCode'))         data.append('removeQrCode', 'true');
+      if (removedFiles.has('paymentQrCode'))  data.append('removePaymentQrCode', 'true');
 
       const res = await api.put('/developer-profile', data, { headers: { 'Content-Type': 'multipart/form-data' } });
       setProfile(res.data.profile);
       setFiles({});
+      setRemovedFiles(new Set());
       toast.success('Developer profile saved!');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save');
