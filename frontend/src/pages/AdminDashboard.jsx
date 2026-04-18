@@ -1916,9 +1916,9 @@ function SubmissionsTab() {
             return (
               <div key={post._id} className="flex items-start gap-4 p-4 sm:p-5 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition">
                 {/* Thumbnail */}
-                <div className="w-14 h-10 flex-shrink-0 rounded overflow-hidden bg-gray-100 dark:bg-gray-700">
+                <div className="w-14 h-10 flex-shrink-0 rounded overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                   {post.coverImage
-                    ? <img src={post.coverImage} alt="" className="w-full h-full object-cover" />
+                    ? <img src={post.coverImage} alt="" className="max-w-full max-h-full object-contain block" />
                     : <div className="w-full h-full flex items-center justify-center text-[10px] text-gray-400">No img</div>
                   }
                 </div>

@@ -230,9 +230,9 @@ function StoryRow({ post, onDelete, onUpdate }) {
       <div className="flex items-center gap-4 py-5 border-b border-medium-border dark:border-gray-700 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition px-1 group">
 
         {/* Thumbnail */}
-        <div className="w-16 h-12 flex-shrink-0 rounded overflow-hidden bg-gray-100 dark:bg-gray-700">
+        <div className="w-16 h-12 flex-shrink-0 rounded overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
           {post.coverImage
-            ? <img src={post.coverImage} alt="" className="w-full h-full object-cover" />
+            ? <img src={post.coverImage} alt="" className="max-w-full max-h-full object-contain block" />
             : <div className="w-full h-full flex items-center justify-center">
                 <span className="text-[10px] text-medium-gray dark:text-gray-500 text-center px-1 leading-tight">No image</span>
               </div>
