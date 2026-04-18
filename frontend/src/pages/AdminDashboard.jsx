@@ -1721,6 +1721,9 @@ function FieldRow({ label, children }) {
 
 const INPUT = 'w-full text-sm px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-green/40';
 const TEXTAREA = INPUT + ' resize-none';
+// Use for inputs inside flex rows — w-full conflicts with flex-1
+const FLEX_INPUT = 'flex-1 min-w-0 text-sm px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-green/40';
+const SELECT_SM = 'w-36 flex-shrink-0 text-sm px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-medium-green/40';
 
 function ImageUploadField({ label, current, fieldName, onChange }) {
   const inputRef = useRef();
@@ -1909,9 +1912,9 @@ function DeveloperProfileTab() {
           <div className="space-y-2">
             {f.socialLinks.map((s, i) => (
               <div key={i} className="flex gap-2 items-center">
-                <input className={INPUT + ' w-32 flex-shrink-0'} value={s.platform} placeholder="github"
+                <input className="w-28 flex-shrink-0 text-sm px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-medium-green/40" value={s.platform} placeholder="github"
                   onChange={e => updateRow('socialLinks', i, 'platform', e.target.value)} />
-                <input className={INPUT + ' flex-1'} value={s.url} placeholder="https://github.com/…"
+                <input className={FLEX_INPUT} value={s.url} placeholder="https://github.com/…"
                   onChange={e => updateRow('socialLinks', i, 'url', e.target.value)} />
                 <button type="button" onClick={() => removeRow('socialLinks', i)}
                   className="text-gray-400 hover:text-red-500 transition flex-shrink-0"><FiX /></button>
@@ -1988,9 +1991,9 @@ function DeveloperProfileTab() {
         <div className="space-y-2">
           {f.skills.map((skill, i) => (
             <div key={i} className="flex gap-2 items-center">
-              <input className={INPUT + ' flex-1'} value={skill.name} placeholder="e.g. React"
+              <input className={FLEX_INPUT} value={skill.name} placeholder="e.g. React"
                 onChange={e => updateRow('skills', i, 'name', e.target.value)} />
-              <select className={INPUT + ' w-32 flex-shrink-0'} value={skill.category}
+              <select className={SELECT_SM} value={skill.category}
                 onChange={e => updateRow('skills', i, 'category', e.target.value)}>
                 {SKILL_CATS.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
               </select>
