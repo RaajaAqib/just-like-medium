@@ -30,15 +30,34 @@ const getPosts = async (req, res) => {
     if (tag) query.tags = tag.toLowerCase();
     if (author) query.author = author;
 
-    // Following feed: restrict to authors the current user follows
-    if (following === 'true' && req.user) {
-      const me = await User.findById(req.user._id).select('following');
-      const followingIds = me?.following || [];
-      if (followingIds.length === 0) {
-        // User follows nobody — return empty list immediately
-        return res.json({ success: true, posts: [], currentPage: 1, totalPages: 0, total: 0 });
+    if (req.user) {
+      const me = await User.findById(req.user._id).select('following followedTopics mutedUsers');
+      const mutedUserIds = (me?.mutedUsers || []).map(id => id.toString());
+
+      if (following === 'true') {
+        // Following feed: posts from followed writers OR followed topics
+        const followingIds = me?.following || [];
+        const followedTopics = (me?.followedTopics || []).map(t => t.toLowerCase());
+
+        if (followingIds.length === 0 && followedTopics.length === 0) {
+          return res.json({ success: true, posts: [], currentPage: 1, totalPages: 0, total: 0 });
+        }
+
+        const andConditions = [];
+        const orConditions = [];
+        if (followingIds.length > 0) orConditions.push({ author: { $in: followingIds } });
+        if (followedTopics.length > 0) orConditions.push({ tags: { $in: followedTopics } });
+        andConditions.push({ $or: orConditions });
+        if (mutedUserIds.length > 0) andConditions.push({ author: { $nin: mutedUserIds } });
+        query.$and = andConditions;
+      } else {
+        // Regular feed: filter out muted users
+        if (mutedUserIds.length > 0) {
+          query.author = query.author
+            ? { ...query.author, $nin: mutedUserIds }
+            : { $nin: mutedUserIds };
+        }
       }
-      query.author = { $in: followingIds };
     }
 
     const total = await Post.countDocuments(query);

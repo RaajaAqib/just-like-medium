@@ -50,6 +50,8 @@ const userSchema = new mongoose.Schema(
       post:   { type: mongoose.Schema.Types.ObjectId, ref: 'Post' },
       readAt: { type: Date, default: Date.now },
     }],
+    followedTopics: [{ type: String }],
+    mutedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     banned:           { type: Boolean, default: false },
     banReason:        { type: String,  default: '' },
     isSuspended:      { type: Boolean, default: false },

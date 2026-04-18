@@ -159,6 +159,7 @@ function ProfileContent({ id }) {
   const [activityLoading, setActivityLoading] = useState(false);
   const [following, setFollowing]       = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
+  const [muted, setMuted]               = useState(false);
   const [modal, setModal]               = useState(null); // 'followers' | 'following'
   const [showEdit, setShowEdit]         = useState(false);
 
@@ -197,6 +198,15 @@ function ProfileContent({ id }) {
       setFollowersCount(res.data.followersCount);
       toast.success(res.data.following ? `Following ${profile.name}` : `Unfollowed ${profile.name}`);
     } catch { toast.error('Failed to follow'); }
+  };
+
+  const handleMute = async () => {
+    if (!user) return toast.error('Please log in');
+    try {
+      const res = await api.post(`/users/${id}/mute`);
+      setMuted(res.data.muted);
+      toast.success(res.data.muted ? `${profile.name} muted` : `${profile.name} unmuted`);
+    } catch { toast.error('Failed to mute'); }
   };
 
   const handleSaveProfile = (updatedUser) => {
@@ -404,14 +414,20 @@ function ProfileContent({ id }) {
                 Edit profile
               </button>
             ) : user ? (
-              <button onClick={handleFollow}
-                className={`w-full text-sm px-5 py-2 rounded-full font-medium transition border ${
-                  following
-                    ? 'border-medium-border dark:border-gray-600 text-medium-gray dark:text-gray-400 hover:border-red-300 hover:text-red-500'
-                    : 'bg-medium-black dark:bg-gray-100 text-white dark:text-gray-900 border-medium-black dark:border-gray-100 hover:opacity-90'
-                }`}>
-                {following ? 'Following' : 'Follow'}
-              </button>
+              <>
+                <button onClick={handleFollow}
+                  className={`w-full text-sm px-5 py-2 rounded-full font-medium transition border ${
+                    following
+                      ? 'border-medium-border dark:border-gray-600 text-medium-gray dark:text-gray-400 hover:border-red-300 hover:text-red-500'
+                      : 'bg-medium-black dark:bg-gray-100 text-white dark:text-gray-900 border-medium-black dark:border-gray-100 hover:opacity-90'
+                  }`}>
+                  {following ? 'Following' : 'Follow'}
+                </button>
+                <button onClick={handleMute}
+                  className="text-xs text-medium-gray dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition underline underline-offset-2">
+                  {muted ? 'Unmute this writer' : 'Mute this writer'}
+                </button>
+              </>
             ) : (
               <Link to="/login"
                 className="w-full text-center block text-sm px-5 py-2 rounded-full font-medium bg-medium-black text-white hover:opacity-90 transition">

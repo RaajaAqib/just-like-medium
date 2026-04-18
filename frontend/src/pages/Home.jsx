@@ -244,7 +244,7 @@ function LoggedInFeed() {
             <div className="border-t border-medium-border dark:border-gray-700 pt-6">
               <h3 className="text-sm font-semibold text-medium-black dark:text-gray-200 mb-4">Recommended topics</h3>
               <div className="flex flex-wrap gap-2">
-                {TAGS.map(t => (
+                {topics.map(t => (
                   <Link key={t} to={`/?tag=${t.toLowerCase()}`}
                     className={`text-sm px-4 py-2 rounded-full transition ${tag===t.toLowerCase() ? 'bg-medium-black dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-medium-black dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}>
                     {t}

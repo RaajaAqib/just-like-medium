@@ -136,7 +136,88 @@ router.post('/admin/:id/remove-restrictions', protect, adminOnly, async (req, re
 // Protected
 router.put('/profile', protect, upload.single('avatar'), updateProfile);
 router.put('/change-password', protect, changePassword);
+
+// GET /api/users/me/following-data — returns following users + followedTopics + mutedUsers
+router.get('/me/following-data', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .select('following followedTopics mutedUsers')
+      .populate('following', 'name avatar bio isVerified followers')
+      .populate('mutedUsers', 'name avatar bio isVerified');
+    res.json({
+      success: true,
+      following: user.following || [],
+      followedTopics: user.followedTopics || [],
+      mutedUsers: user.mutedUsers || [],
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/users/topics/follow — toggle follow/unfollow a topic (must be before /:id/follow)
+router.post('/topics/follow', protect, async (req, res) => {
+  try {
+    const { topic } = req.body;
+    if (!topic?.trim()) return res.status(400).json({ success: false, message: 'Topic required' });
+    const user = await User.findById(req.user._id).select('followedTopics');
+    const idx = user.followedTopics.map(t => t.toLowerCase()).indexOf(topic.toLowerCase().trim());
+    if (idx >= 0) {
+      user.followedTopics.splice(idx, 1);
+    } else {
+      user.followedTopics.push(topic.trim());
+    }
+    await user.save();
+    res.json({ success: true, followedTopics: user.followedTopics, following: idx < 0 });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/users/suggestions — users you might want to follow
+router.get('/suggestions', protect, async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user._id).select('following');
+    const excludeIds = [...(currentUser.following || []).map(id => id.toString()), req.user._id.toString()];
+    const suggestions = await User.find({ _id: { $nin: excludeIds }, banned: false })
+      .select('name avatar bio isVerified followers')
+      .sort({ createdAt: -1 })
+      .limit(10);
+    res.json({ success: true, suggestions });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// DELETE /api/users/me/history — clear all reading history
+router.delete('/me/history', protect, async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user._id, { $set: { readingHistory: [] } });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.post('/:id/follow', protect, checkRestrictions, followUser);
+
+// POST /api/users/:id/mute — toggle mute/unmute a user
+router.post('/:id/mute', protect, async (req, res) => {
+  try {
+    const targetId = req.params.id;
+    const user = await User.findById(req.user._id).select('mutedUsers');
+    const isMuted = user.mutedUsers.some(id => id.toString() === targetId);
+    if (isMuted) {
+      user.mutedUsers = user.mutedUsers.filter(id => id.toString() !== targetId);
+    } else {
+      user.mutedUsers.push(targetId);
+    }
+    await user.save();
+    res.json({ success: true, muted: !isMuted });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 // Save / unsave a post
 router.post('/save-post/:postId', protect, checkRestrictions, async (req, res) => {
