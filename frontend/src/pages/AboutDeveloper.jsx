@@ -301,8 +301,171 @@ export default function AboutDeveloper() {
       .finally(() => setLoading(false));
   }, []);
 
+  // ── Shared BMC coffee cup SVG ─────────────────────────────────────────────
+  const BmcCupSVG = ({ size = 'w-10 h-10' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" className={`${size} flex-shrink-0`} fill="none">
+      <rect x="14" y="10" width="36" height="6" rx="3" fill="white" stroke="#1a1a1a" strokeWidth="2.5"/>
+      <rect x="27" y="7" width="10" height="5" rx="2" fill="white" stroke="#1a1a1a" strokeWidth="2.5"/>
+      <path d="M17 16 L20 52 Q20 55 24 55 L40 55 Q44 55 44 52 L47 16 Z"
+        fill="white" stroke="#1a1a1a" strokeWidth="2.5" strokeLinejoin="round"/>
+      <path d="M18.5 30 L19.8 38 L44.2 38 L45.5 30 Z" fill="#FFDD00" stroke="none"/>
+    </svg>
+  );
+
+  // ── Right sidebar widgets ─────────────────────────────────────────────────
+
+  const ConnectWidget = () => (
+    <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl overflow-hidden">
+      <div className="px-4 pt-4 pb-2">
+        <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 uppercase tracking-widest mb-3">Connect</h3>
+        <div className="flex flex-col items-center gap-2">
+          <div className="bg-white dark:bg-gray-700 rounded-xl p-2 border border-gray-100 dark:border-gray-600 shadow-sm">
+            <img src={profile.qrCode.image} alt={profile.qrCode.altText || 'QR Code'}
+              className="w-full max-w-[160px] h-auto object-contain" />
+          </div>
+          {profile.qrCode.label && (
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 text-center">{profile.qrCode.label}</p>
+          )}
+          {profile.qrCode.purpose && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center leading-relaxed">{profile.qrCode.purpose}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const WebsiteWidget = () => (
+    <div className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-4">
+      <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 uppercase tracking-widest mb-3">
+        About {profile.websiteInfo.name}
+      </h3>
+      <div className="space-y-2">
+        {[
+          { label: 'Platform',     value: profile.websiteInfo.name },
+          { label: 'Founded',      value: profile.websiteInfo.foundedYear },
+          { label: 'Version',      value: profile.websiteInfo.version },
+          { label: 'Contributors', value: profile.websiteInfo.contributors },
+        ].filter(r => r.value).map((row, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <div className="w-1 h-4 rounded-full bg-medium-green flex-shrink-0" />
+            <span className="text-xs text-gray-400 dark:text-gray-500 w-20 flex-shrink-0">{row.label}</span>
+            <span className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">{row.value}</span>
+          </div>
+        ))}
+        {profile.websiteInfo.mission && (
+          <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide font-medium mb-1">Mission</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{profile.websiteInfo.mission}</p>
+          </div>
+        )}
+        {profile.websiteInfo.techStack && (
+          <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide font-medium mb-2">Built With</p>
+            <div className="flex flex-wrap gap-1.5">
+              {profile.websiteInfo.techStack.split(',').map(t => t.trim()).filter(Boolean).map((tech, i) => (
+                <span key={i} className="text-[10px] px-2 py-0.5 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-full">
+                  {tech}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const BmcWidget = () => (
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#FFDD00] via-[#FFD000] to-[#FFC000] shadow-lg">
+      <div className="absolute -top-6 -right-6 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
+      <div className="absolute -bottom-4 -left-4 w-20 h-20 rounded-full bg-white/10 pointer-events-none" />
+
+      <div className="relative p-4">
+        {/* BMC header */}
+        <div className="flex items-center gap-2 mb-3">
+          <BmcCupSVG size="w-9 h-9" />
+          <span style={{ fontFamily: "'Cookie', cursive" }} className="text-3xl text-gray-900 leading-none">
+            {profile.support.heading || 'Buy me a coffee'}
+          </span>
+        </div>
+
+        {profile.support.description && (
+          <p className="text-gray-800/75 text-xs mb-3 leading-relaxed">{profile.support.description}</p>
+        )}
+
+        {/* Payment QR */}
+        {profile.support.paymentQrCode && (
+          <div className="flex flex-col items-center gap-1 mb-3">
+            <div className="bg-white rounded-xl p-2 shadow-md">
+              <img src={profile.support.paymentQrCode} alt="Payment QR" className="w-28 h-28 object-contain" />
+            </div>
+            <p className="text-[10px] font-semibold text-gray-700">Scan to pay</p>
+          </div>
+        )}
+
+        {/* Payment methods */}
+        <div className="space-y-2">
+          {!profile.support.upiId && !profile.support.paypalEmail && !profile.support.bitcoinAddress && !profile.support.bankDetails && !profile.support.paymentQrCode && (
+            <p className="text-xs text-gray-700 italic">Payment details coming soon!</p>
+          )}
+          {profile.support.upiId && (
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-2 shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-[#FFDD00] border border-yellow-300 flex items-center justify-center flex-shrink-0 text-sm font-bold text-gray-800">₹</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider">UPI ID</p>
+                <p className="text-xs font-mono font-semibold text-gray-900 truncate">{profile.support.upiId}</p>
+              </div>
+              <CopyButton value={profile.support.upiId} />
+            </div>
+          )}
+          {profile.support.paypalEmail && (
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-2 shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-[#003087] flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-xs">P</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider">PayPal</p>
+                <p className="text-xs font-mono font-semibold text-gray-900 truncate">{profile.support.paypalEmail}</p>
+              </div>
+              <CopyButton value={profile.support.paypalEmail} />
+            </div>
+          )}
+          {profile.support.bitcoinAddress && (
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-2 shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-[#F7931A] flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-xs">₿</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider">Bitcoin</p>
+                <p className="text-xs font-mono font-semibold text-gray-900 truncate">{profile.support.bitcoinAddress}</p>
+              </div>
+              <CopyButton value={profile.support.bitcoinAddress} />
+            </div>
+          )}
+          {profile.support.bankDetails && (
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl px-3 py-2 flex items-start gap-2 shadow-sm">
+              <div className="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0 mt-0.5 text-sm">🏦</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[9px] font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Bank Transfer</p>
+                <p className="text-xs text-gray-900 leading-relaxed whitespace-pre-wrap">{profile.support.bankDetails}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {profile.support.thankYouMessage && (
+        <div className="px-4 py-2.5 bg-black/10 flex items-center gap-1.5">
+          <FiHeart className="text-red-600 text-xs flex-shrink-0" />
+          <p className="text-xs text-gray-800 italic">{profile.support.thankYouMessage}</p>
+        </div>
+      )}
+    </div>
+  );
+
+  const hasSidebar = profile?.qrCode?.image || profile?.websiteInfo?.name || profile?.support;
+
   const content = (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
       {loading ? (
         <div className="py-20"><LoadingSpinner /></div>
       ) : !profile || (!profile.isVisible && !user?.isAdmin) ? (
@@ -311,275 +474,107 @@ export default function AboutDeveloper() {
           <Link to="/" className="mt-4 inline-block text-medium-green hover:underline text-sm">← Back to home</Link>
         </div>
       ) : (
-        <div className="space-y-16">
+        <div className="flex gap-8 items-start">
 
-          {/* ── Profile Header ─────────────────────────────────────────────── */}
-          <section>
-            <div className="flex flex-col sm:flex-row gap-8 items-start">
-              {/* Photo */}
-              <div className="flex-shrink-0">
-                {profile.photo ? (
-                  <img src={profile.photo} alt={profile.name}
-                    className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl object-cover shadow-lg" />
-                ) : (
-                  <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-gradient-to-br from-medium-green to-green-700 flex items-center justify-center text-white text-4xl font-bold shadow-lg">
-                    {profile.name?.[0] || 'D'}
-                  </div>
-                )}
-              </div>
+          {/* ── Center column ───────────────────────────────────────────────── */}
+          <div className="flex-1 min-w-0 space-y-16">
 
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 font-serif leading-tight">
-                  {profile.name || 'Developer'}
-                </h1>
-                {profile.title && (
-                  <p className="text-medium-green font-medium mt-1 text-lg">{profile.title}</p>
-                )}
-                {profile.location && (
-                  <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-sm mt-2">
-                    <FiMapPin className="text-xs" />
-                    <span>{profile.location}</span>
-                  </div>
-                )}
-                {profile.shortBio && (
-                  <p className="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed max-w-xl italic text-sm sm:text-base">
-                    "{profile.shortBio}"
-                  </p>
-                )}
-
-                {/* Social links */}
-                {profile.socialLinks?.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {profile.socialLinks.filter(s => s.url).map((s, i) => (
-                      <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-medium-green hover:text-medium-green dark:hover:border-medium-green dark:hover:text-medium-green transition text-sm">
-                        <SocialIcon platform={s.platform} />
-                        <span className="capitalize text-xs">{s.platform}</span>
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          {/* ── CV Tabs ────────────────────────────────────────────────────── */}
-          <section>
-            {/* Tab bar */}
-            <div className="flex gap-0 overflow-x-auto border-b border-gray-200 dark:border-gray-700 mb-8 -mx-4 px-4">
-              {CV_TABS.map(tab => {
-                const Icon = tab.icon;
-                return (
-                  <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-                    className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition flex-shrink-0 ${
-                      activeTab === tab.key
-                        ? 'border-medium-black dark:border-gray-200 text-medium-black dark:text-gray-100'
-                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-200'
-                    }`}>
-                    <Icon className="text-sm" />
-                    <span className="hidden sm:inline">{tab.label}</span>
-                    <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Tab content */}
-            <div>
-              {activeTab === 'about'    && <AboutTab p={profile} />}
-              {activeTab === 'exp'      && <ExperienceTab items={profile.workExperience} />}
-              {activeTab === 'edu'      && <EducationTab items={profile.education} />}
-              {activeTab === 'skills'   && <SkillsTab items={profile.skills} />}
-              {activeTab === 'projects' && <ProjectsTab items={profile.projects} />}
-              {activeTab === 'certs'    && <CertsTab items={profile.certifications} />}
-              {activeTab === 'contact'  && <ContactTab p={profile} />}
-            </div>
-          </section>
-
-          {/* ── QR Code Section ────────────────────────────────────────────── */}
-          {profile.qrCode?.image && (
-            <section className="border-t border-gray-100 dark:border-gray-800 pt-12">
-              <h2 className="text-2xl font-bold font-serif text-gray-900 dark:text-gray-100 mb-6">Connect</h2>
-              <div className="flex flex-col sm:flex-row items-center gap-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                <div className="flex-shrink-0 text-center">
-                  <img src={profile.qrCode.image} alt={profile.qrCode.altText || 'QR Code'}
-                    className="w-40 h-40 object-contain rounded-xl border border-gray-200 dark:border-gray-700 bg-white p-2 shadow-sm" />
-                  {profile.qrCode.label && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{profile.qrCode.label}</p>
+            {/* Profile Header */}
+            <section>
+              <div className="flex flex-col sm:flex-row gap-8 items-start">
+                <div className="flex-shrink-0">
+                  {profile.photo ? (
+                    <img src={profile.photo} alt={profile.name}
+                      className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl object-cover shadow-lg" />
+                  ) : (
+                    <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl bg-gradient-to-br from-medium-green to-green-700 flex items-center justify-center text-white text-4xl font-bold shadow-lg">
+                      {profile.name?.[0] || 'D'}
+                    </div>
                   )}
                 </div>
-                <div>
-                  {profile.qrCode.purpose && (
-                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{profile.qrCode.purpose}</p>
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 font-serif leading-tight">
+                    {profile.name || 'Developer'}
+                  </h1>
+                  {profile.title && (
+                    <p className="text-medium-green font-medium mt-1 text-lg">{profile.title}</p>
                   )}
-                  {profile.qrCode.altText && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{profile.qrCode.altText}</p>
+                  {profile.location && (
+                    <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-sm mt-2">
+                      <FiMapPin className="text-xs" />
+                      <span>{profile.location}</span>
+                    </div>
                   )}
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* ── About the Website ──────────────────────────────────────────── */}
-          {profile.websiteInfo?.name && (
-            <section className="border-t border-gray-100 dark:border-gray-800 pt-12">
-              <h2 className="text-2xl font-bold font-serif text-gray-900 dark:text-gray-100 mb-6">About {profile.websiteInfo.name}</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { label: 'Platform', value: profile.websiteInfo.name },
-                  { label: 'Founded', value: profile.websiteInfo.foundedYear },
-                  { label: 'Version', value: profile.websiteInfo.version },
-                  { label: 'Contributors', value: profile.websiteInfo.contributors },
-                ].filter(r => r.value).map((row, i) => (
-                  <div key={i} className="flex items-start gap-3 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                    <div className="flex-shrink-0 w-1 h-full min-h-[24px] rounded-full bg-medium-green" />
-                    <div>
-                      <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">{row.label}</p>
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mt-0.5">{row.value}</p>
-                    </div>
-                  </div>
-                ))}
-                {profile.websiteInfo.mission && (
-                  <div className="sm:col-span-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1">Mission</p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{profile.websiteInfo.mission}</p>
-                  </div>
-                )}
-                {profile.websiteInfo.techStack && (
-                  <div className="sm:col-span-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                    <p className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">Built With</p>
-                    <div className="flex flex-wrap gap-2">
-                      {profile.websiteInfo.techStack.split(',').map(t => t.trim()).filter(Boolean).map((tech, i) => (
-                        <span key={i} className="text-xs px-2.5 py-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 rounded-full">
-                          {tech}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* ── Buy Me a Coffee ────────────────────────────────────────────── */}
-          {profile.support && (
-            <section className="border-t border-gray-100 dark:border-gray-800 pt-12">
-
-              {/* Hero card — yellow gradient, BMC style */}
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#FFDD00] via-[#FFD000] to-[#FFC000] shadow-xl">
-
-                {/* Decorative circles */}
-                <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/10 pointer-events-none" />
-                <div className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-white/10 pointer-events-none" />
-
-                <div className="relative px-6 sm:px-10 py-10">
-                  {/* Top: BMC-style icon + script heading */}
-                  <div className="flex items-center gap-3 mb-2">
-                    {/* BMC coffee cup SVG */}
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" className="w-12 h-12 flex-shrink-0" fill="none">
-                      {/* Lid */}
-                      <rect x="14" y="10" width="36" height="6" rx="3" fill="white" stroke="#1a1a1a" strokeWidth="2.5"/>
-                      {/* Lid top nub */}
-                      <rect x="27" y="7" width="10" height="5" rx="2" fill="white" stroke="#1a1a1a" strokeWidth="2.5"/>
-                      {/* Cup body */}
-                      <path d="M17 16 L20 52 Q20 55 24 55 L40 55 Q44 55 44 52 L47 16 Z"
-                        fill="white" stroke="#1a1a1a" strokeWidth="2.5" strokeLinejoin="round"/>
-                      {/* Sleeve stripe */}
-                      <path d="M18.5 30 L19.8 38 L44.2 38 L45.5 30 Z" fill="#FFDD00" stroke="none"/>
-                    </svg>
-                    <h2 style={{ fontFamily: "'Cookie', cursive" }}
-                      className="text-4xl sm:text-5xl text-gray-900 leading-none">
-                      {profile.support.heading || 'Buy me a coffee'}
-                    </h2>
-                  </div>
-                  {profile.support.description && (
-                    <p className="text-gray-800/80 text-sm sm:text-base max-w-lg mb-8 leading-relaxed">
-                      {profile.support.description}
+                  {profile.shortBio && (
+                    <p className="mt-3 text-gray-600 dark:text-gray-400 leading-relaxed max-w-xl italic text-sm sm:text-base">
+                      "{profile.shortBio}"
                     </p>
                   )}
-
-                  <div className="flex flex-col lg:flex-row gap-8 items-start">
-
-                    {/* Payment methods */}
-                    <div className="flex-1 space-y-3">
-                      {!profile.support.upiId && !profile.support.paypalEmail && !profile.support.bitcoinAddress && !profile.support.bankDetails && !profile.support.paymentQrCode && (
-                        <p className="text-sm text-gray-700 italic">Payment details coming soon — check back later!</p>
-                      )}
-
-                      {profile.support.upiId && (
-                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
-                          <div className="w-9 h-9 rounded-xl bg-[#FFDD00] border border-yellow-300 flex items-center justify-center flex-shrink-0 text-base font-bold text-gray-800">₹</div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">UPI ID</p>
-                            <p className="text-sm font-mono font-semibold text-gray-900 truncate">{profile.support.upiId}</p>
-                          </div>
-                          <CopyButton value={profile.support.upiId} />
-                        </div>
-                      )}
-
-                      {profile.support.paypalEmail && (
-                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
-                          <div className="w-9 h-9 rounded-xl bg-[#003087] flex items-center justify-center flex-shrink-0">
-                            <span className="text-white font-bold text-sm">P</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">PayPal</p>
-                            <p className="text-sm font-mono font-semibold text-gray-900 truncate">{profile.support.paypalEmail}</p>
-                          </div>
-                          <CopyButton value={profile.support.paypalEmail} />
-                        </div>
-                      )}
-
-                      {profile.support.bitcoinAddress && (
-                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
-                          <div className="w-9 h-9 rounded-xl bg-[#F7931A] flex items-center justify-center flex-shrink-0">
-                            <span className="text-white font-bold text-sm">₿</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Bitcoin</p>
-                            <p className="text-sm font-mono font-semibold text-gray-900 truncate">{profile.support.bitcoinAddress}</p>
-                          </div>
-                          <CopyButton value={profile.support.bitcoinAddress} />
-                        </div>
-                      )}
-
-                      {profile.support.bankDetails && (
-                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-start gap-3 shadow-sm">
-                          <div className="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <span className="text-white font-bold text-xs">🏦</span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Bank Transfer</p>
-                            <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">{profile.support.bankDetails}</p>
-                          </div>
-                        </div>
-                      )}
+                  {profile.socialLinks?.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {profile.socialLinks.filter(s => s.url).map((s, i) => (
+                        <a key={i} href={s.url} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-medium-green hover:text-medium-green dark:hover:border-medium-green dark:hover:text-medium-green transition text-sm">
+                          <SocialIcon platform={s.platform} />
+                          <span className="capitalize text-xs">{s.platform}</span>
+                        </a>
+                      ))}
                     </div>
-
-                    {/* QR Code */}
-                    {profile.support.paymentQrCode && (
-                      <div className="flex-shrink-0 flex flex-col items-center gap-2">
-                        <div className="bg-white rounded-2xl p-3 shadow-md">
-                          <img src={profile.support.paymentQrCode} alt="Payment QR"
-                            className="w-36 h-36 object-contain" />
-                        </div>
-                        <p className="text-xs font-semibold text-gray-700">Scan to pay</p>
-                      </div>
-                    )}
-
-                  </div>
+                  )}
                 </div>
-
-                {/* Thank you footer */}
-                {profile.support.thankYouMessage && (
-                  <div className="px-6 sm:px-10 py-4 bg-black/10 flex items-center gap-2">
-                    <FiHeart className="text-red-600 text-sm flex-shrink-0" />
-                    <p className="text-sm text-gray-800 italic">{profile.support.thankYouMessage}</p>
-                  </div>
-                )}
               </div>
             </section>
+
+            {/* CV Tabs */}
+            <section>
+              <div className="flex gap-0 overflow-x-auto border-b border-gray-200 dark:border-gray-700 mb-8 -mx-4 px-4">
+                {CV_TABS.map(tab => {
+                  const Icon = tab.icon;
+                  return (
+                    <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                      className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition flex-shrink-0 ${
+                        activeTab === tab.key
+                          ? 'border-medium-black dark:border-gray-200 text-medium-black dark:text-gray-100'
+                          : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-200'
+                      }`}>
+                      <Icon className="text-sm" />
+                      <span className="hidden sm:inline">{tab.label}</span>
+                      <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div>
+                {activeTab === 'about'    && <AboutTab p={profile} />}
+                {activeTab === 'exp'      && <ExperienceTab items={profile.workExperience} />}
+                {activeTab === 'edu'      && <EducationTab items={profile.education} />}
+                {activeTab === 'skills'   && <SkillsTab items={profile.skills} />}
+                {activeTab === 'projects' && <ProjectsTab items={profile.projects} />}
+                {activeTab === 'certs'    && <CertsTab items={profile.certifications} />}
+                {activeTab === 'contact'  && <ContactTab p={profile} />}
+              </div>
+            </section>
+
+            {/* Mobile: sidebar sections stacked below tabs (hidden on lg) */}
+            {hasSidebar && (
+              <div className="lg:hidden space-y-6 border-t border-gray-100 dark:border-gray-800 pt-10">
+                {profile.qrCode?.image   && <ConnectWidget />}
+                {profile.websiteInfo?.name && <WebsiteWidget />}
+                {profile.support         && <BmcWidget />}
+              </div>
+            )}
+
+          </div>
+
+          {/* ── Right sticky sidebar (desktop only) ─────────────────────────── */}
+          {hasSidebar && (
+            <aside className="hidden lg:block w-72 xl:w-80 flex-shrink-0">
+              <div className="sticky top-20 space-y-5 max-h-[calc(100vh-5.5rem)] overflow-y-auto pb-6 pr-1">
+                {profile.qrCode?.image    && <ConnectWidget />}
+                {profile.websiteInfo?.name && <WebsiteWidget />}
+                {profile.support          && <BmcWidget />}
+              </div>
+            </aside>
           )}
 
         </div>
