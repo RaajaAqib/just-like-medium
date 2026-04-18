@@ -5,10 +5,12 @@ import { useAuth } from '../context/AuthContext';
 import SidebarLayout from '../components/SidebarLayout';
 import LoadingSpinner from '../components/LoadingSpinner';
 import api from '../utils/axios';
+import toast from 'react-hot-toast';
 import {
   FiGithub, FiLinkedin, FiTwitter, FiGlobe, FiMail, FiPhone,
   FiMapPin, FiCalendar, FiExternalLink, FiBriefcase, FiBook,
   FiCode, FiAward, FiMessageSquare, FiYoutube, FiInstagram,
+  FiCopy, FiCheck, FiHeart,
 } from 'react-icons/fi';
 
 // ── Social link icon resolver ─────────────────────────────────────────────────
@@ -263,6 +265,24 @@ function Empty({ label }) {
   );
 }
 
+function CopyButton({ value }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(true);
+      toast.success('Copied!');
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button onClick={copy}
+      className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-800/40 transition flex-shrink-0"
+      title="Copy to clipboard">
+      {copied ? <FiCheck className="text-sm text-green-600" /> : <FiCopy className="text-sm" />}
+    </button>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function AboutDeveloper() {
   const { user } = useAuth();
@@ -445,68 +465,106 @@ export default function AboutDeveloper() {
           {/* ── Buy Me a Coffee ────────────────────────────────────────────── */}
           {profile.support && (
             <section className="border-t border-gray-100 dark:border-gray-800 pt-12">
-              <h2 className="text-2xl font-bold font-serif text-gray-900 dark:text-gray-100 mb-2">
-                {profile.support.heading || 'Buy Me a Coffee ☕'}
-              </h2>
-              {profile.support.description && (
-                <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">{profile.support.description}</p>
-              )}
 
-              <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-6">
-                <div className="flex flex-col sm:flex-row gap-8 items-start">
-                  {/* QR */}
-                  {profile.support.paymentQrCode && (
-                    <div className="flex-shrink-0 text-center">
-                      <img src={profile.support.paymentQrCode} alt="Payment QR"
-                        className="w-36 h-36 object-contain rounded-xl border border-amber-200 dark:border-amber-800 bg-white p-2 shadow-sm" />
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Scan to pay</p>
-                    </div>
+              {/* Hero card — yellow gradient, BMC style */}
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#FFDD00] via-[#FFD000] to-[#FFC000] shadow-xl">
+
+                {/* Decorative circles */}
+                <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/10 pointer-events-none" />
+                <div className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-white/10 pointer-events-none" />
+
+                <div className="relative px-6 sm:px-10 py-10">
+                  {/* Top: emoji + heading */}
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-4xl select-none">☕</span>
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
+                      {profile.support.heading || 'Buy Me a Coffee'}
+                    </h2>
+                  </div>
+                  {profile.support.description && (
+                    <p className="text-gray-800/80 text-sm sm:text-base max-w-lg mb-8 leading-relaxed">
+                      {profile.support.description}
+                    </p>
                   )}
 
-                  {/* Details */}
-                  <div className="space-y-3 flex-1">
-                    {!profile.support.upiId && !profile.support.paypalEmail && !profile.support.bitcoinAddress && !profile.support.bankDetails && !profile.support.paymentQrCode && (
-                      <p className="text-sm text-amber-700 dark:text-amber-400 italic">Payment details coming soon — check back later!</p>
-                    )}
-                    {profile.support.upiId && (
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 w-20">UPI ID</span>
-                        <span className="text-sm font-mono text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700">
-                          {profile.support.upiId}
-                        </span>
+                  <div className="flex flex-col lg:flex-row gap-8 items-start">
+
+                    {/* Payment methods */}
+                    <div className="flex-1 space-y-3">
+                      {!profile.support.upiId && !profile.support.paypalEmail && !profile.support.bitcoinAddress && !profile.support.bankDetails && !profile.support.paymentQrCode && (
+                        <p className="text-sm text-gray-700 italic">Payment details coming soon — check back later!</p>
+                      )}
+
+                      {profile.support.upiId && (
+                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
+                          <div className="w-9 h-9 rounded-xl bg-[#FFDD00] border border-yellow-300 flex items-center justify-center flex-shrink-0 text-base font-bold text-gray-800">₹</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">UPI ID</p>
+                            <p className="text-sm font-mono font-semibold text-gray-900 truncate">{profile.support.upiId}</p>
+                          </div>
+                          <CopyButton value={profile.support.upiId} />
+                        </div>
+                      )}
+
+                      {profile.support.paypalEmail && (
+                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
+                          <div className="w-9 h-9 rounded-xl bg-[#003087] flex items-center justify-center flex-shrink-0">
+                            <span className="text-white font-bold text-sm">P</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">PayPal</p>
+                            <p className="text-sm font-mono font-semibold text-gray-900 truncate">{profile.support.paypalEmail}</p>
+                          </div>
+                          <CopyButton value={profile.support.paypalEmail} />
+                        </div>
+                      )}
+
+                      {profile.support.bitcoinAddress && (
+                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
+                          <div className="w-9 h-9 rounded-xl bg-[#F7931A] flex items-center justify-center flex-shrink-0">
+                            <span className="text-white font-bold text-sm">₿</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Bitcoin</p>
+                            <p className="text-sm font-mono font-semibold text-gray-900 truncate">{profile.support.bitcoinAddress}</p>
+                          </div>
+                          <CopyButton value={profile.support.bitcoinAddress} />
+                        </div>
+                      )}
+
+                      {profile.support.bankDetails && (
+                        <div className="bg-white/80 backdrop-blur-sm rounded-2xl px-4 py-3 flex items-start gap-3 shadow-sm">
+                          <div className="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-white font-bold text-xs">🏦</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-0.5">Bank Transfer</p>
+                            <p className="text-sm text-gray-900 leading-relaxed whitespace-pre-wrap">{profile.support.bankDetails}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* QR Code */}
+                    {profile.support.paymentQrCode && (
+                      <div className="flex-shrink-0 flex flex-col items-center gap-2">
+                        <div className="bg-white rounded-2xl p-3 shadow-md">
+                          <img src={profile.support.paymentQrCode} alt="Payment QR"
+                            className="w-36 h-36 object-contain" />
+                        </div>
+                        <p className="text-xs font-semibold text-gray-700">Scan to pay</p>
                       </div>
                     )}
-                    {profile.support.paypalEmail && (
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 w-20">PayPal</span>
-                        <span className="text-sm font-mono text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700">
-                          {profile.support.paypalEmail}
-                        </span>
-                      </div>
-                    )}
-                    {profile.support.bitcoinAddress && (
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 w-20">Bitcoin</span>
-                        <span className="text-sm font-mono text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 break-all">
-                          {profile.support.bitcoinAddress}
-                        </span>
-                      </div>
-                    )}
-                    {profile.support.bankDetails && (
-                      <div className="flex items-start gap-3">
-                        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 w-20 pt-1.5">Bank</span>
-                        <span className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
-                          {profile.support.bankDetails}
-                        </span>
-                      </div>
-                    )}
+
                   </div>
                 </div>
 
+                {/* Thank you footer */}
                 {profile.support.thankYouMessage && (
-                  <p className="mt-6 pt-4 border-t border-amber-200 dark:border-amber-800/50 text-center text-sm text-gray-600 dark:text-gray-400 italic">
-                    {profile.support.thankYouMessage}
-                  </p>
+                  <div className="px-6 sm:px-10 py-4 bg-black/10 flex items-center gap-2">
+                    <FiHeart className="text-red-600 text-sm flex-shrink-0" />
+                    <p className="text-sm text-gray-800 italic">{profile.support.thankYouMessage}</p>
+                  </div>
                 )}
               </div>
             </section>
