@@ -12,6 +12,7 @@ import { formatDistanceToNow, format } from 'date-fns';
 import {
   FiEdit2, FiX, FiMessageCircle, FiCalendar, FiUsers,
   FiMoreHorizontal, FiVolumeX, FiVolume2, FiUserMinus, FiUserPlus,
+  FiLink, FiSlash, FiFlag,
 } from 'react-icons/fi';
 import UserBadges from '../components/UserBadges';
 
@@ -141,6 +142,79 @@ function EditProfileModal({ profile, onClose, onSave }) {
   );
 }
 
+// ── Report user modal ─────────────────────────────────────────────────────────
+const REPORT_REASONS = [
+  'Harassment or bullying',
+  'Hate speech or discrimination',
+  'Spam or misleading content',
+  'Impersonation',
+  'Sharing private information',
+  'Other',
+];
+
+function ReportUserModal({ name, onClose, onSubmit }) {
+  const [reason, setReason] = useState(REPORT_REASONS[0]);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    await onSubmit(reason);
+    setSubmitting(false);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-700">
+          <h3 className="font-semibold text-medium-black dark:text-gray-100">Report {name}</h3>
+          <button onClick={onClose} className="p-1 text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-100 transition">
+            <FiX className="text-xl" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="px-5 py-4 space-y-4">
+          <p className="text-sm text-medium-gray dark:text-gray-400">
+            Why are you reporting this author? Our team will review your report.
+          </p>
+          <div className="space-y-2">
+            {REPORT_REASONS.map(r => (
+              <label key={r} className="flex items-center gap-3 cursor-pointer group">
+                <input
+                  type="radio"
+                  name="reason"
+                  value={r}
+                  checked={reason === r}
+                  onChange={() => setReason(r)}
+                  className="accent-medium-black dark:accent-gray-200"
+                />
+                <span className="text-sm text-medium-black dark:text-gray-200 group-hover:text-medium-black">
+                  {r}
+                </span>
+              </label>
+            ))}
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 px-4 py-2.5 text-sm font-medium border border-medium-border dark:border-gray-600 rounded-full text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+              Cancel
+            </button>
+            <button type="submit" disabled={submitting}
+              className="flex-1 px-4 py-2.5 text-sm font-medium bg-red-500 text-white rounded-full hover:bg-red-600 transition disabled:opacity-50">
+              {submitting ? 'Submitting…' : 'Submit report'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 const TABS = [
   { key: 'home',     label: 'Home' },
@@ -161,7 +235,9 @@ function ProfileContent({ id }) {
   const [following, setFollowing]       = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [muted, setMuted]               = useState(false);
+  const [blocked, setBlocked]           = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
   const [modal, setModal]               = useState(null); // 'followers' | 'following'
   const [showEdit, setShowEdit]         = useState(false);
   const moreMenuRef                     = useRef(null);
@@ -222,6 +298,37 @@ function ProfileContent({ id }) {
       setMuted(res.data.muted);
       toast.success(res.data.muted ? `${profile.name} muted` : `${profile.name} unmuted`);
     } catch { toast.error('Failed to mute'); }
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast.success('Link copied to clipboard');
+    setShowMoreMenu(false);
+  };
+
+  const handleBlock = async () => {
+    if (!user) return toast.error('Please log in');
+    setShowMoreMenu(false);
+    try {
+      const res = await api.post(`/users/${id}/block`);
+      setBlocked(res.data.blocked);
+      if (res.data.blocked) {
+        setFollowing(false);
+        toast.success(`${profile.name} blocked`);
+      } else {
+        toast.success(`${profile.name} unblocked`);
+      }
+    } catch { toast.error('Failed to block user'); }
+  };
+
+  const handleReport = async (reason) => {
+    try {
+      await api.post(`/users/${id}/report`, { reason });
+      toast.success('Report submitted. Our team will review it.');
+      setShowReportModal(false);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit report');
+    }
   };
 
   const handleSaveProfile = (updatedUser) => {
@@ -473,7 +580,15 @@ function ProfileContent({ id }) {
                   </button>
 
                   {showMoreMenu && (
-                    <div className="absolute right-0 top-10 w-52 bg-white dark:bg-gray-800 border border-medium-border dark:border-gray-600 rounded-lg shadow-xl py-1 z-30">
+                    <div className="absolute right-0 top-10 w-56 bg-white dark:bg-gray-800 border border-medium-border dark:border-gray-600 rounded-lg shadow-xl py-1 z-30">
+                      <button
+                        onClick={handleCopyLink}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left"
+                      >
+                        <FiLink size={15} />
+                        Copy link to profile
+                      </button>
+                      <div className="my-1 border-t border-medium-border dark:border-gray-700" />
                       <button
                         onClick={() => { handleFollow(); setShowMoreMenu(false); }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left"
@@ -487,6 +602,21 @@ function ProfileContent({ id }) {
                       >
                         {muted ? <FiVolume2 size={15} /> : <FiVolumeX size={15} />}
                         {muted ? `Unmute ${profile.name}` : `Mute ${profile.name}`}
+                      </button>
+                      <button
+                        onClick={handleBlock}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left"
+                      >
+                        <FiSlash size={15} />
+                        {blocked ? `Unblock ${profile.name}` : `Block ${profile.name}`}
+                      </button>
+                      <div className="my-1 border-t border-medium-border dark:border-gray-700" />
+                      <button
+                        onClick={() => { setShowMoreMenu(false); setShowReportModal(true); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left"
+                      >
+                        <FiFlag size={15} />
+                        Report {profile.name}
                       </button>
                     </div>
                   )}
@@ -533,6 +663,14 @@ function ProfileContent({ id }) {
           profile={profile}
           onClose={() => setShowEdit(false)}
           onSave={handleSaveProfile} />
+      )}
+
+      {/* Report user modal */}
+      {showReportModal && (
+        <ReportUserModal
+          name={profile.name}
+          onClose={() => setShowReportModal(false)}
+          onSubmit={handleReport} />
       )}
     </div>
   );

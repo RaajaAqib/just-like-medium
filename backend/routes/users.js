@@ -214,6 +214,56 @@ router.delete('/me/history', protect, async (req, res) => {
 
 router.post('/:id/follow', protect, checkRestrictions, followUser);
 
+// POST /api/users/:id/block — toggle block/unblock a user
+router.post('/:id/block', protect, async (req, res) => {
+  try {
+    const targetId = req.params.id;
+    if (targetId === req.user._id.toString()) {
+      return res.status(400).json({ success: false, message: 'You cannot block yourself' });
+    }
+    const user = await User.findById(req.user._id).select('blockedUsers');
+    const isBlocked = (user.blockedUsers || []).some(id => id.toString() === targetId);
+    if (isBlocked) {
+      await User.findByIdAndUpdate(req.user._id, { $pull: { blockedUsers: targetId } });
+    } else {
+      // Block also unfollows in both directions
+      await User.findByIdAndUpdate(req.user._id, {
+        $addToSet: { blockedUsers: targetId },
+        $pull:     { following: targetId },
+      });
+      await User.findByIdAndUpdate(targetId, {
+        $pull: { followers: req.user._id, following: req.user._id },
+      });
+    }
+    res.json({ success: true, blocked: !isBlocked });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/users/:id/report — report a user
+router.post('/:id/report', protect, async (req, res) => {
+  try {
+    const targetId = req.params.id;
+    if (targetId === req.user._id.toString()) {
+      return res.status(400).json({ success: false, message: 'You cannot report yourself' });
+    }
+    const { reason = 'No reason given' } = req.body;
+    // Store report on the reporter's record (to prevent duplicate reports)
+    const reporter = await User.findById(req.user._id).select('reportedUsers');
+    const alreadyReported = (reporter.reportedUsers || []).some(r => r.user?.toString() === targetId);
+    if (alreadyReported) {
+      return res.status(400).json({ success: false, message: 'You have already reported this user' });
+    }
+    await User.findByIdAndUpdate(req.user._id, {
+      $push: { reportedUsers: { user: targetId, reason } },
+    });
+    res.json({ success: true, message: 'User reported. Our team will review this shortly.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // POST /api/users/:id/mute — toggle mute/unmute a user
 router.post('/:id/mute', protect, async (req, res) => {
   try {
