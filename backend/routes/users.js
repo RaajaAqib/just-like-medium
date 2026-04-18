@@ -138,6 +138,42 @@ router.post('/admin/:id/remove-restrictions', protect, adminOnly, async (req, re
 router.put('/profile', protect, upload.single('avatar'), updateProfile);
 router.put('/change-password', protect, changePassword);
 
+// PUT /api/users/me/cover — upload or remove profile cover image
+router.put('/me/cover', protect, upload.single('cover'), async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Remove existing cover from Cloudinary if present
+    if (req.body.remove === 'true' || req.body.remove === true) {
+      if (user.coverImagePublicId) {
+        const { cloudinary } = require('../utils/cloudinary');
+        await cloudinary.uploader.destroy(user.coverImagePublicId).catch(() => {});
+      }
+      user.coverImage = '';
+      user.coverImagePublicId = '';
+      await user.save({ validateBeforeSave: false });
+      return res.json({ success: true, coverImage: '' });
+    }
+
+    if (req.file) {
+      // Delete old cover
+      if (user.coverImagePublicId) {
+        const { cloudinary } = require('../utils/cloudinary');
+        await cloudinary.uploader.destroy(user.coverImagePublicId).catch(() => {});
+      }
+      user.coverImage = req.file.path;
+      user.coverImagePublicId = req.file.filename;
+      await user.save({ validateBeforeSave: false });
+      return res.json({ success: true, coverImage: user.coverImage });
+    }
+
+    res.status(400).json({ success: false, message: 'No file uploaded' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // GET /api/users/me/following-data — returns following users + followedTopics + mutedUsers
 router.get('/me/following-data', protect, async (req, res) => {
   try {

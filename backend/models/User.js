@@ -35,6 +35,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    coverImage: {
+      type: String,
+      default: '',
+    },
+    coverImagePublicId: {
+      type: String,
+      default: '',
+    },
     isAdmin: {
       type: Boolean,
       default: false,

@@ -27,6 +27,18 @@ router.get('/me', protect, async (req, res) => {
   }
 });
 
+// ── Get public lists for any user (profile page) ─────────────────────────────
+router.get('/user/:userId', async (req, res) => {
+  try {
+    const lists = await List.find({ owner: req.params.userId, isPrivate: false })
+      .populate({ path: 'posts', select: '_id coverImage title' })
+      .sort({ updatedAt: -1 });
+    res.json({ success: true, lists });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ── Get a single list (public or owned) ──────────────────────────────────────
 router.get('/:id', optionalAuth, async (req, res) => {
   try {

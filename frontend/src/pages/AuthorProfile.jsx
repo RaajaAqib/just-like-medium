@@ -12,7 +12,7 @@ import { formatDistanceToNow, format } from 'date-fns';
 import {
   FiEdit2, FiX, FiMessageCircle, FiCalendar, FiUsers,
   FiMoreHorizontal, FiVolumeX, FiVolume2, FiUserMinus, FiUserPlus,
-  FiLink, FiSlash, FiFlag,
+  FiLink, FiSlash, FiFlag, FiBookmark,
 } from 'react-icons/fi';
 import UserBadges from '../components/UserBadges';
 
@@ -142,6 +142,69 @@ function EditProfileModal({ profile, onClose, onSave }) {
   );
 }
 
+// ── Sidebar following row with ··· menu ───────────────────────────────────────
+function SidebarFollowingRow({ u, currentUser }) {
+  const [open, setOpen]       = useState(false);
+  const [following, setFollowing] = useState(
+    currentUser ? (currentUser.following || []).some(f => (f._id || f) === u._id) : false
+  );
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const handleFollow = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setOpen(false);
+    if (!currentUser) { toast.error('Please log in'); return; }
+    try {
+      const res = await api.post(`/users/${u._id}/follow`);
+      setFollowing(res.data.following);
+      toast.success(res.data.following ? `Following ${u.name}` : `Unfollowed ${u.name}`);
+    } catch { toast.error('Failed'); }
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-2 py-1.5 group">
+      <Link to={`/profile/${u._id}`} className="flex items-center gap-2.5 min-w-0">
+        <img
+          src={u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'U')}&background=random&size=32`}
+          alt={u.name}
+          className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+        />
+        <span className="text-sm text-medium-black dark:text-gray-200 group-hover:underline truncate">{u.name}</span>
+      </Link>
+
+      {currentUser && (
+        <div className="relative flex-shrink-0" ref={ref}>
+          <button
+            onClick={(e) => { e.preventDefault(); setOpen(v => !v); }}
+            className="p-1 rounded-full text-medium-gray dark:text-gray-500 hover:text-medium-black dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition opacity-0 group-hover:opacity-100"
+          >
+            <FiMoreHorizontal size={15} />
+          </button>
+          {open && (
+            <div className="absolute right-0 top-7 w-44 bg-white dark:bg-gray-800 border border-medium-border dark:border-gray-600 rounded-lg shadow-xl py-1 z-30">
+              <button
+                onClick={handleFollow}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left"
+              >
+                {following ? <FiUserMinus size={14} /> : <FiUserPlus size={14} />}
+                {following ? `Unfollow` : `Follow`}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Report user modal ─────────────────────────────────────────────────────────
 const REPORT_REASONS = [
   'Harassment or bullying',
@@ -219,6 +282,7 @@ function ReportUserModal({ name, onClose, onSubmit }) {
 const TABS = [
   { key: 'home',     label: 'Home' },
   { key: 'activity', label: 'Activity' },
+  { key: 'lists',    label: 'Lists' },
   { key: 'about',    label: 'About' },
 ];
 
@@ -230,6 +294,8 @@ function ProfileContent({ id }) {
   const [profile, setProfile]           = useState(null);
   const [posts, setPosts]               = useState([]);
   const [activity, setActivity]         = useState([]);
+  const [publicLists, setPublicLists]   = useState([]);
+  const [listsLoading, setListsLoading] = useState(false);
   const [loading, setLoading]           = useState(true);
   const [activityLoading, setActivityLoading] = useState(false);
   const [following, setFollowing]       = useState(false);
@@ -240,6 +306,8 @@ function ProfileContent({ id }) {
   const [showReportModal, setShowReportModal] = useState(false);
   const [modal, setModal]               = useState(null); // 'followers' | 'following'
   const [showEdit, setShowEdit]         = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const coverInputRef                   = useRef(null);
   const moreMenuRef                     = useRef(null);
 
   // Close more menu on outside click
@@ -279,7 +347,48 @@ function ProfileContent({ id }) {
       .finally(() => setActivityLoading(false));
   }, [activeTab, id]);
 
+  // Lazy-load public lists
+  useEffect(() => {
+    if (activeTab !== 'lists' || publicLists.length > 0) return;
+    setListsLoading(true);
+    api.get(`/lists/user/${id}`)
+      .then(res => setPublicLists(res.data.lists || []))
+      .catch(() => {})
+      .finally(() => setListsLoading(false));
+  }, [activeTab, id]);
+
+  // Also load public lists for sidebar (always)
+  useEffect(() => {
+    api.get(`/lists/user/${id}`)
+      .then(res => setPublicLists(res.data.lists || []))
+      .catch(() => {});
+  }, [id]);
+
   const setTab = (key) => setSearchParams({ tab: key });
+
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverUploading(true);
+    const fd = new FormData();
+    fd.append('cover', file);
+    try {
+      const res = await api.put('/users/me/cover', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setProfile(prev => ({ ...prev, coverImage: res.data.coverImage }));
+      toast.success('Cover image updated');
+    } catch { toast.error('Failed to upload cover image'); }
+    finally { setCoverUploading(false); if (coverInputRef.current) coverInputRef.current.value = ''; }
+  };
+
+  const handleCoverRemove = async () => {
+    setCoverUploading(true);
+    try {
+      await api.put('/users/me/cover', { remove: 'true' });
+      setProfile(prev => ({ ...prev, coverImage: '' }));
+      toast.success('Cover image removed');
+    } catch { toast.error('Failed to remove cover image'); }
+    finally { setCoverUploading(false); }
+  };
 
   const handleFollow = async () => {
     if (!user) return toast.error('Please log in to follow');
@@ -343,7 +452,46 @@ function ProfileContent({ id }) {
   const followingList = profile.following || [];
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 md:px-8 py-8 flex gap-12">
+    <div className="max-w-5xl mx-auto">
+
+      {/* ── Cover image ── */}
+      <div className={`relative w-full ${profile.coverImage ? 'h-48 sm:h-64' : isOwn ? 'h-20' : 'h-0'} overflow-hidden bg-gray-100 dark:bg-gray-800`}>
+        {profile.coverImage ? (
+          <>
+            <img src={profile.coverImage} alt="Cover" className="w-full h-full object-cover" />
+            {isOwn && (
+              <div className="absolute bottom-3 right-4 flex gap-2">
+                <button onClick={() => coverInputRef.current?.click()}
+                  disabled={coverUploading}
+                  className="px-3 py-1.5 text-xs font-medium bg-white/80 dark:bg-gray-900/80 backdrop-blur rounded-full hover:bg-white dark:hover:bg-gray-900 transition">
+                  {coverUploading ? 'Uploading…' : 'Change cover'}
+                </button>
+                <button onClick={handleCoverRemove}
+                  disabled={coverUploading}
+                  className="px-3 py-1.5 text-xs font-medium bg-white/80 dark:bg-gray-900/80 backdrop-blur rounded-full hover:bg-white dark:hover:bg-gray-900 transition text-red-500">
+                  Remove
+                </button>
+              </div>
+            )}
+          </>
+        ) : isOwn ? (
+          <button onClick={() => coverInputRef.current?.click()}
+            disabled={coverUploading}
+            className="absolute inset-0 w-full h-full flex items-center justify-center gap-2 text-sm text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-200 hover:bg-gray-200/40 dark:hover:bg-gray-700/40 transition">
+            <FiEdit2 size={14} />
+            {coverUploading ? 'Uploading…' : 'Add cover image'}
+          </button>
+        ) : null}
+        <input
+          ref={coverInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={handleCoverUpload}
+        />
+      </div>
+
+      <div className="px-4 sm:px-6 md:px-8 py-8 flex gap-12">
 
       {/* ── Center column ── */}
       <div className="flex-1 min-w-0 max-w-2xl">
@@ -465,6 +613,57 @@ function ProfileContent({ id }) {
           )
         )}
 
+        {/* ── Lists tab ── */}
+        {activeTab === 'lists' && (
+          listsLoading ? <LoadingSpinner /> :
+          publicLists.length === 0 ? (
+            <div className="text-center py-16">
+              <FiBookmark className="text-4xl text-medium-gray dark:text-gray-600 mx-auto mb-3" />
+              <p className="text-medium-black dark:text-gray-200 font-medium mb-1">No public lists yet</p>
+              <p className="text-medium-gray dark:text-gray-500 text-sm">
+                {isOwn ? 'Create a list in your Library and make it public.' : 'This writer has no public lists.'}
+              </p>
+              {isOwn && <Link to="/library" className="mt-4 inline-block btn-black px-6 py-2 text-sm">Go to Library</Link>}
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {publicLists.map(list => {
+                const covers = (list.posts || []).map(p => p.coverImage).filter(Boolean).slice(0, 3);
+                return (
+                  <Link key={list._id} to={`/lists/${list._id}`}
+                    className="block border border-medium-border dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-md transition group">
+                    {/* Cover collage */}
+                    <div className="w-full h-32 bg-gray-100 dark:bg-gray-800 flex overflow-hidden">
+                      {covers.length === 0 ? (
+                        <div className="flex-1 flex items-center justify-center">
+                          <FiBookmark className="text-3xl text-gray-300 dark:text-gray-600" />
+                        </div>
+                      ) : covers.length === 1 ? (
+                        <img src={covers[0]} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <>
+                          <img src={covers[0]} alt="" className="w-1/2 h-full object-cover border-r border-white dark:border-gray-900" />
+                          <div className="w-1/2 flex flex-col">
+                            {covers.slice(1).map((src, i) => (
+                              <img key={i} src={src} alt="" className={`flex-1 w-full object-cover ${i === 0 && covers.length > 2 ? 'border-b border-white dark:border-gray-900' : ''}`} />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    {/* Info */}
+                    <div className="p-4">
+                      <h3 className="font-bold text-medium-black dark:text-gray-100 text-base group-hover:underline decoration-1 underline-offset-2">{list.name}</h3>
+                      {list.description && <p className="text-sm text-medium-gray dark:text-gray-400 mt-1 line-clamp-2">{list.description}</p>}
+                      <p className="text-xs text-medium-gray dark:text-gray-500 mt-2">{list.posts?.length || 0} {list.posts?.length === 1 ? 'story' : 'stories'}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )
+        )}
+
         {/* ── About tab ── */}
         {activeTab === 'about' && (
           <div className="space-y-6 py-2">
@@ -531,8 +730,8 @@ function ProfileContent({ id }) {
       </div>
 
       {/* ── Right sidebar ── */}
-      <aside className="hidden lg:block w-72 flex-shrink-0 border-l border-medium-border dark:border-gray-700 pl-8">
-        <div className="sticky top-24">
+      <aside className="hidden lg:block w-72 flex-shrink-0 self-start border-l border-medium-border dark:border-gray-700 pl-8">
+        <div className="sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1 scrollbar-thin">
 
           {/* Avatar + name + bio */}
           <div className="flex flex-col items-center text-center gap-4 pb-6">
@@ -645,22 +844,13 @@ function ProfileContent({ id }) {
             </button>
           </div>
 
-          {/* Following list with right-edge fade */}
+          {/* Following list with ··· menu per user */}
           {followingList.length > 0 && (
             <div className="border-t border-medium-border dark:border-gray-700 pt-5">
               <h3 className="text-sm font-semibold text-medium-black dark:text-gray-100 mb-3">Following</h3>
-              <div className="space-y-3">
+              <div className="space-y-1">
                 {followingList.slice(0, 6).map(u => (
-                  <div key={u._id} className="flex items-center justify-between gap-2">
-                    <Link to={`/profile/${u._id}`} className="flex items-center gap-2.5 min-w-0 group">
-                      <img
-                        src={u.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'U')}&background=random&size=32`}
-                        alt={u.name}
-                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                      />
-                      <span className="text-sm text-medium-black dark:text-gray-200 group-hover:underline truncate">{u.name}</span>
-                    </Link>
-                  </div>
+                  <SidebarFollowingRow key={u._id} u={u} currentUser={user} />
                 ))}
               </div>
               {followingList.length > 6 && (
@@ -672,8 +862,51 @@ function ProfileContent({ id }) {
             </div>
           )}
 
+          {/* Public lists section */}
+          {publicLists.length > 0 && (
+            <div className="border-t border-medium-border dark:border-gray-700 pt-5">
+              <h3 className="text-sm font-semibold text-medium-black dark:text-gray-100 mb-3">Lists</h3>
+              <div className="space-y-3">
+                {publicLists.slice(0, 4).map(list => {
+                  const covers = (list.posts || []).map(p => p.coverImage).filter(Boolean).slice(0, 2);
+                  return (
+                    <Link key={list._id} to={`/lists/${list._id}`}
+                      className="flex items-center gap-3 group">
+                      <div className="w-12 h-9 rounded overflow-hidden bg-gray-100 dark:bg-gray-700 flex-shrink-0 flex">
+                        {covers.length === 0 ? (
+                          <div className="flex-1 flex items-center justify-center">
+                            <FiBookmark className="text-xs text-gray-400" />
+                          </div>
+                        ) : covers.length === 1 ? (
+                          <img src={covers[0]} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <>
+                            <img src={covers[0]} alt="" className="w-1/2 h-full object-cover border-r border-white dark:border-gray-900" />
+                            <img src={covers[1]} alt="" className="w-1/2 h-full object-cover" />
+                          </>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-medium-black dark:text-gray-200 group-hover:underline truncate">{list.name}</p>
+                        <p className="text-xs text-medium-gray dark:text-gray-500">{list.posts?.length || 0} {list.posts?.length === 1 ? 'story' : 'stories'}</p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+              {publicLists.length > 4 && (
+                <button onClick={() => setTab('lists')}
+                  className="text-sm text-medium-green dark:text-green-400 hover:underline transition mt-3 block">
+                  See all lists
+                </button>
+              )}
+            </div>
+          )}
+
         </div>
       </aside>
+
+      </div>{/* close px-4 wrapper */}
 
       {/* Modals */}
       {modal === 'followers' && (
