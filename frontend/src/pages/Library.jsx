@@ -25,7 +25,11 @@ function CoverCollage({ images }) {
     );
   }
   if (imgs.length === 1) {
-    return <img src={imgs[0]} alt="" className="w-24 h-16 object-cover rounded flex-shrink-0" />;
+    return (
+      <div className="w-24 h-16 rounded overflow-hidden bg-white dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+        <img src={imgs[0]} alt="" className="max-w-full max-h-full object-contain block" />
+      </div>
+    );
   }
   return (
     <div className="w-24 h-16 rounded overflow-hidden flex gap-0.5 flex-shrink-0">
@@ -416,7 +420,9 @@ export default function Library() {
                       </div>
                       {post.coverImage && (
                         <Link to={`/article/${post.slug}`} className="flex-shrink-0">
-                          <img src={post.coverImage} alt={post.title} className="w-24 h-16 object-cover rounded" />
+                          <div className="w-24 h-16 rounded overflow-hidden bg-white dark:bg-gray-800 flex items-center justify-center">
+                            <img src={post.coverImage} alt={post.title} className="max-w-full max-h-full object-contain block" />
+                          </div>
                         </Link>
                       )}
                     </div>
@@ -465,7 +471,9 @@ export default function Library() {
                       </div>
                       {post.coverImage && (
                         <Link to={`/article/${post.slug}`} className="flex-shrink-0">
-                          <img src={post.coverImage} alt={post.title} className="w-24 h-16 object-cover rounded" />
+                          <div className="w-24 h-16 rounded overflow-hidden bg-white dark:bg-gray-800 flex items-center justify-center">
+                            <img src={post.coverImage} alt={post.title} className="max-w-full max-h-full object-contain block" />
+                          </div>
                         </Link>
                       )}
                     </div>
