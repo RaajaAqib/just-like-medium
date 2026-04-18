@@ -13,6 +13,10 @@ const {
   getPostReports,
   dismissPostReport,
   deleteReportedPost,
+  hidePost,
+  warnPostAuthor,
+  suspendPostAuthor,
+  banPostAuthor,
 } = require('../controllers/postController');
 const { protect, optionalAuth } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/adminAuth');
@@ -151,6 +155,10 @@ router.get('/id/:id', protect, async (req, res) => {
 router.get('/admin/reports',         protect, adminOnly, getPostReports);
 router.post('/admin/:id/dismiss',    protect, adminOnly, dismissPostReport);
 router.delete('/admin/:id/reported', protect, adminOnly, deleteReportedPost);
+router.post('/admin/:id/hide',       protect, adminOnly, hidePost);
+router.post('/admin/:id/warn',       protect, adminOnly, warnPostAuthor);
+router.post('/admin/:id/suspend',    protect, adminOnly, suspendPostAuthor);
+router.post('/admin/:id/ban',        protect, adminOnly, banPostAuthor);
 
 // Public (optionalAuth so following feed works when logged in)
 router.get('/', optionalAuth, getPosts);

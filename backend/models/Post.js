@@ -83,6 +83,7 @@ const postSchema = new mongoose.Schema(
     moderationNote:   { type: String, default: '' },
     moderatedBy:      { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     moderatedAt:      { type: Date, default: null },
+    isHidden:         { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -7,7 +7,7 @@ import {
   FiAlertCircle, FiSearch, FiHeart, FiZap,
   FiGrid, FiToggleLeft, FiToggleRight, FiX, FiFlag, FiAlertTriangle,
   FiClock, FiBell, FiUserX, FiUserCheck, FiUser, FiPlus, FiSave,
-  FiUpload, FiChevronDown, FiChevronUp, FiExternalLink,
+  FiUpload, FiChevronDown, FiChevronUp, FiExternalLink, FiEyeOff,
 } from 'react-icons/fi';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -1087,6 +1087,138 @@ function ModerationModal({ comment, onClose, onDone }) {
   );
 }
 
+// ─── Story Moderation Modal ───────────────────────────────────────────────────
+function StoryModerationModal({ post, onClose, onDone }) {
+  const [action, setAction]   = useState('dismiss');
+  const [reason, setReason]   = useState('');
+  const [days, setDays]       = useState(7);
+  const [loading, setLoading] = useState(false);
+
+  const ACTIONS = [
+    { id: 'dismiss', label: 'Dismiss report',       icon: FiCheckCircle, color: 'text-green-600' },
+    { id: 'hide',    label: 'Hide story',            icon: FiEyeOff,      color: 'text-amber-600' },
+    { id: 'delete',  label: 'Delete story',          icon: FiTrash2,      color: 'text-red-600' },
+    { id: 'warn',    label: 'Warn author',           icon: FiBell,        color: 'text-yellow-600' },
+    { id: 'suspend', label: 'Suspend author',        icon: FiUserX,       color: 'text-orange-600' },
+    { id: 'ban',     label: 'Ban author permanently',icon: FiSlash,       color: 'text-red-700' },
+  ];
+
+  const submit = async () => {
+    setLoading(true);
+    try {
+      const body = { reason: reason || undefined, days: action === 'suspend' ? days : undefined };
+      if (action === 'dismiss')      await api.post(`/posts/admin/${post._id}/dismiss`, body);
+      else if (action === 'hide')    await api.post(`/posts/admin/${post._id}/hide`, body);
+      else if (action === 'delete')  await api.delete(`/posts/admin/${post._id}/reported`, { data: body });
+      else if (action === 'warn')    await api.post(`/posts/admin/${post._id}/warn`, body);
+      else if (action === 'suspend') await api.post(`/posts/admin/${post._id}/suspend`, body);
+      else if (action === 'ban')     await api.post(`/posts/admin/${post._id}/ban`, body);
+      toast.success('Moderation action applied');
+      onDone();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Action failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-base">Moderate reported story</h3>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+              {post.reportedBy?.length || 0} report{post.reportedBy?.length !== 1 ? 's' : ''} ·{' '}
+              by <span className="font-medium text-gray-600 dark:text-gray-300">{post.author?.name}</span>
+            </p>
+          </div>
+          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+            <FiX />
+          </button>
+        </div>
+
+        {/* Story preview */}
+        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3 mb-4 border border-gray-100 dark:border-gray-700">
+          <Link to={`/article/${post.slug}`} target="_blank"
+            className="text-sm font-semibold text-gray-900 dark:text-gray-100 hover:underline line-clamp-1">
+            {post.title}
+          </Link>
+          {post.excerpt && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{post.excerpt}</p>
+          )}
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+            {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+          </p>
+        </div>
+
+        {/* Report reason */}
+        {post.reportReason && (
+          <div className="mb-4 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800 rounded-lg">
+            <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-0.5">Report reason</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400">{post.reportReason}</p>
+          </div>
+        )}
+
+        {/* Action selector */}
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Choose action</p>
+        <div className="grid grid-cols-1 gap-1.5 mb-4">
+          {ACTIONS.map(a => {
+            const Icon = a.icon;
+            return (
+              <label key={a.id}
+                className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                  action === a.id ? 'border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-700' : 'border-gray-100 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}>
+                <input type="radio" name="story-action" value={a.id} checked={action === a.id}
+                  onChange={() => setAction(a.id)} className="accent-gray-800 dark:accent-gray-300" />
+                <Icon className={`text-base flex-shrink-0 ${a.color}`} />
+                <div>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{a.label}</span>
+                  {a.id === 'hide' && <p className="text-xs text-gray-400 dark:text-gray-500">Story hidden from public but not deleted</p>}
+                </div>
+              </label>
+            );
+          })}
+        </div>
+
+        {/* Suspend days */}
+        {action === 'suspend' && (
+          <div className="mb-4">
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Suspension duration</label>
+            <select value={days} onChange={e => setDays(Number(e.target.value))}
+              className="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-gray-400 bg-white dark:bg-gray-700 dark:text-gray-200">
+              {[1,3,7,14,30].map(d => <option key={d} value={d}>{d} day{d > 1 ? 's' : ''}</option>)}
+            </select>
+          </div>
+        )}
+
+        {/* Reason / note */}
+        {action !== 'dismiss' && (
+          <div className="mb-5">
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              {action === 'delete' ? 'Internal note (optional)' : 'Reason sent to author (optional)'}
+            </label>
+            <textarea value={reason} onChange={e => setReason(e.target.value)}
+              rows={2} placeholder="Violation of community guidelines…"
+              className="w-full text-sm border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:placeholder-gray-500 rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-gray-400 dark:focus:border-gray-500" />
+          </div>
+        )}
+
+        <div className="flex gap-3 justify-end">
+          <button onClick={onClose}
+            className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition">
+            Cancel
+          </button>
+          <button onClick={submit} disabled={loading}
+            className="px-5 py-2 text-sm bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-full hover:bg-gray-700 dark:hover:bg-white transition disabled:opacity-40">
+            {loading ? 'Applying…' : 'Apply action'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Reports Tab ──────────────────────────────────────────────────────────────
 function ReportsTab() {
   const [reportType, setReportType]   = useState('comments'); // 'comments' | 'stories'
@@ -1096,7 +1228,8 @@ function ReportsTab() {
   const [page, setPage]               = useState(1);
   const [totalPages, setTotal]        = useState(1);
   const [totalCount, setCount]        = useState(0);
-  const [selected, setSelected]       = useState(null);
+  const [selected, setSelected]       = useState(null); // comment moderate modal
+  const [selectedStory, setSelectedStory] = useState(null); // story moderate modal
 
   const fetchReports = useCallback(async () => {
     setLoading(true);
@@ -1123,23 +1256,6 @@ function ReportsTab() {
     pending:   'bg-amber-100 text-amber-700',
     dismissed: 'bg-gray-100 text-gray-500',
     actioned:  'bg-red-100 text-red-600',
-  };
-
-  const dismissStory = async (postId) => {
-    try {
-      await api.post(`/posts/admin/${postId}/dismiss`);
-      toast.success('Report dismissed');
-      fetchReports();
-    } catch { toast.error('Failed to dismiss'); }
-  };
-
-  const deleteStory = async (postId) => {
-    if (!window.confirm('Delete this story permanently?')) return;
-    try {
-      await api.delete(`/posts/admin/${postId}/reported`);
-      toast.success('Story deleted');
-      fetchReports();
-    } catch { toast.error('Failed to delete'); }
   };
 
   return (
@@ -1218,30 +1334,12 @@ function ReportsTab() {
 
                         {/* Actions */}
                         <div className="flex gap-2 flex-shrink-0">
-                          {isStory ? (
-                            <>
-                              <button
-                                onClick={() => dismissStory(item._id)}
-                                disabled={status !== 'pending'}
-                                className="flex items-center gap-1 px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-700 dark:text-gray-300 rounded-full hover:border-gray-400 transition disabled:opacity-40">
-                                <FiCheckCircle className="text-green-500" /> Dismiss
-                              </button>
-                              <button
-                                onClick={() => deleteStory(item._id)}
-                                disabled={status === 'actioned'}
-                                className="flex items-center gap-1 px-3 py-1.5 text-xs bg-red-500 text-white rounded-full hover:bg-red-600 transition disabled:opacity-40">
-                                <FiTrash2 /> Delete
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              onClick={() => setSelected(item)}
-                              disabled={status === 'dismissed' || status === 'actioned'}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-900 text-white rounded-full
-                                hover:bg-gray-700 transition disabled:opacity-40 disabled:cursor-default">
-                              <FiShield className="text-xs" /> Moderate
-                            </button>
-                          )}
+                          <button
+                            onClick={() => isStory ? setSelectedStory(item) : setSelected(item)}
+                            disabled={status === 'dismissed' || status === 'actioned'}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-full hover:bg-gray-700 dark:hover:bg-white transition disabled:opacity-40 disabled:cursor-default">
+                            <FiShield className="text-xs" /> Moderate
+                          </button>
                         </div>
                       </div>
 
@@ -1321,6 +1419,13 @@ function ReportsTab() {
           comment={selected}
           onClose={() => setSelected(null)}
           onDone={() => { setSelected(null); fetchReports(); }}
+        />
+      )}
+      {selectedStory && (
+        <StoryModerationModal
+          post={selectedStory}
+          onClose={() => setSelectedStory(null)}
+          onDone={() => { setSelectedStory(null); fetchReports(); }}
         />
       )}
     </div>

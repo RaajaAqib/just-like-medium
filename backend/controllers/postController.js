@@ -412,8 +412,141 @@ const deleteReportedPost = async (req, res) => {
   }
 };
 
+// ─── ADMIN: POST /api/posts/admin/:id/hide ────────────────────────────────────
+const hidePost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    post.isHidden         = true;
+    post.moderationStatus = 'actioned';
+    post.moderationNote   = req.body.reason || 'Story hidden by admin';
+    post.moderatedBy      = req.user._id;
+    post.moderatedAt      = new Date();
+    await post.save({ validateBeforeSave: false });
+
+    await Notification.create({
+      recipient:        post.author,
+      fromUser:         req.user._id,
+      type:             'moderation',
+      moderationAction: 'hide',
+      moderationNote:   post.moderationNote,
+      postTitle:        post.title,
+      postSlug:         post.slug,
+    }).catch(() => {});
+
+    res.json({ success: true, message: 'Story hidden' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ─── ADMIN: POST /api/posts/admin/:id/warn ────────────────────────────────────
+const warnPostAuthor = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    const reason = req.body.reason || 'Violation of community guidelines';
+
+    await User.findByIdAndUpdate(post.author, {
+      $push: { warnings: { reason, date: new Date(), adminId: req.user._id } },
+    });
+
+    await Notification.create({
+      recipient:        post.author,
+      fromUser:         req.user._id,
+      type:             'moderation',
+      moderationAction: 'warn',
+      moderationNote:   reason,
+      postTitle:        post.title,
+      postSlug:         post.slug,
+    }).catch(() => {});
+
+    post.moderationStatus = 'actioned';
+    post.moderationNote   = reason;
+    post.moderatedBy      = req.user._id;
+    post.moderatedAt      = new Date();
+    await post.save({ validateBeforeSave: false });
+
+    res.json({ success: true, message: 'Warning sent to author' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ─── ADMIN: POST /api/posts/admin/:id/suspend ─────────────────────────────────
+const suspendPostAuthor = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    const { days = 7, reason = 'Violation of community guidelines' } = req.body;
+    const suspendedUntil = new Date(Date.now() + parseInt(days) * 24 * 60 * 60 * 1000);
+
+    await User.findByIdAndUpdate(post.author, {
+      isSuspended: true,
+      suspendedUntil,
+      $push: { warnings: { reason: `Suspended ${days}d: ${reason}`, date: new Date(), adminId: req.user._id } },
+    });
+
+    await Notification.create({
+      recipient:        post.author,
+      fromUser:         req.user._id,
+      type:             'moderation',
+      moderationAction: 'suspend',
+      moderationNote:   `Suspended ${days} day(s): ${reason}`,
+      postTitle:        post.title,
+      postSlug:         post.slug,
+    }).catch(() => {});
+
+    post.moderationStatus = 'actioned';
+    post.moderationNote   = `Suspended ${days}d: ${reason}`;
+    post.moderatedBy      = req.user._id;
+    post.moderatedAt      = new Date();
+    await post.save({ validateBeforeSave: false });
+
+    res.json({ success: true, message: `Author suspended for ${days} days` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ─── ADMIN: POST /api/posts/admin/:id/ban ────────────────────────────────────
+const banPostAuthor = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    const reason = req.body.reason || 'Violation of community guidelines';
+
+    await User.findByIdAndUpdate(post.author, { banned: true, banReason: reason });
+
+    await Notification.create({
+      recipient:        post.author,
+      fromUser:         req.user._id,
+      type:             'moderation',
+      moderationAction: 'ban',
+      moderationNote:   reason,
+      postTitle:        post.title,
+      postSlug:         post.slug,
+    }).catch(() => {});
+
+    post.moderationStatus = 'actioned';
+    post.moderationNote   = reason;
+    post.moderatedBy      = req.user._id;
+    post.moderatedAt      = new Date();
+    await post.save({ validateBeforeSave: false });
+
+    res.json({ success: true, message: 'Author permanently banned' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   getPosts, getPost, createPost, updatePost, deletePost,
   likePost, clapPost, getAllPostsAdmin,
   reportPost, getPostReports, dismissPostReport, deleteReportedPost,
+  hidePost, warnPostAuthor, suspendPostAuthor, banPostAuthor,
 };
