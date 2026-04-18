@@ -65,10 +65,17 @@ export default function SidebarLayout({ children }) {
   // Poll unread count for the bell badge only
   useEffect(() => {
     if (!user) return;
-    const fetch = () => api.get('/notifications').then(r => setNotifications(r.data.notifications || [])).catch(() => {});
+    const fetch = () => {
+      if (document.visibilityState === 'hidden') return;
+      api.get('/notifications').then(r => setNotifications(r.data.notifications || [])).catch(() => {});
+    };
     fetch();
-    const interval = setInterval(fetch, 30000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetch, 15000);
+    document.addEventListener('visibilitychange', fetch);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', fetch);
+    };
   }, [user]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
