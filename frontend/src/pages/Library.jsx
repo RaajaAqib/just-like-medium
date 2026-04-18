@@ -592,9 +592,9 @@ export default function Library() {
                           <Link to={`/article/${post.slug}`}
                             className="flex gap-3 mb-3 group">
                             {post.coverImage ? (
-                              <div className="w-16 h-12 rounded overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800">
+                              <div className="w-16 h-12 rounded overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                                 <img src={post.coverImage} alt={post.title}
-                                  className="w-full h-full object-cover" />
+                                  className="max-w-full max-h-full object-contain block" />
                               </div>
                             ) : (
                               <div className="w-16 h-12 rounded flex-shrink-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
