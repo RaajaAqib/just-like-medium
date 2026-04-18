@@ -99,13 +99,15 @@ export default function PostCard({ post }) {
 
         {/* Cover image */}
         {post.coverImage && (
-          <Link to={`/article/${post.slug}`} className="flex-shrink-0">
-            <img
-              src={post.coverImage}
-              alt={post.title}
-              className="rounded object-cover"
-              style={{ width: '112px', height: '80px', minWidth: '112px' }}
-            />
+          <Link to={`/article/${post.slug}`} className="flex-shrink-0 self-start">
+            <div className="rounded overflow-hidden bg-white dark:bg-gray-800 flex items-center justify-center"
+              style={{ width: '120px', minWidth: '120px', height: '80px' }}>
+              <img
+                src={post.coverImage}
+                alt={post.title}
+                className="max-w-full max-h-full object-contain block"
+              />
+            </div>
           </Link>
         )}
       </div>
