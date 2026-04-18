@@ -265,8 +265,9 @@ function HistoryItem({ post }) {
       </div>
       {post.coverImage && (
         <Link to={`/article/${post.slug}`} className="flex-shrink-0 self-start">
-          <div className="w-20 h-14 rounded overflow-hidden bg-gray-100 dark:bg-gray-800">
-            <img src={post.coverImage} alt={post.title} className="w-full h-full object-cover" />
+          <div className="rounded overflow-hidden bg-white dark:bg-gray-800 flex items-center justify-center"
+            style={{ width: '80px', minWidth: '80px', height: '56px' }}>
+            <img src={post.coverImage} alt={post.title} className="max-w-full max-h-full object-contain block" />
           </div>
         </Link>
       )}
