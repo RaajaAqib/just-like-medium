@@ -581,38 +581,79 @@ export default function Library() {
                 </div>
               ) : (
                 <div className="divide-y divide-medium-border dark:divide-gray-700">
-                  {responses.map(comment => (
-                    <div key={comment._id} className="py-5">
-                      {comment.post && (
-                        <Link to={`/article/${comment.post.slug}`}
-                          className="text-xs text-medium-gray dark:text-gray-500 hover:text-medium-black dark:hover:text-gray-300 transition flex items-center gap-1.5 mb-2 group">
-                          <FiMessageCircle className="text-xs flex-shrink-0" />
-                          <span className="line-clamp-1 group-hover:underline">
-                            In response to: <span className="font-medium">{comment.post.title}</span>
-                          </span>
-                        </Link>
-                      )}
-                      <p className="text-sm text-medium-black dark:text-gray-200 leading-relaxed line-clamp-3">
-                        {comment.content}
-                      </p>
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className="text-xs text-medium-gray dark:text-gray-500">
-                          {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                        </span>
-                        {comment.likes?.length > 0 && (
-                          <span className="text-xs text-medium-gray dark:text-gray-500">
-                            {comment.likes.length} {comment.likes.length === 1 ? 'like' : 'likes'}
-                          </span>
-                        )}
-                        {comment.post && (
-                          <Link to={`/article/${comment.post.slug}`}
-                            className="text-xs text-medium-gray dark:text-gray-500 hover:text-medium-black dark:hover:text-gray-300 underline ml-auto">
-                            View
+                  {responses.map(comment => {
+                    const post = comment.post;
+                    const articleUrl = post ? `/article/${post.slug}?comment=${comment._id}` : null;
+                    return (
+                      <div key={comment._id} className="py-5">
+
+                        {/* Story card header — thumbnail + title + author */}
+                        {post && (
+                          <Link to={`/article/${post.slug}`}
+                            className="flex gap-3 mb-3 group">
+                            {post.coverImage ? (
+                              <div className="w-16 h-12 rounded overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800">
+                                <img src={post.coverImage} alt={post.title}
+                                  className="w-full h-full object-cover" />
+                              </div>
+                            ) : (
+                              <div className="w-16 h-12 rounded flex-shrink-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                                <FiMessageCircle className="text-gray-400 dark:text-gray-600" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              {post.author && (
+                                <div className="flex items-center gap-1.5 mb-0.5">
+                                  <img
+                                    src={post.author.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author.name || 'U')}&background=random`}
+                                    className="w-4 h-4 rounded-full object-cover flex-shrink-0"
+                                    alt={post.author.name}
+                                  />
+                                  <span className="text-xs text-medium-gray dark:text-gray-500 truncate">{post.author.name}</span>
+                                  {post.readTime && (
+                                    <>
+                                      <span className="text-medium-gray dark:text-gray-600 text-xs">·</span>
+                                      <span className="text-xs text-medium-gray dark:text-gray-500 flex items-center gap-0.5">
+                                        <FiClock className="text-xs" />{post.readTime} min
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                              <p className="text-sm font-semibold text-medium-black dark:text-gray-100 line-clamp-2 leading-snug group-hover:underline">
+                                {post.title}
+                              </p>
+                            </div>
                           </Link>
                         )}
+
+                        {/* Response content */}
+                        <div className="pl-1 border-l-2 border-gray-200 dark:border-gray-700 ml-1">
+                          <p className="text-sm text-medium-black dark:text-gray-200 leading-relaxed line-clamp-3 pl-3">
+                            {comment.content}
+                          </p>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex items-center gap-3 mt-2.5">
+                          <span className="text-xs text-medium-gray dark:text-gray-500">
+                            {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                          </span>
+                          {comment.likes?.length > 0 && (
+                            <span className="text-xs text-medium-gray dark:text-gray-500">
+                              · {comment.likes.length} {comment.likes.length === 1 ? 'like' : 'likes'}
+                            </span>
+                          )}
+                          {articleUrl && (
+                            <Link to={articleUrl}
+                              className="ml-auto text-xs font-medium text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-100 transition underline">
+                              View response
+                            </Link>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )
             )}
