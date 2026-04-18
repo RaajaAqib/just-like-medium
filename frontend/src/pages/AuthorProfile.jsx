@@ -291,42 +291,65 @@ function ProfileContent({ id }) {
           activityLoading ? <LoadingSpinner /> :
           activity.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-medium-gray dark:text-gray-500 text-base">
-                {isOwn ? 'You have no recent activity yet.' : 'No recent activity.'}
+              <FiMessageCircle className="text-4xl text-medium-gray dark:text-gray-600 mx-auto mb-3" />
+              <p className="text-medium-black dark:text-gray-200 font-medium mb-1">No responses yet</p>
+              <p className="text-medium-gray dark:text-gray-500 text-sm">
+                {isOwn ? 'Your responses to stories will appear here.' : 'This writer has not responded to any stories yet.'}
               </p>
             </div>
           ) : (
             <div className="divide-y divide-medium-border dark:divide-gray-700">
               {activity.map(comment => (
-                <div key={comment._id} className="py-5">
-                  {/* Which story */}
-                  {comment.post && (
-                    <Link to={`/article/${comment.post.slug}`}
-                      className="flex items-center gap-1.5 text-xs text-medium-gray dark:text-gray-500 hover:text-medium-black dark:hover:text-gray-300 transition mb-2 group">
-                      <FiMessageCircle className="text-xs flex-shrink-0" />
-                      <span className="line-clamp-1 group-hover:underline">
-                        Responded to: <span className="font-medium">{comment.post.title}</span>
-                      </span>
-                    </Link>
-                  )}
-                  {/* Comment content */}
-                  <p className="text-sm text-medium-black dark:text-gray-200 leading-relaxed line-clamp-4">
+                <div key={comment._id} className="py-6">
+                  {/* Response text */}
+                  <p className="text-sm sm:text-base text-medium-black dark:text-gray-100 leading-relaxed mb-4">
                     {comment.content}
                   </p>
-                  <div className="flex items-center gap-3 mt-2">
+
+                  {/* Post preview card */}
+                  {comment.post && (
+                    <Link to={`/article/${comment.post.slug}`}
+                      className="flex items-start gap-3 p-3 rounded-lg border border-medium-border dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition group">
+                      {/* Cover image */}
+                      {comment.post.coverImage && (
+                        <div className="flex-shrink-0 w-16 h-12 rounded overflow-hidden bg-white dark:bg-gray-800 flex items-center justify-center">
+                          <img src={comment.post.coverImage} alt={comment.post.title}
+                            className="max-w-full max-h-full object-contain block" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        {/* Post author */}
+                        {comment.post.author && (
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <img
+                              src={comment.post.author.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(comment.post.author.name || 'A')}&background=random&size=16`}
+                              alt={comment.post.author.name}
+                              className="w-4 h-4 rounded-full object-cover"
+                            />
+                            <span className="text-xs text-medium-gray dark:text-gray-400">{comment.post.author.name}</span>
+                          </div>
+                        )}
+                        {/* Post title */}
+                        <p className="text-sm font-semibold text-medium-black dark:text-gray-100 line-clamp-2 group-hover:underline decoration-1 underline-offset-2 leading-snug">
+                          {comment.post.title}
+                        </p>
+                        {comment.post.readTime && (
+                          <p className="text-xs text-medium-gray dark:text-gray-500 mt-0.5">{comment.post.readTime} min read</p>
+                        )}
+                      </div>
+                    </Link>
+                  )}
+
+                  {/* Meta: timestamp + likes */}
+                  <div className="flex items-center gap-3 mt-3">
                     <span className="text-xs text-medium-gray dark:text-gray-500">
                       {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                     </span>
                     {comment.likes?.length > 0 && (
-                      <span className="text-xs text-medium-gray dark:text-gray-500">
-                        {comment.likes.length} {comment.likes.length === 1 ? 'like' : 'likes'}
+                      <span className="flex items-center gap-1 text-xs text-medium-gray dark:text-gray-500">
+                        <FiMessageCircle className="text-xs" />
+                        {comment.likes.length} {comment.likes.length === 1 ? 'clap' : 'claps'}
                       </span>
-                    )}
-                    {comment.post && (
-                      <Link to={`/article/${comment.post.slug}`}
-                        className="text-xs text-medium-gray dark:text-gray-500 hover:text-medium-black dark:hover:text-gray-300 underline ml-auto">
-                        View
-                      </Link>
                     )}
                   </div>
                 </div>

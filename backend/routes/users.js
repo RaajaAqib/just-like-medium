@@ -331,7 +331,11 @@ router.get('/:id/activity', async (req, res) => {
   try {
     const Comment = require('../models/Comment');
     const comments = await Comment.find({ author: req.params.id, isHidden: false })
-      .populate('post', 'title slug coverImage')
+      .populate({
+        path: 'post',
+        select: 'title slug coverImage readTime',
+        populate: { path: 'author', select: 'name avatar isVerified' },
+      })
       .sort({ createdAt: -1 })
       .limit(30);
     res.json({ success: true, activity: comments });
