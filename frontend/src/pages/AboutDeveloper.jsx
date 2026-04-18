@@ -439,7 +439,7 @@ export default function AboutDeveloper() {
           )}
 
           {/* ── Buy Me a Coffee ────────────────────────────────────────────── */}
-          {(profile.support?.upiId || profile.support?.paypalEmail || profile.support?.paymentQrCode || profile.support?.bitcoinAddress || profile.support?.bankDetails) && (
+          {profile.support && (
             <section className="border-t border-gray-100 dark:border-gray-800 pt-12">
               <h2 className="text-2xl font-bold font-serif text-gray-900 dark:text-gray-100 mb-2">
                 {profile.support.heading || 'Buy Me a Coffee ☕'}
@@ -461,6 +461,9 @@ export default function AboutDeveloper() {
 
                   {/* Details */}
                   <div className="space-y-3 flex-1">
+                    {!profile.support.upiId && !profile.support.paypalEmail && !profile.support.bitcoinAddress && !profile.support.bankDetails && !profile.support.paymentQrCode && (
+                      <p className="text-sm text-amber-700 dark:text-amber-400 italic">Payment details coming soon — check back later!</p>
+                    )}
                     {profile.support.upiId && (
                       <div className="flex items-center gap-3">
                         <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 w-20">UPI ID</span>
