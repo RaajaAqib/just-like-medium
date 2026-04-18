@@ -265,7 +265,8 @@ function LoggedInFeed() {
 }
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) return null;
   if (user) return <LoggedInFeed />;
   return <LandingPage />;
 }
