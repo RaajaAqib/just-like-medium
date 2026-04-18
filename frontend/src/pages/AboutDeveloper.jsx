@@ -474,11 +474,23 @@ export default function AboutDeveloper() {
                 <div className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-white/10 pointer-events-none" />
 
                 <div className="relative px-6 sm:px-10 py-10">
-                  {/* Top: emoji + heading */}
+                  {/* Top: BMC-style icon + script heading */}
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-4xl select-none">☕</span>
-                    <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 leading-tight">
-                      {profile.support.heading || 'Buy Me a Coffee'}
+                    {/* BMC coffee cup SVG */}
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" className="w-12 h-12 flex-shrink-0" fill="none">
+                      {/* Lid */}
+                      <rect x="14" y="10" width="36" height="6" rx="3" fill="white" stroke="#1a1a1a" strokeWidth="2.5"/>
+                      {/* Lid top nub */}
+                      <rect x="27" y="7" width="10" height="5" rx="2" fill="white" stroke="#1a1a1a" strokeWidth="2.5"/>
+                      {/* Cup body */}
+                      <path d="M17 16 L20 52 Q20 55 24 55 L40 55 Q44 55 44 52 L47 16 Z"
+                        fill="white" stroke="#1a1a1a" strokeWidth="2.5" strokeLinejoin="round"/>
+                      {/* Sleeve stripe */}
+                      <path d="M18.5 30 L19.8 38 L44.2 38 L45.5 30 Z" fill="#FFDD00" stroke="none"/>
+                    </svg>
+                    <h2 style={{ fontFamily: "'Cookie', cursive" }}
+                      className="text-4xl sm:text-5xl text-gray-900 leading-none">
+                      {profile.support.heading || 'Buy me a coffee'}
                     </h2>
                   </div>
                   {profile.support.description && (
