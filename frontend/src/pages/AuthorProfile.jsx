@@ -650,8 +650,8 @@ function ProfileContent({ id }) {
       setPinnedPostIds(newPinnedIds);
       // Re-order posts: pinned first, then unpinned chronologically
       setPosts(prev => {
-        const pinned   = newPinnedIds.map(pid => prev.find(p => p._id === pid)).filter(Boolean);
-        const unpinned = prev.filter(p => !newPinnedIds.includes(p._id));
+        const pinned   = newPinnedIds.map(pid => prev.find(p => (p._id?.toString?.() ?? p._id) === pid)).filter(Boolean);
+        const unpinned = prev.filter(p => !newPinnedIds.includes(p._id?.toString?.() ?? p._id));
         return [...pinned, ...unpinned];
       });
     } catch (err) {
@@ -760,7 +760,7 @@ function ProfileContent({ id }) {
                     <span className="text-xs font-semibold text-medium-gray dark:text-gray-400 uppercase tracking-wider">Pinned</span>
                   </div>
                   {pinnedPostIds.map(pid => {
-                    const post = posts.find(p => p._id === pid);
+                    const post = posts.find(p => (p._id?.toString?.() ?? p._id) === pid);
                     if (!post) return null;
                     return (
                       <StoryRow
@@ -788,7 +788,7 @@ function ProfileContent({ id }) {
 
               {/* ── Unpinned stories ── */}
               {posts
-                .filter(p => !pinnedPostIds.includes(p._id))
+                .filter(p => !pinnedPostIds.includes(p._id?.toString?.() ?? p._id))
                 .map(post => (
                   <StoryRow
                     key={post._id}

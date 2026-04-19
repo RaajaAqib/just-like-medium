@@ -17,6 +17,7 @@ const getUserProfile = async (req, res) => {
     const pinnedIds = (user.pinnedPosts || []).map(id => id.toString());
 
     const allPosts = await Post.find({ author: user._id, published: true, isHidden: { $ne: true } })
+      .populate('author', 'name avatar isAdmin isVerified')
       .sort({ createdAt: -1 })
       .select('-content');
 
