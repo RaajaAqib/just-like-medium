@@ -7,7 +7,7 @@ import {
   FiAlertCircle, FiSearch, FiHeart, FiZap,
   FiGrid, FiToggleLeft, FiToggleRight, FiX, FiFlag, FiAlertTriangle,
   FiClock, FiBell, FiUserX, FiUserCheck, FiUser, FiPlus, FiSave,
-  FiUpload, FiChevronDown, FiChevronUp, FiExternalLink, FiEyeOff,
+  FiUpload, FiChevronDown, FiChevronUp, FiExternalLink, FiEyeOff, FiTrendingUp,
 } from 'react-icons/fi';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -207,6 +207,20 @@ function ArticlesTab() {
     } catch { toast.error('Failed to update'); }
   };
 
+  const toggleBoost = async (id, currentlyBoosted) => {
+    try {
+      if (currentlyBoosted) {
+        await api.delete(`/posts/admin/${id}/boost`);
+        setPosts(posts.map(p => p._id === id ? { ...p, isBoosted: false, boostedAt: null } : p));
+        toast.success('Post removed from boost');
+      } else {
+        const res = await api.post(`/posts/admin/${id}/boost`);
+        setPosts(posts.map(p => p._id === id ? { ...p, isBoosted: true, boostedAt: res.data.post.boostedAt } : p));
+        toast.success('Post boosted to home feed top!');
+      }
+    } catch { toast.error('Failed to update boost'); }
+  };
+
   const filtered = posts.filter(p => {
     const matchSearch = p.title.toLowerCase().includes(search.toLowerCase()) ||
       p.author?.name?.toLowerCase().includes(search.toLowerCase());
@@ -257,6 +271,7 @@ function ArticlesTab() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {post.featured && <FiStar className="text-yellow-400 flex-shrink-0" title="Featured" />}
+                        {post.isBoosted && <FiTrendingUp className="text-blue-500 flex-shrink-0" title="Boosted to home feed" />}
                         <span className="font-medium text-gray-900 dark:text-gray-100 line-clamp-1 max-w-[200px]">{post.title}</span>
                       </div>
                     </td>
@@ -284,6 +299,11 @@ function ArticlesTab() {
                           className={`p-1.5 rounded transition ${post.featured ? 'text-yellow-400 hover:text-gray-400' : 'text-gray-300 dark:text-gray-600 hover:text-yellow-400'}`}
                           title={post.featured ? 'Unfeature' : 'Feature'}>
                           <FiStar className="text-sm" />
+                        </button>
+                        <button onClick={() => toggleBoost(post._id, post.isBoosted)}
+                          className={`p-1.5 rounded transition ${post.isBoosted ? 'text-blue-500 hover:text-gray-400' : 'text-gray-300 dark:text-gray-600 hover:text-blue-500'}`}
+                          title={post.isBoosted ? 'Remove boost' : 'Boost to home feed top'}>
+                          <FiTrendingUp className="text-sm" />
                         </button>
                         <button onClick={() => togglePublish(post._id)}
                           className={`p-1.5 rounded transition ${post.published ? 'text-green-400 hover:text-gray-400' : 'text-gray-300 dark:text-gray-600 hover:text-green-400'}`}

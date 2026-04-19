@@ -14,6 +14,7 @@ import {
   FiMoreHorizontal, FiVolumeX, FiVolume2, FiUserMinus, FiUserPlus,
   FiLink, FiSlash, FiFlag, FiBookmark,
 } from 'react-icons/fi';
+import { TbPin, TbPinnedOff } from 'react-icons/tb';
 import UserBadges from '../components/UserBadges';
 
 // ── Followers / Following modal ───────────────────────────────────────────────
@@ -405,6 +406,66 @@ function ReportUserModal({ name, onClose, onSubmit }) {
   );
 }
 
+// ── Story row wrapper with owner three-dot menu ───────────────────────────────
+function StoryRow({ post, isPinned, isOwn, onPinToggle, canPin }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
+
+  return (
+    <div className="relative group">
+      {/* Pin indicator strip */}
+      {isPinned && (
+        <div className="flex items-center gap-1.5 mb-1 ml-0.5">
+          <TbPin className="text-medium-gray dark:text-gray-500" size={12} />
+          <span className="text-[11px] text-medium-gray dark:text-gray-500">Pinned story</span>
+        </div>
+      )}
+
+      <div className="relative">
+        <PostCard post={post} />
+
+        {/* Three-dot menu — owner only */}
+        {isOwn && (
+          <div className="absolute top-3 right-3 z-10" ref={menuRef}>
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(v => !v); }}
+              className="p-1.5 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur border border-medium-border dark:border-gray-600 text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-200 transition opacity-0 group-hover:opacity-100"
+              title="Story options"
+            >
+              <FiMoreHorizontal size={14} />
+            </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 top-9 w-48 bg-white dark:bg-gray-800 border border-medium-border dark:border-gray-600 rounded-lg shadow-xl py-1 z-30">
+                <button
+                  onClick={(e) => { e.stopPropagation(); onPinToggle(post._id); setMenuOpen(false); }}
+                  disabled={!isPinned && !canPin}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {isPinned
+                    ? <><TbPinnedOff size={15} /> Unpin from profile</>
+                    : <><TbPin size={15} /> Pin to profile</>
+                  }
+                </button>
+                {!isPinned && !canPin && (
+                  <p className="px-4 pb-2 text-xs text-medium-gray dark:text-gray-500">Max 3 stories pinned</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 const TABS = [
   { key: 'home',     label: 'Home' },
@@ -420,6 +481,7 @@ function ProfileContent({ id }) {
 
   const [profile, setProfile]           = useState(null);
   const [posts, setPosts]               = useState([]);
+  const [pinnedPostIds, setPinnedPostIds] = useState([]);
   const [activity, setActivity]         = useState([]);
   const [publicLists, setPublicLists]   = useState([]);
   const [listsLoading, setListsLoading] = useState(false);
@@ -457,6 +519,7 @@ function ProfileContent({ id }) {
       .then(res => {
         setProfile(res.data.user);
         setPosts(res.data.posts);
+        setPinnedPostIds(res.data.pinnedPostIds || []);
         setFollowersCount(res.data.user.followers?.length || 0);
         if (user) setFollowing(res.data.user.followers?.some(f => f._id === user._id || f === user._id));
       })
@@ -572,6 +635,30 @@ function ProfileContent({ id }) {
     updateUser({ name: updatedUser.name, avatar: updatedUser.avatar });
   };
 
+  const handlePinToggle = async (postId) => {
+    const isPinned = pinnedPostIds.includes(postId);
+    try {
+      let res;
+      if (isPinned) {
+        res = await api.delete(`/users/me/pin/${postId}`);
+        toast.success('Story unpinned');
+      } else {
+        res = await api.post(`/users/me/pin/${postId}`);
+        toast.success('Story pinned to profile');
+      }
+      const newPinnedIds = res.data.pinnedPostIds;
+      setPinnedPostIds(newPinnedIds);
+      // Re-order posts: pinned first, then unpinned chronologically
+      setPosts(prev => {
+        const pinned   = newPinnedIds.map(pid => prev.find(p => p._id === pid)).filter(Boolean);
+        const unpinned = prev.filter(p => !newPinnedIds.includes(p._id));
+        return [...pinned, ...unpinned];
+      });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update pin');
+    }
+  };
+
   if (loading) return <div className="py-20"><LoadingSpinner /></div>;
   if (!profile) return null;
 
@@ -665,7 +752,54 @@ function ProfileContent({ id }) {
             </div>
           ) : (
             <div>
-              {posts.map(post => <PostCard key={post._id} post={post} />)}
+              {/* ── Pinned stories section ── */}
+              {pinnedPostIds.length > 0 && (
+                <>
+                  <div className="flex items-center gap-2 mb-3">
+                    <TbPin className="text-medium-gray dark:text-gray-400" size={14} />
+                    <span className="text-xs font-semibold text-medium-gray dark:text-gray-400 uppercase tracking-wider">Pinned</span>
+                  </div>
+                  {pinnedPostIds.map(pid => {
+                    const post = posts.find(p => p._id === pid);
+                    if (!post) return null;
+                    return (
+                      <StoryRow
+                        key={`pinned-${post._id}`}
+                        post={post}
+                        isPinned
+                        isOwn={isOwn}
+                        onPinToggle={handlePinToggle}
+                      />
+                    );
+                  })}
+                  {/* Divider between pinned and regular stories */}
+                  {posts.filter(p => !pinnedPostIds.includes(p._id)).length > 0 && (
+                    <div className="relative my-6">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-medium-border dark:border-gray-700" />
+                      </div>
+                      <div className="relative flex justify-center">
+                        <span className="bg-white dark:bg-gray-900 px-3 text-xs text-medium-gray dark:text-gray-500">Other stories</span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* ── Unpinned stories ── */}
+              {posts
+                .filter(p => !pinnedPostIds.includes(p._id))
+                .map(post => (
+                  <StoryRow
+                    key={post._id}
+                    post={post}
+                    isPinned={false}
+                    isOwn={isOwn}
+                    onPinToggle={handlePinToggle}
+                    canPin={pinnedPostIds.length < 3}
+                  />
+                ))
+              }
             </div>
           )
         )}

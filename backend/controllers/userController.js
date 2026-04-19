@@ -14,11 +14,20 @@ const getUserProfile = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const posts = await Post.find({ author: user._id, published: true })
+    const pinnedIds = (user.pinnedPosts || []).map(id => id.toString());
+
+    const allPosts = await Post.find({ author: user._id, published: true, isHidden: false })
       .sort({ createdAt: -1 })
       .select('-content');
 
-    res.json({ success: true, user, posts });
+    // Put pinned posts first (in pin order), then rest chronologically
+    const pinned   = pinnedIds
+      .map(pid => allPosts.find(p => p._id.toString() === pid))
+      .filter(Boolean);
+    const unpinned = allPosts.filter(p => !pinnedIds.includes(p._id.toString()));
+    const posts    = [...pinned, ...unpinned];
+
+    res.json({ success: true, user, posts, pinnedPostIds: pinnedIds });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

@@ -515,6 +515,49 @@ router.get('/me/responses', protect, async (req, res) => {
   }
 });
 
+// ── Pin / Unpin a post on own profile ─────────────────────────────────────────
+const MAX_PINS = 3;
+
+router.post('/me/pin/:postId', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('pinnedPosts');
+    const postId = req.params.postId;
+
+    // Verify the post belongs to this user
+    const Post = require('../models/Post');
+    const post = await Post.findOne({ _id: postId, author: req.user._id, published: true });
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+    const pinned = (user.pinnedPosts || []).map(id => id.toString());
+    if (pinned.includes(postId)) {
+      return res.json({ success: true, pinnedPostIds: pinned }); // already pinned
+    }
+    if (pinned.length >= MAX_PINS) {
+      return res.status(400).json({ success: false, message: `You can pin up to ${MAX_PINS} stories` });
+    }
+
+    // Prepend so most-recently pinned is first
+    await User.findByIdAndUpdate(req.user._id, { $push: { pinnedPosts: { $each: [postId], $position: 0 } } });
+    res.json({ success: true, pinnedPostIds: [postId, ...pinned] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.delete('/me/pin/:postId', protect, async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $pull: { pinnedPosts: req.params.postId } },
+      { new: true }
+    ).select('pinnedPosts');
+    const pinnedPostIds = (user.pinnedPosts || []).map(id => id.toString());
+    res.json({ success: true, pinnedPostIds });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Public
 router.get('/:id', getUserProfile);
 

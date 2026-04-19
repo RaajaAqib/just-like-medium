@@ -63,7 +63,7 @@ const getPosts = async (req, res) => {
     const total = await Post.countDocuments(query);
     const posts = await Post.find(query)
       .populate('author', 'name avatar bio isAdmin isVerified')
-      .sort({ createdAt: -1 })
+      .sort({ isBoosted: -1, boostedAt: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .select('-content');

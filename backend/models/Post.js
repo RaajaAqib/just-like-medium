@@ -84,6 +84,9 @@ const postSchema = new mongoose.Schema(
     moderatedBy:      { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     moderatedAt:      { type: Date, default: null },
     isHidden:         { type: Boolean, default: false },
+    // ── Admin boost (appears at top of home feed) ────────────────────────────
+    isBoosted:        { type: Boolean, default: false },
+    boostedAt:        { type: Date,    default: null  },
   },
   { timestamps: true }
 );

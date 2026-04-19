@@ -160,6 +160,37 @@ router.post('/admin/:id/warn',       protect, adminOnly, warnPostAuthor);
 router.post('/admin/:id/suspend',    protect, adminOnly, suspendPostAuthor);
 router.post('/admin/:id/ban',        protect, adminOnly, banPostAuthor);
 
+// ── Admin boost / unboost ────────────────────────────────────────────────────
+router.post('/admin/:id/boost', protect, adminOnly, async (req, res) => {
+  try {
+    const Post = require('../models/Post');
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { isBoosted: true, boostedAt: new Date() },
+      { new: true }
+    );
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+    res.json({ success: true, post });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.delete('/admin/:id/boost', protect, adminOnly, async (req, res) => {
+  try {
+    const Post = require('../models/Post');
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { isBoosted: false, boostedAt: null },
+      { new: true }
+    );
+    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+    res.json({ success: true, post });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // Public (optionalAuth so following feed works when logged in)
 router.get('/', optionalAuth, getPosts);
 router.get('/:slug', optionalAuth, getPost);
