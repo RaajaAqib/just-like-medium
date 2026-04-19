@@ -80,7 +80,7 @@ export default function PostCard({ post, onMute, isPinned, onPin, canPin, isBoos
           <UserBadges user={post.author} size="sm" />
         </Link>
         {isBoosted && (
-          <span className="flex items-center gap-1 text-[10px] text-medium-gray dark:text-gray-500 border border-medium-border dark:border-gray-600 rounded-full px-2 py-0.5 flex-shrink-0">
+          <span className="flex items-center gap-1 text-[10px] text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-full px-2 py-0.5 flex-shrink-0">
             <FiTrendingUp size={10} />
             Promoted
           </span>
