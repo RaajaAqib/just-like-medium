@@ -1,0 +1,19 @@
+name: Sync to Cloudflare repo
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to private duplicate repo
+        run: |
+          git remote add private https://x-access-token:${{ secrets.CF_REPO_TOKEN }}@github.com/RaajaAqib/just-like-medium-private.git
+          git push private main --force
