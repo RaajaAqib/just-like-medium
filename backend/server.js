@@ -32,7 +32,12 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin.toLowerCase())) {
+    const lower = origin.toLowerCase();
+    if (allowedOrigins.includes(lower)) {
+      return callback(null, true);
+    }
+    // Allow all Cloudflare Pages preview deployment URLs (hash-prefixed subdomains)
+    if (lower.endsWith('.just-like-medium-private.pages.dev')) {
       return callback(null, true);
     }
     callback(new Error(`CORS blocked: ${origin}`));
