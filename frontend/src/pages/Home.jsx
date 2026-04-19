@@ -6,7 +6,6 @@ import SidebarLayout from '../components/SidebarLayout';
 import PostCard from '../components/PostCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import api from '../utils/axios';
-import { FiTrendingUp } from 'react-icons/fi';
 
 const FALLBACK_TAGS = ['Technology', 'Programming', 'Design', 'Science', 'Culture', 'AI', 'Startup', 'Health', 'Travel', 'Food'];
 
@@ -212,15 +211,7 @@ function LoggedInFeed() {
           ) : (
             <>
               {posts.map(post => (
-                <div key={post._id}>
-                  {post.isBoosted && (
-                    <div className="flex items-center gap-1.5 mb-1 ml-0.5">
-                      <FiTrendingUp className="text-blue-500" size={12} />
-                      <span className="text-[11px] text-blue-500 font-medium">Promoted by editors</span>
-                    </div>
-                  )}
-                  <PostCard post={post} />
-                </div>
+                <PostCard key={post._id} post={post} isBoosted={post.isBoosted} />
               ))}
               {totalPages > 1 && (
                 <div className="flex justify-center gap-3 mt-10 pt-6 border-t border-medium-border dark:border-gray-700">

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
-import { FiBookmark, FiMoreHorizontal, FiVolumeX, FiVolume2 } from 'react-icons/fi';
+import { FiBookmark, FiMoreHorizontal, FiVolumeX, FiVolume2, FiTrendingUp } from 'react-icons/fi';
 import { TbPin, TbPinnedOff } from 'react-icons/tb';
 import { MdOutlineWavingHand } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
@@ -11,7 +11,7 @@ import UserBadges from './UserBadges';
 import api from '../utils/axios';
 import toast from 'react-hot-toast';
 
-export default function PostCard({ post, onMute, isPinned, onPin, canPin }) {
+export default function PostCard({ post, onMute, isPinned, onPin, canPin, isBoosted }) {
   const { user } = useAuth();
   const { isSaved } = useSavedPosts();
   const navigate = useNavigate();
@@ -69,15 +69,23 @@ export default function PostCard({ post, onMute, isPinned, onPin, canPin }) {
   return (
     <article className="py-6 sm:py-8 border-b border-medium-border dark:border-gray-700 group">
       {/* Author row */}
-      <Link to={`/profile/${post.author?._id}`} className="flex items-center gap-2 mb-3">
-        <img
-          src={post.author?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author?.name || 'A')}&background=random&size=24`}
-          alt={post.author?.name}
-          className="w-6 h-6 rounded-full object-cover"
-        />
-        <span className="text-sm text-medium-black dark:text-gray-300 hover:underline">{post.author?.name}</span>
-        <UserBadges user={post.author} size="sm" />
-      </Link>
+      <div className="flex items-center justify-between mb-3">
+        <Link to={`/profile/${post.author?._id}`} className="flex items-center gap-2">
+          <img
+            src={post.author?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.author?.name || 'A')}&background=random&size=24`}
+            alt={post.author?.name}
+            className="w-6 h-6 rounded-full object-cover"
+          />
+          <span className="text-sm text-medium-black dark:text-gray-300 hover:underline">{post.author?.name}</span>
+          <UserBadges user={post.author} size="sm" />
+        </Link>
+        {isBoosted && (
+          <span className="flex items-center gap-1 text-[10px] text-medium-gray dark:text-gray-500 border border-medium-border dark:border-gray-600 rounded-full px-2 py-0.5 flex-shrink-0">
+            <FiTrendingUp size={10} />
+            Promoted
+          </span>
+        )}
+      </div>
 
       {/* Content row */}
       <div className="flex gap-4 sm:gap-8 items-start">
