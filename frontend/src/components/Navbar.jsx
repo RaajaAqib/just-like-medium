@@ -25,7 +25,7 @@ export default function Navbar({ variant = 'default' }) {
       <nav className="border-b border-medium-black bg-cream dark:bg-gray-900 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 h-14 sm:h-16 flex items-center justify-between">
           <Link to="/" className="text-xl sm:text-3xl font-bold font-serif text-medium-black dark:text-gray-100 tracking-tight">
-            Just Like Medium
+            Dynamic Lab
           </Link>
           <div className="flex items-center gap-2 sm:gap-4">
             <Link to="/our-story" className="text-sm text-medium-black dark:text-gray-300 hover:text-medium-gray hidden md:block transition">Our story</Link>
@@ -54,7 +54,7 @@ export default function Navbar({ variant = 'default' }) {
     <nav className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-medium-border dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
         <Link to="/" className="text-2xl font-bold font-serif text-medium-black dark:text-gray-100 tracking-tight flex-shrink-0">
-          Just Like Medium
+          Dynamic Lab
         </Link>
 
         <div className="flex-1 max-w-xs hidden md:block">

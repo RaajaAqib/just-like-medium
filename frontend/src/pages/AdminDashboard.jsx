@@ -2372,7 +2372,7 @@ function DeveloperProfileTab() {
             <button type="button" onClick={() => removeRow('projects', i)}
               className="absolute top-3 right-3 text-gray-400 hover:text-red-500 transition"><FiX /></button>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <FieldRow label="Project Name"><input className={INPUT} value={proj.name} onChange={e => updateRow('projects', i, 'name', e.target.value)} placeholder="Just Like Medium" /></FieldRow>
+              <FieldRow label="Project Name"><input className={INPUT} value={proj.name} onChange={e => updateRow('projects', i, 'name', e.target.value)} placeholder="Dynamic Lab" /></FieldRow>
               <FieldRow label="Live / GitHub Link"><input className={INPUT} value={proj.link} onChange={e => updateRow('projects', i, 'link', e.target.value)} placeholder="https://github.com/…" /></FieldRow>
             </div>
             <FieldRow label="Technologies (comma-separated)">
@@ -2422,7 +2422,7 @@ function DeveloperProfileTab() {
       <Section title="About the Website Section" open={openSections.websiteInfo} onToggle={() => toggle('websiteInfo')}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
-            ['name',         'Platform Name',        'Just Like Medium'],
+            ['name',         'Platform Name',        'Dynamic Lab'],
             ['foundedYear',  'Founded Year',          '2025'],
             ['version',      'Version',               '1.0.0'],
             ['contributors', 'Contributors',          'Raja Aqib'],

@@ -70,7 +70,7 @@ const developerProfileSchema = new mongoose.Schema({
 
   // ── About this website section ──────────────────────────────────────────────
   websiteInfo: {
-    name:         { type: String, default: 'Just Like Medium' },
+    name:         { type: String, default: 'Dynamic Lab' },
     foundedYear:  { type: String, default: '' },
     mission:      { type: String, default: '' },
     techStack:    { type: String, default: '' },

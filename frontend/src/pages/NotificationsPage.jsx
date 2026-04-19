@@ -307,7 +307,7 @@ export default function NotificationsPage() {
             <div className="border-t border-medium-border dark:border-gray-700 pt-6">
               <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-5">
                 <h3 className="font-semibold text-medium-black dark:text-gray-100 mb-2 text-sm">
-                  Writing on Just Like Medium
+                  Writing on Dynamic Lab
                 </h3>
                 <ul className="space-y-1.5 mb-4 text-sm text-medium-black dark:text-gray-300">
                   <li className="hover:underline cursor-pointer">New writer FAQ</li>

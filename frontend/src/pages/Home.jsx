@@ -42,7 +42,7 @@ function TrendingFeed() {
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
         </svg>
-        <span className="text-sm font-bold text-medium-black dark:text-gray-200 uppercase tracking-widest">Trending on Just Like Medium</span>
+        <span className="text-sm font-bold text-medium-black dark:text-gray-200 uppercase tracking-widest">Trending on Dynamic Lab</span>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {posts.map((post, i) => (
@@ -99,7 +99,7 @@ function LandingPage() {
               Built with passion,<br />one commit at a time.
             </h2>
             <p className="text-medium-gray dark:text-gray-400 text-base leading-relaxed">
-              Learn about the developer behind Just Like Medium — their experience, projects, and the story of how this platform came to life.
+              Learn about the developer behind Dynamic Lab — their experience, projects, and the story of how this platform came to life.
             </p>
           </div>
           <Link to="/about-developer"
@@ -259,7 +259,7 @@ function LoggedInFeed() {
 
             <div className="border-t border-medium-border dark:border-gray-700 pt-6">
               <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-5">
-                <h3 className="font-semibold text-medium-black dark:text-gray-100 mb-3">Writing on Just Like Medium</h3>
+                <h3 className="font-semibold text-medium-black dark:text-gray-100 mb-3">Writing on Dynamic Lab</h3>
                 <ul className="space-y-2 mb-4">
                   <li className="text-sm text-medium-black dark:text-gray-300 hover:underline cursor-pointer">New writer FAQ</li>
                   <li className="text-sm text-medium-black dark:text-gray-300 hover:underline cursor-pointer">Expert writing advice</li>

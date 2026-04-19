@@ -31,7 +31,7 @@ async function seed() {
   // ── About Me ───────────────────────────────────────────────────────────────
   profile.fullBio = `Hi, I'm Raja Aqib — a Software Engineer and ServiceNow Developer based in Pakistan.
 
-I built Just Like Medium as a full-stack portfolio project to create a modern, clean writing platform inspired by Medium. The goal was to build something that demonstrates real-world skills: authentication, real-time features, content moderation, admin tooling, and a polished user experience.
+I built Dynamic Lab as a full-stack portfolio project to create a modern, clean writing platform inspired by Medium. The goal was to build something that demonstrates real-world skills: authentication, real-time features, content moderation, admin tooling, and a polished user experience.
 
 I'm passionate about crafting software that is both technically solid and genuinely useful. When I'm not building full-stack apps, I work on ServiceNow implementations and enterprise workflow automation.`;
 
@@ -47,7 +47,7 @@ I'm passionate about crafting software that is both technically solid and genuin
       role:        'Full-Stack Developer',
       startDate:   '2022',
       endDate:     'Present',
-      description: 'Building full-stack web applications using React, Node.js, Express, and MongoDB. Developed Just Like Medium — a fully-featured writing platform — as a showcase project covering auth, rich text editing, notifications, admin dashboards, and cloud media management.',
+      description: 'Building full-stack web applications using React, Node.js, Express, and MongoDB. Developed Dynamic Lab — a fully-featured writing platform — as a showcase project covering auth, rich text editing, notifications, admin dashboards, and cloud media management.',
     },
     {
       company:     'ServiceNow Projects',
@@ -100,7 +100,7 @@ I'm passionate about crafting software that is both technically solid and genuin
   // ── Projects ───────────────────────────────────────────────────────────────
   profile.projects = [
     {
-      name:         'Just Like Medium',
+      name:         'Dynamic Lab',
       description:  'A full-featured blogging platform inspired by Medium.com. Built from scratch with JWT auth, a rich text editor, reading lists, follow system, notifications, admin dashboard, content moderation, dark mode, and a full submission/review workflow.',
       technologies: 'React, Node.js, Express, MongoDB, Cloudinary, TipTap, Tailwind CSS, JWT',
       link:         'https://raajaaqib.github.io/just-like-medium/',
@@ -112,7 +112,7 @@ I'm passionate about crafting software that is both technically solid and genuin
 
   // ── Website Info ───────────────────────────────────────────────────────────
   profile.websiteInfo = {
-    name:         'Just Like Medium',
+    name:         'Dynamic Lab',
     foundedYear:  '2025',
     mission:      'A platform for writers and readers to share ideas, stories, and knowledge — free from algorithmic noise.',
     techStack:    'React, Node.js, Express.js, MongoDB, Cloudinary, Tailwind CSS, TipTap, JWT, Render, GitHub Pages',
@@ -123,7 +123,7 @@ I'm passionate about crafting software that is both technically solid and genuin
   // ── Support ────────────────────────────────────────────────────────────────
   profile.support = {
     heading:         'Buy Me a Coffee ☕',
-    description:     'Just Like Medium is a free, open platform. If you find it useful, consider supporting its development — every bit helps keep the servers running!',
+    description:     'Dynamic Lab is a free, open platform. If you find it useful, consider supporting its development — every bit helps keep the servers running!',
     paymentQrCode:   '',
     paymentQrPublicId: '',
     upiId:           '',

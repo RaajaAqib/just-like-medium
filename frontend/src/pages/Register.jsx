@@ -24,7 +24,7 @@ export default function Register() {
     try {
       const res = await api.post('/auth/register', form);
       login(res.data.token, res.data.user);
-      toast.success(`Welcome to Just Like Medium, ${res.data.user.name}!`);
+      toast.success(`Welcome to Dynamic Lab, ${res.data.user.name}!`);
       navigate('/');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Registration failed');
@@ -39,12 +39,12 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
       <div className="border-b border-medium-border dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="text-2xl font-bold font-serif text-medium-black dark:text-gray-100">Just Like Medium</Link>
+        <Link to="/" className="text-2xl font-bold font-serif text-medium-black dark:text-gray-100">Dynamic Lab</Link>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-4 py-16">
         <div className="w-full max-w-sm">
-          <h1 className="text-3xl font-serif font-bold text-medium-black dark:text-gray-100 text-center mb-2">Join Just Like Medium.</h1>
+          <h1 className="text-3xl font-serif font-bold text-medium-black dark:text-gray-100 text-center mb-2">Join Dynamic Lab.</h1>
           <p className="text-medium-gray dark:text-gray-400 text-sm text-center mb-8">Create an account to read, write, and connect.</p>
 
           <div className="border border-medium-border dark:border-gray-700 rounded-lg p-8 dark:bg-gray-800">
@@ -106,7 +106,7 @@ export default function Register() {
           </div>
 
           <p className="text-xs text-medium-gray dark:text-gray-500 text-center mt-6 leading-relaxed">
-            Click "Create account" to agree to Just Like Medium's{' '}
+            Click "Create account" to agree to Dynamic Lab's{' '}
             <span className="underline cursor-pointer">Terms of Service</span>
             {' '}and acknowledge the{' '}
             <span className="underline cursor-pointer">Privacy Policy</span>.

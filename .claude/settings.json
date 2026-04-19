@@ -7,7 +7,8 @@
       "Bash(node -e ':*)",
       "Bash(curl -s \"https://raajaaqib.github.io/just-like-medium/assets/index-55214280.js\")",
       "Bash(curl -s -X POST https://just-like-medium.onrender.com/api/auth/login -H 'Content-Type: application/json' -H 'Origin: https://raajaaqib.github.io' -d '{\"email\":\"aqibrajpootofficial@gmail.com\",\"password\":\"test123\"}')",
-      "Bash(curl -s -X POST https://just-like-medium.onrender.com/api/auth/register -H 'Content-Type: application/json' -H 'Origin: https://raajaaqib.github.io' -d '{\"name\":\"test\",\"email\":\"test_check@test.com\",\"password\":\"test123456\"}')"
+      "Bash(curl -s -X POST https://just-like-medium.onrender.com/api/auth/register -H 'Content-Type: application/json' -H 'Origin: https://raajaaqib.github.io' -d '{\"name\":\"test\",\"email\":\"test_check@test.com\",\"password\":\"test123456\"}')",
+      "Bash(node -e \"const p = require\\('./package.json'\\); ['@tiptap/extension-code-block-lowlight','@tiptap/extension-underline','@tiptap/extension-text-align','lowlight'].forEach\\(k => console.log\\(k, p.dependencies[k]\\)\\)\")"
     ]
   }
 }

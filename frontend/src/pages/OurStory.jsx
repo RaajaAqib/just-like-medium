@@ -18,11 +18,11 @@ export default function OurStory() {
 
       <div className="max-w-2xl mx-auto px-6 py-16 space-y-8 text-lg leading-relaxed text-medium-black dark:text-gray-300">
         <p>
-          Just Like Medium is a home for human stories and ideas. Here, anyone can share knowledge
+          Dynamic Lab is a home for human stories and ideas. Here, anyone can share knowledge
           and wisdom with the world — without having to build a mailing list or a following first.
         </p>
         <p>
-          The internet is noisy and chaotic. Just Like Medium is quiet yet full of insight. It's simple,
+          The internet is noisy and chaotic. Dynamic Lab is quiet yet full of insight. It's simple,
           beautiful, collaborative, and helps you find the right readers for whatever you have to say.
         </p>
         <blockquote className="border-l-4 border-medium-black dark:border-gray-500 pl-6 py-1 italic text-2xl font-serif dark:text-gray-200">
@@ -55,7 +55,7 @@ export default function OurStory() {
               </div>
               <p>
                 Hi, I'm <strong className="text-medium-black dark:text-gray-100">Raja Aqib</strong> — a Software Engineer
-                and ServiceNow Developer. I built Just Like Medium as a full-stack project to create a
+                and ServiceNow Developer. I built Dynamic Lab as a full-stack project to create a
                 modern, clean writing platform inspired by Medium.
               </p>
               <p>Here's what I built into this platform:</p>
@@ -96,7 +96,7 @@ export default function OurStory() {
 
         <div className="pt-6 border-t border-medium-border dark:border-gray-700">
           <p className="text-medium-gray dark:text-gray-400 text-base mb-6">
-            Join millions of curious readers and fearless writers on Just Like Medium.
+            Join millions of curious readers and fearless writers on Dynamic Lab.
           </p>
           <div className="flex gap-4 flex-wrap">
             <Link to="/register" className="btn-black px-8 py-3">Start writing</Link>

@@ -32,7 +32,7 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
       <div className="border-b border-medium-border dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="text-2xl font-bold font-serif text-medium-black dark:text-gray-100">Just Like Medium</Link>
+        <Link to="/" className="text-2xl font-bold font-serif text-medium-black dark:text-gray-100">Dynamic Lab</Link>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-4 py-16">
@@ -72,9 +72,9 @@ export default function Login() {
           </div>
 
           <p className="text-xs text-medium-gray dark:text-gray-500 text-center mt-6 leading-relaxed">
-            Click "Sign in" to agree to Just Like Medium's{' '}
+            Click "Sign in" to agree to Dynamic Lab's{' '}
             <span className="underline cursor-pointer">Terms of Service</span>
-            {' '}and acknowledge that Just Like Medium's{' '}
+            {' '}and acknowledge that Dynamic Lab's{' '}
             <span className="underline cursor-pointer">Privacy Policy</span>
             {' '}applies to you.
           </p>

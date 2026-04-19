@@ -144,7 +144,7 @@ export default function SidebarLayout({ children }) {
             <FiMenu className="text-[22px]" />
           </button>
           <Link to="/" className="font-bold font-serif text-medium-black dark:text-gray-100 text-lg leading-none whitespace-nowrap">
-            Just Like Medium
+            Dynamic Lab
           </Link>
         </div>
 
@@ -261,7 +261,7 @@ export default function SidebarLayout({ children }) {
               <div className="flex items-center justify-between px-4 h-14 border-b border-medium-border dark:border-gray-700 flex-shrink-0">
                 <Link to="/" onClick={() => setMobileOpen(false)}
                   className="font-bold font-serif text-medium-black dark:text-gray-100 text-lg">
-                  Just Like Medium
+                  Dynamic Lab
                 </Link>
                 <button onClick={() => setMobileOpen(false)}
                   className="p-1.5 text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-100 transition">
