@@ -24,6 +24,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'https://raajaaqib.github.io',
+  'https://just-like-medium-private.pages.dev',
   process.env.CLIENT_URL,
 ].filter(Boolean).map(o => o.toLowerCase());
 
