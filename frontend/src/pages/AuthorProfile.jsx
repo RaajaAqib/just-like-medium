@@ -14,7 +14,7 @@ import {
   FiMoreHorizontal, FiVolumeX, FiVolume2, FiUserMinus, FiUserPlus,
   FiLink, FiSlash, FiFlag, FiBookmark,
 } from 'react-icons/fi';
-import { TbPin, TbPinnedOff } from 'react-icons/tb';
+import { TbPin } from 'react-icons/tb';
 import UserBadges from '../components/UserBadges';
 
 // ── Followers / Following modal ───────────────────────────────────────────────
@@ -406,62 +406,23 @@ function ReportUserModal({ name, onClose, onSubmit }) {
   );
 }
 
-// ── Story row wrapper with owner three-dot menu ───────────────────────────────
+// ── Story row wrapper with pin indicator ─────────────────────────────────────
 function StoryRow({ post, isPinned, isOwn, onPinToggle, canPin }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [menuOpen]);
-
   return (
-    <div className="relative group">
+    <div>
       {/* Pin indicator strip */}
       {isPinned && (
-        <div className="flex items-center gap-1.5 mb-1 ml-0.5">
+        <div className="flex items-center gap-1.5 mt-1 ml-0.5">
           <TbPin className="text-medium-gray dark:text-gray-500" size={12} />
           <span className="text-[11px] text-medium-gray dark:text-gray-500">Pinned story</span>
         </div>
       )}
-
-      <div className="relative">
-        <PostCard post={post} />
-
-        {/* Three-dot menu — owner only */}
-        {isOwn && (
-          <div className="absolute top-3 right-3 z-10" ref={menuRef}>
-            <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(v => !v); }}
-              className="p-1.5 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur border border-medium-border dark:border-gray-600 text-medium-gray dark:text-gray-400 hover:text-medium-black dark:hover:text-gray-200 transition opacity-0 group-hover:opacity-100"
-              title="Story options"
-            >
-              <FiMoreHorizontal size={14} />
-            </button>
-
-            {menuOpen && (
-              <div className="absolute right-0 top-9 w-48 bg-white dark:bg-gray-800 border border-medium-border dark:border-gray-600 rounded-lg shadow-xl py-1 z-30">
-                <button
-                  onClick={(e) => { e.stopPropagation(); onPinToggle(post._id); setMenuOpen(false); }}
-                  disabled={!isPinned && !canPin}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {isPinned
-                    ? <><TbPinnedOff size={15} /> Unpin from profile</>
-                    : <><TbPin size={15} /> Pin to profile</>
-                  }
-                </button>
-                {!isPinned && !canPin && (
-                  <p className="px-4 pb-2 text-xs text-medium-gray dark:text-gray-500">Max 3 stories pinned</p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      <PostCard
+        post={post}
+        isPinned={isPinned}
+        onPin={isOwn ? onPinToggle : undefined}
+        canPin={canPin}
+      />
     </div>
   );
 }

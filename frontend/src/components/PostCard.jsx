@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { FiBookmark, FiMoreHorizontal, FiVolumeX, FiVolume2 } from 'react-icons/fi';
+import { TbPin, TbPinnedOff } from 'react-icons/tb';
 import { MdOutlineWavingHand } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
 import { useSavedPosts } from '../context/SavedPostsContext';
@@ -10,7 +11,7 @@ import UserBadges from './UserBadges';
 import api from '../utils/axios';
 import toast from 'react-hot-toast';
 
-export default function PostCard({ post, onMute }) {
+export default function PostCard({ post, onMute, isPinned, onPin, canPin }) {
   const { user } = useAuth();
   const { isSaved } = useSavedPosts();
   const navigate = useNavigate();
@@ -132,8 +133,8 @@ export default function PostCard({ post, onMute }) {
                 )}
               </div>
 
-              {/* More options (···) — only for logged-in users viewing others' posts */}
-              {user && !isOwnPost && (
+              {/* More options (···) */}
+              {user && (!isOwnPost || !!onPin) && (
                 <div className="relative" ref={moreRef}>
                   <button
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowMoreMenu(v => !v); }}
@@ -145,13 +146,30 @@ export default function PostCard({ post, onMute }) {
 
                   {showMoreMenu && (
                     <div className="absolute right-0 bottom-8 w-52 bg-white dark:bg-gray-800 border border-medium-border dark:border-gray-600 rounded-lg shadow-lg py-1 z-20">
-                      <button
-                        onClick={handleMuteAuthor}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left"
-                      >
-                        {muted ? <FiVolume2 size={15} /> : <FiVolumeX size={15} />}
-                        {muted ? `Unmute ${post.author?.name}` : `Mute ${post.author?.name}`}
-                      </button>
+                      {/* Mute — only on others' posts */}
+                      {!isOwnPost && (
+                        <button
+                          onClick={handleMuteAuthor}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left"
+                        >
+                          {muted ? <FiVolume2 size={15} /> : <FiVolumeX size={15} />}
+                          {muted ? `Unmute ${post.author?.name}` : `Mute ${post.author?.name}`}
+                        </button>
+                      )}
+                      {/* Pin / Unpin — only on own posts when handler is passed */}
+                      {isOwnPost && onPin && (
+                        <button
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPin(post._id); setShowMoreMenu(false); }}
+                          disabled={!isPinned && !canPin}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-medium-black dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {isPinned ? <TbPinnedOff size={15} /> : <TbPin size={15} />}
+                          {isPinned ? 'Unpin from profile' : 'Pin to profile'}
+                        </button>
+                      )}
+                      {isOwnPost && onPin && !isPinned && !canPin && (
+                        <p className="px-4 pb-2 text-xs text-medium-gray dark:text-gray-500">Max 3 stories pinned</p>
+                      )}
                     </div>
                   )}
                 </div>
